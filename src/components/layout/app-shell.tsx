@@ -24,22 +24,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarHeader className="p-4">
           <div className="flex items-center gap-2">
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-8 h-8 text-primary"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-8 w-8 text-primary"
             >
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-              <polyline points="14 2 14 8 20 8" />
-              <path d="M12 18v-1a2 2 0 0 1 2-2h4v-2a2 2 0 0 0-2-2h-1" />
-              <path d="M8 12h2" />
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                <polyline points="14 2 14 8 20 8" />
+                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                <path d="M17 12h.01" />
             </svg>
             <div className="flex flex-col">
-              <h2 className="text-lg font-bold font-headline">Sips & Slices Corner</h2>
+              <h2 className="text-lg font-bold font-headline">The hangout spot</h2>
             </div>
           </div>
         </SidebarHeader>
@@ -73,11 +73,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <SidebarMenuButton
                     asChild
                     isActive={pathname === "/upload-menu"}
-                    tooltip="Upload Menu"
+                    tooltip="Manage Menu"
                 >
                     <Link href="/upload-menu">
                     <Upload />
-                    <span>Upload Menu</span>
+                    <span>Manage Menu</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -96,10 +96,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <CardContent className="p-3">
                     <h3 className="font-bold font-headline text-sm flex items-center gap-2"><MapPin className="w-4 h-4" /> Address</h3>
                     <p className="text-xs text-sidebar-accent-foreground mt-1">
-                        Mahalaxmi 01, Lalitpur 44300
+                        Sagarmatha 03, Mount Everest 33400
                     </p>
                     <h3 className="font-bold font-headline text-sm mt-3">Phone</h3>
-                    <p className="text-xs text-sidebar-accent-foreground">980-4746336</p>
+                    <p className="text-xs text-sidebar-accent-foreground">980-1234567</p>
                 </CardContent>
             </Card>
         </SidebarHeader>
@@ -108,21 +108,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="flex items-center justify-between p-2 border-b h-14 md:hidden">
             <div className="flex items-center gap-2">
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-6 h-6 text-primary"
-                >
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <path d="M12 18v-1a2 2 0 0 1 2-2h4v-2a2 2 0 0 0-2-2h-1" />
-                  <path d="M8 12h2" />
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-6 w-6 text-primary"
+                    >
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                    <path d="M17 12h.01" />
                 </svg>
-                <h2 className="text-md font-bold font-headline">Sips & Slices Corner</h2>
+                <h2 className="text-md font-bold font-headline">The hangout spot</h2>
             </div>
             <SidebarTrigger />
         </header>

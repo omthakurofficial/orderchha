@@ -1,5 +1,5 @@
 import type { MenuCategory, Table } from '@/types';
-import { Flame, GlassWater, IceCream2, Salad, UtensilsCrossed } from 'lucide-react';
+import { Flame, GlassWater, IceCream2, Salad, Utensils, UtensilsCrossed } from 'lucide-react';
 
 export const MENU: MenuCategory[] = [
   {
@@ -21,6 +21,15 @@ export const MENU: MenuCategory[] = [
     items: [
         { id: 's1', name: 'Caesar Salad', description: 'Crisp romaine, croutons, and parmesan', price: 9.00, image: 'https://placehold.co/600x400.png', imageHint: 'caesar salad', inStock: true },
         { id: 's2', name: 'Greek Salad', description: 'Feta, olives, and fresh vegetables', price: 9.50, image: 'https://placehold.co/600x400.png', imageHint: 'greek salad', inStock: true },
+    ]
+  },
+  {
+    id: 'snacks',
+    name: 'Snacks',
+    icon: Utensils,
+    items: [
+        { id: 'sn1', name: 'French Fries', description: 'Crispy golden fries', price: 4.50, image: 'https://placehold.co/600x400.png', imageHint: 'french fries', inStock: true },
+        { id: 'sn2', name: 'Mozzarella Sticks', description: 'Served with marinara sauce', price: 6.00, image: 'https://placehold.co/600x400.png', imageHint: 'mozzarella sticks', inStock: true },
     ]
   },
   {
