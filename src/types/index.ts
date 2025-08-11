@@ -1,3 +1,4 @@
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -19,4 +20,14 @@ export interface Table {
   id: number;
   status: 'available' | 'occupied' | 'reserved' | 'disabled';
   capacity: number;
+}
+
+export interface Settings {
+    cafeName: string;
+    address: string;
+    phone: string;
+    logo: string;
+    aiSuggestionsEnabled: boolean;
+    onlineOrderingEnabled: boolean;
+    paymentQrUrl: string;
 }

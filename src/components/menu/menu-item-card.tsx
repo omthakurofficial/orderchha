@@ -1,3 +1,4 @@
+
 import type { MenuItem } from "@/types";
 import Image from "next/image";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,12 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { PlusCircle } from "lucide-react";
+import { useApp } from "@/context/app-context";
 
 interface MenuItemCardProps {
   item: MenuItem;
 }
 
 export function MenuItemCard({ item }: MenuItemCardProps) {
+  const { settings } = useApp();
+
+  const isOrderable = item.inStock && settings.onlineOrderingEnabled;
+
   return (
     <Card className="flex flex-col overflow-hidden h-full">
       <CardHeader className="p-0 relative">
@@ -39,7 +45,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
         <p className="text-lg font-bold text-primary">NPR {item.price.toFixed(2)}</p>
-        <Button disabled={!item.inStock}>
+        <Button disabled={!isOrderable} title={!settings.onlineOrderingEnabled ? "Online ordering is currently disabled" : ""}>
           <PlusCircle />
           Add
         </Button>

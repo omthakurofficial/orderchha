@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useApp } from "@/context/app-context";
 
 export default function MenuPage() {
-  const { menu: menuCategories } = useApp();
+  const { menu: menuCategories, settings } = useApp();
 
   return (
     <div className="flex flex-col h-full">
@@ -37,8 +37,12 @@ export default function MenuPage() {
         </div>
       </header>
       <main className="flex-1 p-4 md:p-6 overflow-auto space-y-8">
-        <ComboSuggester />
-        <Separator />
+        {settings.aiSuggestionsEnabled && (
+          <>
+            <ComboSuggester />
+            <Separator />
+          </>
+        )}
         <div className="space-y-6">
             {menuCategories.map((category) => (
               <MenuCategory key={category.id} category={category} />

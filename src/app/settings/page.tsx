@@ -10,16 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { useApp } from "@/context/app-context";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export default function SettingsPage() {
     const { toast } = useToast();
     const { settings, updateSettings } = useApp();
+    const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
 
     const handleSaveChanges = () => {
-        // Here you would handle form submission, e.g., by calling updateSettings
         toast({
             title: "Settings Saved",
-            description: "Your changes have been saved successfully.",
+            description: "Your changes have been saved successfully and will persist on this device.",
         });
     }
 
@@ -27,6 +28,45 @@ export default function SettingsPage() {
         const { id, value } = e.target;
         updateSettings({ [id]: value });
     }
+
+    const handleSwitchChange = (id: string, checked: boolean) => {
+        updateSettings({ [id]: checked });
+    }
+
+    const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                updateSettings({ logo: reader.result as string });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
+    const generateQrCode = () => {
+        if (settings.paymentQrUrl && settings.paymentQrUrl.trim() !== '') {
+            setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(settings.paymentQrUrl)}`);
+            toast({
+              title: "QR Code Generated",
+              description: "The new QR code for your payment link is now displayed.",
+            });
+        } else {
+            toast({
+                variant: 'destructive',
+                title: "Invalid URL",
+                description: "Please enter a valid payment URL before generating a QR code.",
+            });
+        }
+    }
+    
+    useEffect(() => {
+        if (settings.paymentQrUrl && settings.paymentQrUrl.trim() !== '') {
+            setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(settings.paymentQrUrl)}`);
+        } else {
+            setQrCodeUrl("https://placehold.co/256x256.png");
+        }
+    }, [settings.paymentQrUrl]);
 
     return (
         <div className="flex flex-col h-full">
@@ -56,9 +96,14 @@ export default function SettingsPage() {
                                     <Input id="phone" value={settings.phone} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="cafe-logo">Cafe Logo</Label>
-                                    <Input id="cafe-logo" type="file" />
+                                    <Label htmlFor="logo">Cafe Logo</Label>
+                                    <Input id="logo" type="file" onChange={handleLogoChange} accept="image/*" />
                                     <p className="text-xs text-muted-foreground pt-1">Upload a new logo image.</p>
+                                    {settings.logo && (
+                                        <div className="mt-4">
+                                            <Image src={settings.logo} alt="Cafe Logo Preview" width={80} height={80} className="rounded-md border p-1" />
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -70,17 +115,17 @@ export default function SettingsPage() {
                             <CardContent className="space-y-4">
                                 <div className="flex items-center justify-between p-3 shadow-sm border rounded-lg">
                                     <div>
-                                        <Label htmlFor="ai-suggestions">AI Combo Suggestions</Label>
+                                        <Label htmlFor="aiSuggestionsEnabled">AI Combo Suggestions</Label>
                                         <p className="text-xs text-muted-foreground">Show AI-powered meal recommendations to customers.</p>
                                     </div>
-                                    <Switch id="ai-suggestions" defaultChecked />
+                                    <Switch id="aiSuggestionsEnabled" checked={settings.aiSuggestionsEnabled} onCheckedChange={(checked) => handleSwitchChange('aiSuggestionsEnabled', checked)} />
                                 </div>
                                 <div className="flex items-center justify-between p-3 shadow-sm border rounded-lg">
                                      <div>
-                                        <Label htmlFor="online-orders">Online Ordering</Label>
+                                        <Label htmlFor="onlineOrderingEnabled">Online Ordering</Label>
                                         <p className="text-xs text-muted-foreground">Allow customers to place orders directly from the menu.</p>
                                     </div>
-                                    <Switch id="online-orders" defaultChecked />
+                                    <Switch id="onlineOrderingEnabled" checked={settings.onlineOrderingEnabled} onCheckedChange={(checked) => handleSwitchChange('onlineOrderingEnabled', checked)} />
                                 </div>
                             </CardContent>
                         </Card>
@@ -89,26 +134,31 @@ export default function SettingsPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>QR Code Payment</CardTitle>
-                                <CardDescription>Display a QR code for easy payments.</CardDescription>
+                                <CardDescription>Enter a payment link to generate a QR code.</CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col items-center justify-center">
+                                <div className="w-full space-y-2 mb-4">
+                                    <Label htmlFor="paymentQrUrl">Payment URL</Label>
+                                    <Input id="paymentQrUrl" placeholder="https://your-payment-link.com" value={settings.paymentQrUrl} onChange={handleInputChange} />
+                                </div>
                                 <div className="p-4 border rounded-lg">
                                      <Image
-                                        src="https://placehold.co/256x256.png"
-                                        alt="Payment QR Code Placeholder"
+                                        src={qrCodeUrl}
+                                        alt="Payment QR Code"
                                         width={256}
                                         height={256}
                                         data-ai-hint="qr code"
                                         className="rounded-lg"
+                                        unoptimized
                                     />
                                 </div>
-                                <Button className="mt-4 w-full">Generate New QR Code</Button>
+                                <Button className="mt-4 w-full" onClick={generateQrCode}>Generate New QR Code</Button>
                             </CardContent>
                         </Card>
                     </div>
                 </div>
                  <div className="flex justify-end">
-                    <Button onClick={handleSaveChanges} size="lg">Save Changes</Button>
+                    <Button onClick={handleSaveChanges} size="lg">Save All Changes</Button>
                 </div>
             </main>
         </div>
