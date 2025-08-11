@@ -1,5 +1,6 @@
+
 import type { MenuCategory, Table } from '@/types';
-import { Flame, GlassWater, IceCream2, Salad, Pizza, UtensilsCrossed } from 'lucide-react';
+import { Flame, GlassWater, IceCream2, Salad, Pizza } from 'lucide-react';
 
 export const MENU: MenuCategory[] = [
   {
