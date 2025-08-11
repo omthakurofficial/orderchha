@@ -127,9 +127,9 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                     name="price"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Price ($)</FormLabel>
+                        <FormLabel>Price (NPR)</FormLabel>
                         <FormControl>
-                            <Input type="number" step="0.01" placeholder="e.g., 12.50" {...field} />
+                            <Input type="number" step="0.01" placeholder="e.g., 1250.00" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>

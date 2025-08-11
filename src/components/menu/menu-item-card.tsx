@@ -38,7 +38,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
         <p className="text-sm text-muted-foreground">{item.description}</p>
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
-        <p className="text-lg font-bold text-primary">${item.price.toFixed(2)}</p>
+        <p className="text-lg font-bold text-primary">NPR {item.price.toFixed(2)}</p>
         <Button disabled={!item.inStock}>
           <PlusCircle />
           Add
