@@ -211,7 +211,7 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
             </Button>
             </form>
         </Form>
-        </Content>
+        </CardContent>
     </Card>
   );
 }
