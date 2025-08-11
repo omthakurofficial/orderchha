@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import { useMenu } from '@/context/menu-context';
+import { useApp } from '@/context/app-context';
 
 const menuItemSchema = z.object({
   name: z.string().min(2, { message: "Item name must be at least 2 characters." }),
@@ -35,7 +35,7 @@ interface MenuUploadFormProps {
 export function MenuUploadForm({ categories }: MenuUploadFormProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const { toast } = useToast();
-  const { addMenuItem } = useMenu();
+  const { addMenuItem } = useApp();
   
   const form = useForm<MenuItemFormValues>({
     resolver: zodResolver(menuItemSchema),
