@@ -5,7 +5,7 @@ import type { Table } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Users, QrCode } from "lucide-react";
+import { Users, QrCode, MoreVertical, CheckCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +14,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useApp } from "@/context/app-context";
+import { Button } from "../ui/button";
 
 interface TableCardProps {
   table: Table;
@@ -30,6 +42,7 @@ const statusStyles = {
 export function TableCard({ table }: TableCardProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
   const [origin, setOrigin] = useState("");
+  const { updateTableStatus } = useApp();
 
   useEffect(() => {
     // window.location.origin is only available on the client side.
@@ -44,22 +57,49 @@ export function TableCard({ table }: TableCardProps) {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-300 hover:border-primary">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-                <CardTitle className="font-headline">Table {table.id}</CardTitle>
-                <Badge className={cn(statusStyles[table.status], "capitalize")}>
-                  {table.status}
-                </Badge>
+      <Card className={cn(
+        "cursor-pointer hover:shadow-lg transition-shadow duration-300 hover:border-primary",
+        table.status !== 'available' && "opacity-75"
+      )}>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="font-headline">Table {table.id}</CardTitle>
+              <CardDescription className="flex items-center gap-2 pt-2">
+                <Users className="w-4 h-4" />
+                <span>{table.capacity} Seats</span>
+              </CardDescription>
             </div>
-            <CardDescription className="flex items-center gap-2 pt-2">
-              <Users className="w-4 h-4" />
-              <span>{table.capacity} Seats</span>
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </DialogTrigger>
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup value={table.status} onValueChange={(status) => updateTableStatus(table.id, status as Table['status'])}>
+                        <DropdownMenuRadioItem value="available">Available</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="occupied">Occupied</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="reserved">Reserved</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between">
+            <Badge className={cn(statusStyles[table.status], "capitalize")}>
+                {table.status}
+            </Badge>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Show QR Code">
+                <QrCode />
+              </Button>
+            </DialogTrigger>
+        </CardContent>
+      </Card>
+      
        <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2"><QrCode /> Scan to view menu</DialogTitle>
