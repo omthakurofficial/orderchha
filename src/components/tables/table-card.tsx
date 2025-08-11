@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Table } from "@/types";
@@ -14,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 interface TableCardProps {
   table: Table;
@@ -26,6 +28,20 @@ const statusStyles = {
 };
 
 export function TableCard({ table }: TableCardProps) {
+  const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    // window.location.origin is only available on the client side.
+    // We use useEffect to prevent hydration errors.
+    if (typeof window !== "undefined") {
+        const currentOrigin = window.location.origin;
+        setOrigin(currentOrigin);
+        const menuUrl = `${currentOrigin}/menu?table=${table.id}`;
+        setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(menuUrl)}`);
+    }
+  }, [table.id]);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -53,12 +69,13 @@ export function TableCard({ table }: TableCardProps) {
         </DialogHeader>
         <div className="flex justify-center p-4">
             <Image
-                src="https://placehold.co/256x256.png"
-                alt="QR Code Placeholder"
+                src={qrCodeUrl}
+                alt={`QR Code for Table ${table.id}`}
                 width={256}
                 height={256}
                 data-ai-hint="qr code"
                 className="rounded-lg"
+                unoptimized // Required for external QR code service
             />
         </div>
       </DialogContent>
