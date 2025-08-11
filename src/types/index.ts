@@ -19,7 +19,7 @@ export interface KitchenOrder {
     id: string;
     tableId: number;
     items: OrderItem[];
-    status: 'pending' | 'completed';
+    status: 'pending' | 'in-kitchen' | 'completed';
     timestamp: string;
     total: number;
 }
@@ -33,7 +33,7 @@ export interface MenuCategory {
 
 export interface Table {
   id: number;
-  status: 'available' | 'occupied' | 'reserved' | 'disabled';
+  status: 'available' | 'occupied' | 'reserved' | 'disabled' | 'billing';
   capacity: number;
 }
 
@@ -45,4 +45,12 @@ export interface Settings {
     aiSuggestionsEnabled: boolean;
     onlineOrderingEnabled: boolean;
     paymentQrUrl: string;
+}
+
+export interface Transaction {
+    id: string;
+    tableId: number;
+    amount: number;
+    method: 'cash' | 'online';
+    timestamp: string;
 }

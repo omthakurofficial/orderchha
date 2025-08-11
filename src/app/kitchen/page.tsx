@@ -7,7 +7,7 @@ import { ChefHat } from 'lucide-react';
 
 export default function KitchenPage() {
   const { kitchenOrders, isLoaded } = useApp();
-  const activeOrders = kitchenOrders.filter(o => o.status === 'pending');
+  const activeOrders = kitchenOrders.filter(o => o.status === 'in-kitchen');
 
   if (!isLoaded) {
     return (

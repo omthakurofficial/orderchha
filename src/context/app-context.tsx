@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder } from '@/types';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
 interface AppContextType {
@@ -25,6 +25,8 @@ interface AppContextType {
   pendingOrders: KitchenOrder[];
   approvePendingOrder: (orderId: string) => void;
   rejectPendingOrder: (orderId: string) => void;
+  transactions: Transaction[];
+  processPayment: (tableId: number, method: 'cash' | 'online') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -77,6 +79,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [order, setOrder] = useState<OrderItem[]>([]);
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
 
   // Load initial state from localStorage on mount
@@ -87,6 +90,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setOrder(loadState('dineswift-order', []));
     setKitchenOrders(loadState('dineswift-kitchen-orders', []));
     setPendingOrders(loadState('dineswift-pending-orders', []));
+    setTransactions(loadState('dineswift-transactions', []));
     setIsLoaded(true);
   }, []);
 
@@ -97,6 +101,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (isLoaded) saveState('dineswift-order', order); }, [order, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-kitchen-orders', kitchenOrders); }, [kitchenOrders, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-pending-orders', pendingOrders); }, [pendingOrders, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('dineswift-transactions', transactions); }, [transactions, isLoaded]);
+
 
   const addMenuItem = (item: MenuItem, categoryName: string) => {
     setMenu(prevMenu => {
@@ -186,7 +192,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
   
   const completeKitchenOrder = (orderId: string) => {
-    setKitchenOrders(prev => prev.map(o => o.id === orderId ? {...o, status: 'completed'} : o))
+    const order = kitchenOrders.find(o => o.id === orderId);
+    if (!order) return;
+
+    setKitchenOrders(prev => prev.map(o => o.id === orderId ? {...o, status: 'completed'} : o));
+    updateTableStatus(order.tableId, 'billing');
   }
   
   const approvePendingOrder = (orderId: string) => {
@@ -194,7 +204,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!orderToApprove) return;
 
     // Move from pending to kitchen
-    setKitchenOrders(prev => [...prev, orderToApprove]);
+    setKitchenOrders(prev => [...prev, {...orderToApprove, status: 'in-kitchen'}]);
     setPendingOrders(prev => prev.filter(o => o.id !== orderId));
 
     // Update table status
@@ -203,6 +213,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const rejectPendingOrder = (orderId: string) => {
     setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+  };
+
+  const processPayment = (tableId: number, method: 'cash' | 'online') => {
+    // Find all completed orders for the table
+    const ordersToPay = kitchenOrders.filter(o => o.tableId === tableId && o.status === 'completed');
+    if (ordersToPay.length === 0) return;
+
+    const totalAmount = ordersToPay.reduce((acc, order) => acc + order.total, 0);
+
+    const newTransaction: Transaction = {
+        id: `txn-${Date.now()}`,
+        tableId,
+        amount: totalAmount * 1.13, // Apply VAT
+        method,
+        timestamp: new Date().toISOString(),
+    };
+
+    setTransactions(prev => [...prev, newTransaction]);
+
+    // Remove paid orders from kitchen list
+    const orderIdsToPay = ordersToPay.map(o => o.id);
+    setKitchenOrders(prev => prev.filter(o => !orderIdsToPay.includes(o.id)));
+
+    // Set table back to available
+    updateTableStatus(tableId, 'available');
   };
 
 
@@ -226,6 +261,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     pendingOrders,
     approvePendingOrder,
     rejectPendingOrder,
+    transactions,
+    processPayment,
   };
 
   return (
