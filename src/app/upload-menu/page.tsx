@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { Upload, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { MENU } from '@/lib/data';
@@ -176,11 +176,11 @@ export default function UploadMenuPage() {
                         <FormField
                             control={form.control}
                             name="image"
-                            render={({ field }) => (
+                            render={({ field: { onChange, value, ...rest } }) => (
                                 <FormItem>
                                 <FormLabel>Item Image</FormLabel>
                                 <FormControl>
-                                    <Input type="file" accept="image/*" onChange={handleFileChange} />
+                                    <Input type="file" accept="image/*" onChange={handleFileChange} {...rest} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
