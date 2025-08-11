@@ -9,8 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { MinusCircle, PlusCircle, ShoppingCart, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export function OrderSummary() {
+function OrderSummaryContent() {
   const { order, updateOrderItemQuantity, removeItemFromOrder, placeOrder } = useApp();
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -29,8 +30,8 @@ export function OrderSummary() {
     }
     placeOrder(parseInt(tableId, 10));
     toast({
-      title: 'Order Placed!',
-      description: `Your order for Table ${tableId} has been sent to the kitchen.`,
+      title: 'Order Submitted!',
+      description: `Your order for Table ${tableId} has been submitted for confirmation.`,
     });
   };
 
@@ -86,9 +87,18 @@ export function OrderSummary() {
           <span>NPR {(total * 1.13).toFixed(2)}</span>
         </div>
         <Button className="w-full" size="lg" onClick={handlePlaceOrder} disabled={!tableId}>
-          Place Order
+          Submit Order for Confirmation
         </Button>
       </div>
     </div>
   );
+}
+
+
+export function OrderSummary() {
+  return (
+    <Suspense fallback={<div>Loading order...</div>}>
+      <OrderSummaryContent />
+    </Suspense>
+  )
 }

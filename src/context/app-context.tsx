@@ -22,6 +22,9 @@ interface AppContextType {
   placeOrder: (tableId: number) => void;
   kitchenOrders: KitchenOrder[];
   completeKitchenOrder: (orderId: string) => void;
+  pendingOrders: KitchenOrder[];
+  approvePendingOrder: (orderId: string) => void;
+  rejectPendingOrder: (orderId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -73,6 +76,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [order, setOrder] = useState<OrderItem[]>([]);
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
+
 
   // Load initial state from localStorage on mount
   useEffect(() => {
@@ -81,6 +86,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettings(loadState('dineswift-settings', initialSettings));
     setOrder(loadState('dineswift-order', []));
     setKitchenOrders(loadState('dineswift-kitchen-orders', []));
+    setPendingOrders(loadState('dineswift-pending-orders', []));
     setIsLoaded(true);
   }, []);
 
@@ -90,6 +96,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (isLoaded) saveState('dineswift-settings', settings); }, [settings, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-order', order); }, [order, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-kitchen-orders', kitchenOrders); }, [kitchenOrders, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('dineswift-pending-orders', pendingOrders); }, [pendingOrders, isLoaded]);
 
   const addMenuItem = (item: MenuItem, categoryName: string) => {
     setMenu(prevMenu => {
@@ -165,7 +172,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const placeOrder = (tableId: number) => {
     if (order.length === 0) return;
 
-    const newKitchenOrder: KitchenOrder = {
+    const newPendingOrder: KitchenOrder = {
         id: `order-${Date.now()}`,
         tableId,
         items: [...order],
@@ -174,13 +181,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
         total: order.reduce((acc, item) => acc + item.price * item.quantity, 0)
     };
     
-    setKitchenOrders(prev => [...prev, newKitchenOrder]);
+    setPendingOrders(prev => [...prev, newPendingOrder]);
     clearOrder();
   }
   
   const completeKitchenOrder = (orderId: string) => {
     setKitchenOrders(prev => prev.map(o => o.id === orderId ? {...o, status: 'completed'} : o))
   }
+  
+  const approvePendingOrder = (orderId: string) => {
+    const orderToApprove = pendingOrders.find(o => o.id === orderId);
+    if (!orderToApprove) return;
+
+    // Move from pending to kitchen
+    setKitchenOrders(prev => [...prev, orderToApprove]);
+    setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+
+    // Update table status
+    updateTableStatus(orderToApprove.tableId, 'occupied');
+  };
+
+  const rejectPendingOrder = (orderId: string) => {
+    setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+  };
 
 
   const value = { 
@@ -200,6 +223,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     placeOrder,
     kitchenOrders,
     completeKitchenOrder,
+    pendingOrders,
+    approvePendingOrder,
+    rejectPendingOrder,
   };
 
   return (
