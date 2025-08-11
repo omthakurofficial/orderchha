@@ -1,7 +1,9 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { AppShell } from '@/components/layout/app-shell';
 import { Toaster } from '@/components/ui/toaster';
+import { MenuProvider } from '@/context/menu-context';
 
 export const metadata: Metadata = {
   title: 'Sips & Slices Corner',
@@ -21,8 +23,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <AppShell>{children}</AppShell>
-        <Toaster />
+        <MenuProvider>
+          <AppShell>{children}</AppShell>
+          <Toaster />
+        </MenuProvider>
       </body>
     </html>
   );

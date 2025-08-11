@@ -1,12 +1,15 @@
+
+'use client';
+
 import { MenuCategory } from "@/components/menu/menu-category";
 import { ComboSuggester } from "@/components/suggestions/combo-suggester";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { MENU } from "@/lib/data";
+import { useMenu } from "@/context/menu-context";
 
 export default function MenuPage() {
-  const menuCategories = MENU;
+  const { menu: menuCategories } = useMenu();
 
   return (
     <div className="flex flex-col h-full">

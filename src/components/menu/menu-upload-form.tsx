@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -14,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { useMenu } from '@/context/menu-context';
 
 const menuItemSchema = z.object({
   name: z.string().min(2, { message: "Item name must be at least 2 characters." }),
@@ -33,6 +35,7 @@ interface MenuUploadFormProps {
 export function MenuUploadForm({ categories }: MenuUploadFormProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const { toast } = useToast();
+  const { addMenuItem } = useMenu();
   
   const form = useForm<MenuItemFormValues>({
     resolver: zodResolver(menuItemSchema),
@@ -60,10 +63,18 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
   };
 
   const onSubmit: SubmitHandler<MenuItemFormValues> = (data) => {
-    console.log('New menu item:', {
-        ...data,
-        image: data.image[0].name,
-    });
+    const newItem = {
+      id: `item-${Date.now()}`, // simple unique id
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      inStock: data.inStock,
+      image: preview!, // We know preview is not null if form is valid
+      imageHint: `${data.name.toLowerCase()}`
+    };
+
+    addMenuItem(newItem, data.category);
+
     toast({
       title: 'Item Added Successfully',
       description: `${data.name} has been added to the menu.`,
@@ -200,7 +211,7 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
             </Button>
             </form>
         </Form>
-        </CardContent>
+        </Content>
     </Card>
   );
 }
