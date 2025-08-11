@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -15,9 +16,20 @@ import { usePathname } from "next/navigation";
 import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
+import React from "react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
   return (
     <SidebarProvider>
       <Sidebar>
