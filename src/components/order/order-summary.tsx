@@ -3,42 +3,52 @@
 
 import { useApp } from '@/context/app-context';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import Image from 'next/image';
-import { MinusCircle, PlusCircle, ShoppingCart, Trash2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { MinusCircle, PlusCircle, ShoppingCart, Trash2 } from 'lucide-react';
+import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 
 export function OrderSummary() {
-  const { order, updateOrderItemQuantity, removeItemFromOrder, clearOrder } = useApp();
+  const { order, updateOrderItemQuantity, removeItemFromOrder, placeOrder } = useApp();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const tableId = searchParams.get('table');
 
   const total = order.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const handlePlaceOrder = () => {
+    if (!tableId) {
+      toast({
+        variant: 'destructive',
+        title: 'Table Number Missing',
+        description: 'Could not place order. The table number is missing from the URL.',
+      });
+      return;
+    }
+    placeOrder(parseInt(tableId, 10));
     toast({
-        title: "Order Placed!",
-        description: "Your order has been sent to the kitchen.",
+      title: 'Order Placed!',
+      description: `Your order for Table ${tableId} has been sent to the kitchen.`,
     });
-    clearOrder();
-  }
+  };
 
   if (order.length === 0) {
     return (
-        <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <ShoppingCart className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-muted-foreground">Your order is empty</h3>
-            <p className="text-sm text-muted-foreground">Add items from the menu to get started.</p>
-        </div>
-    )
+      <div className="flex flex-col items-center justify-center h-full text-center p-8">
+        <ShoppingCart className="w-16 h-16 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold text-muted-foreground">Your order is empty</h3>
+        <p className="text-sm text-muted-foreground">Add items from the menu to get started.</p>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-4">
-          {order.map((item) => (
+          {order.map(item => (
             <div key={item.id} className="flex items-center gap-4">
               <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md object-cover" />
               <div className="flex-1">
@@ -54,7 +64,7 @@ export function OrderSummary() {
                   <PlusCircle className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeItemFromOrder(item.id)}>
-                    <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -66,7 +76,7 @@ export function OrderSummary() {
           <span>Subtotal</span>
           <span>NPR {total.toFixed(2)}</span>
         </div>
-         <div className="flex justify-between text-sm text-muted-foreground">
+        <div className="flex justify-between text-sm text-muted-foreground">
           <span>VAT (13%)</span>
           <span>NPR {(total * 0.13).toFixed(2)}</span>
         </div>
@@ -75,7 +85,7 @@ export function OrderSummary() {
           <span>Total</span>
           <span>NPR {(total * 1.13).toFixed(2)}</span>
         </div>
-        <Button className="w-full" size="lg" onClick={handlePlaceOrder}>
+        <Button className="w-full" size="lg" onClick={handlePlaceOrder} disabled={!tableId}>
           Place Order
         </Button>
       </div>

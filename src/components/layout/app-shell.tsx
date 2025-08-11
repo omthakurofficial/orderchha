@@ -13,7 +13,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin } from "lucide-react";
+import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
@@ -103,6 +103,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <span>Manage Menu</span>
                     </Link>
                 </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === "/kitchen"}
+                tooltip="Kitchen"
+              >
+                <Link href="/kitchen">
+                  <ChefHat />
+                  <span>Kitchen</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton 

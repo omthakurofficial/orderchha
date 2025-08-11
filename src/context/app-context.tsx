@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { MenuCategory, MenuItem, Table, Settings, OrderItem } from '@/types';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
 interface AppContextType {
@@ -19,6 +19,9 @@ interface AppContextType {
   removeItemFromOrder: (itemId: string) => void;
   updateOrderItemQuantity: (itemId: string, quantity: number) => void;
   clearOrder: () => void;
+  placeOrder: (tableId: number) => void;
+  kitchenOrders: KitchenOrder[];
+  completeKitchenOrder: (orderId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -69,6 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [tables, setTables] = useState<Table[]>([]);
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [order, setOrder] = useState<OrderItem[]>([]);
+  const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
 
   // Load initial state from localStorage on mount
   useEffect(() => {
@@ -76,6 +80,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTables(loadState('dineswift-tables', initialTables));
     setSettings(loadState('dineswift-settings', initialSettings));
     setOrder(loadState('dineswift-order', []));
+    setKitchenOrders(loadState('dineswift-kitchen-orders', []));
     setIsLoaded(true);
   }, []);
 
@@ -84,7 +89,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (isLoaded) saveState('dineswift-tables', tables); }, [tables, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-settings', settings); }, [settings, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-order', order); }, [order, isLoaded]);
-
+  useEffect(() => { if (isLoaded) saveState('dineswift-kitchen-orders', kitchenOrders); }, [kitchenOrders, isLoaded]);
 
   const addMenuItem = (item: MenuItem, categoryName: string) => {
     setMenu(prevMenu => {
@@ -157,6 +162,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setOrder([]);
   };
 
+  const placeOrder = (tableId: number) => {
+    if (order.length === 0) return;
+
+    const newKitchenOrder: KitchenOrder = {
+        id: `order-${Date.now()}`,
+        tableId,
+        items: [...order],
+        status: 'pending',
+        timestamp: new Date().toISOString(),
+        total: order.reduce((acc, item) => acc + item.price * item.quantity, 0)
+    };
+    
+    setKitchenOrders(prev => [...prev, newKitchenOrder]);
+    clearOrder();
+  }
+  
+  const completeKitchenOrder = (orderId: string) => {
+    setKitchenOrders(prev => prev.map(o => o.id === orderId ? {...o, status: 'completed'} : o))
+  }
+
+
   const value = { 
     isLoaded,
     menu, 
@@ -171,6 +197,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     removeItemFromOrder,
     updateOrderItemQuantity,
     clearOrder,
+    placeOrder,
+    kitchenOrders,
+    completeKitchenOrder,
   };
 
   return (

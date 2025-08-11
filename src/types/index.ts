@@ -1,4 +1,6 @@
 
+import type { ComponentType } from "react";
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -11,6 +13,15 @@ export interface MenuItem {
 
 export interface OrderItem extends MenuItem {
     quantity: number;
+}
+
+export interface KitchenOrder {
+    id: string;
+    tableId: number;
+    items: OrderItem[];
+    status: 'pending' | 'completed';
+    timestamp: string;
+    total: number;
 }
 
 export interface MenuCategory {
