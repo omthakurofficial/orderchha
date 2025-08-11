@@ -6,10 +6,10 @@ import { ComboSuggester } from "@/components/suggestions/combo-suggester";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { useMenu } from "@/context/menu-context";
+import { useApp } from "@/context/app-context";
 
 export default function MenuPage() {
-  const { menu: menuCategories } = useMenu();
+  const { menu: menuCategories } = useApp();
 
   return (
     <div className="flex flex-col h-full">
