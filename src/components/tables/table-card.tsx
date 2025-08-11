@@ -28,6 +28,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useApp } from "@/context/app-context";
 import { Button } from "../ui/button";
+import Link from "next/link";
 
 interface TableCardProps {
   table: Table;
@@ -60,10 +61,9 @@ export function TableCard({ table }: TableCardProps) {
 
   return (
     <Dialog>
-      <Card className={cn(
-        "hover:shadow-lg transition-shadow duration-300",
-        isInteractive ? "cursor-pointer hover:border-primary" : "cursor-not-allowed bg-muted",
-        (table.status !== 'available' && isInteractive) && "opacity-75"
+       <Card className={cn(
+        "flex flex-col",
+        !isInteractive && "cursor-not-allowed bg-muted opacity-60"
       )}>
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -93,16 +93,23 @@ export function TableCard({ table }: TableCardProps) {
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent className="flex items-center justify-between">
-            <Badge className={cn(statusStyles[table.status], "capitalize")}>
-                {table.status === 'disabled' && <XCircle className="w-3 h-3 mr-1" />}
-                {table.status}
-            </Badge>
-            <DialogTrigger asChild disabled={!isInteractive}>
-              <Button variant="ghost" size="icon" aria-label="Show QR Code" disabled={!isInteractive}>
-                <QrCode />
-              </Button>
-            </DialogTrigger>
+        <CardContent className="flex-1 flex flex-col justify-end">
+            <div className="flex items-center justify-between mt-auto">
+                <Badge className={cn(statusStyles[table.status], "capitalize")}>
+                    {table.status === 'disabled' && <XCircle className="w-3 h-3 mr-1" />}
+                    {table.status}
+                </Badge>
+                <DialogTrigger asChild disabled={!isInteractive}>
+                <Button variant="ghost" size="icon" aria-label="Show QR Code" disabled={!isInteractive}>
+                    <QrCode />
+                </Button>
+                </DialogTrigger>
+            </div>
+             <Button asChild className="w-full mt-4" disabled={!isInteractive}>
+                <Link href={`/menu?table=${table.id}`}>
+                    Go to Menu
+                </Link>
+             </Button>
         </CardContent>
       </Card>
       
