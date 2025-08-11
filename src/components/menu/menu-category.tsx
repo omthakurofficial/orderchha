@@ -1,12 +1,23 @@
 import type { MenuCategory as MenuCategoryType } from "@/types";
 import { MenuItemCard } from "./menu-item-card";
+import { Flame, GlassWater, IceCream2, Salad, Pizza, Utensils } from 'lucide-react';
 
 interface MenuCategoryProps {
   category: MenuCategoryType;
 }
 
+const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
+  Flame,
+  GlassWater,
+  IceCream2,
+  Salad,
+  Pizza,
+  Utensils,
+};
+
+
 export function MenuCategory({ category }: MenuCategoryProps) {
-  const Icon = category.icon;
+  const Icon = iconMap[category.icon] || Utensils; // Fallback to a default icon
   return (
     <section>
       <div className="flex items-center gap-3 mb-4">

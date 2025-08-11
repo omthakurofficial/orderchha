@@ -16,7 +16,7 @@ export interface OrderItem extends MenuItem {
 export interface MenuCategory {
   id: string;
   name: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: string;
   items: MenuItem[];
 }
 

@@ -6,7 +6,7 @@ export const MENU: MenuCategory[] = [
   {
     id: 'pizza',
     name: 'Pizzas',
-    icon: Flame,
+    icon: 'Flame',
     items: [
       { id: 'p1', name: 'Margherita', description: 'Classic cheese and tomato', price: 12.50, image: 'https://placehold.co/600x400.png', imageHint: 'margherita pizza', inStock: true },
       { id: 'p2', name: 'Pepperoni', description: 'Loaded with spicy pepperoni', price: 14.00, image: 'https://placehold.co/600x400.png', imageHint: 'pepperoni pizza', inStock: true },
@@ -18,7 +18,7 @@ export const MENU: MenuCategory[] = [
   {
     id: 'salads',
     name: 'Salads',
-    icon: Salad,
+    icon: 'Salad',
     items: [
         { id: 's1', name: 'Caesar Salad', description: 'Crisp romaine, croutons, and parmesan', price: 9.00, image: 'https://placehold.co/600x400.png', imageHint: 'caesar salad', inStock: true },
         { id: 's2', name: 'Greek Salad', description: 'Feta, olives, and fresh vegetables', price: 9.50, image: 'https://placehold.co/600x400.png', imageHint: 'greek salad', inStock: true },
@@ -27,7 +27,7 @@ export const MENU: MenuCategory[] = [
   {
     id: 'snacks',
     name: 'Snacks',
-    icon: Pizza,
+    icon: 'Pizza',
     items: [
         { id: 'sn1', name: 'French Fries', description: 'Crispy golden fries', price: 4.50, image: 'https://placehold.co/600x400.png', imageHint: 'french fries', inStock: true },
         { id: 'sn2', name: 'Mozzarella Sticks', description: 'Served with marinara sauce', price: 6.00, image: 'https://placehold.co/600x400.png', imageHint: 'mozzarella sticks', inStock: true },
@@ -36,7 +36,7 @@ export const MENU: MenuCategory[] = [
   {
     id: 'beverages',
     name: 'Beverages',
-    icon: GlassWater,
+    icon: 'GlassWater',
     items: [
       { id: 'b1', name: 'Coca-Cola', description: 'Classic fizzy drink', price: 2.50, image: 'https://placehold.co/600x400.png', imageHint: 'cola drink', inStock: true },
       { id: 'b2', name: 'Orange Juice', description: 'Freshly squeezed', price: 3.00, image: 'https://placehold.co/600x400.png', imageHint: 'orange juice', inStock: true },
@@ -46,7 +46,7 @@ export const MENU: MenuCategory[] = [
   {
     id: 'desserts',
     name: 'Desserts',
-    icon: IceCream2,
+    icon: 'IceCream2',
     items: [
       { id: 'd1', name: 'Tiramisu', description: 'Coffee-flavored Italian dessert', price: 7.00, image: 'https://placehold.co/600x400.png', imageHint: 'tiramisu cake', inStock: true },
       { id: 'd2', name: 'Cheesecake', description: 'Creamy New York style', price: 6.50, image: 'https://placehold.co/600x400.png', imageHint: 'cheesecake slice', inStock: false },
