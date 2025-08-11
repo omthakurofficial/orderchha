@@ -5,7 +5,7 @@ import type { Table } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Users, QrCode, MoreVertical, CheckCircle } from "lucide-react";
+import { Users, QrCode, MoreVertical, XCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +37,7 @@ const statusStyles = {
   available: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800",
   occupied: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800",
   reserved: "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800",
+  disabled: "bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
 };
 
 export function TableCard({ table }: TableCardProps) {
@@ -55,11 +56,14 @@ export function TableCard({ table }: TableCardProps) {
     }
   }, [table.id]);
 
+  const isInteractive = table.status !== 'disabled';
+
   return (
     <Dialog>
       <Card className={cn(
-        "cursor-pointer hover:shadow-lg transition-shadow duration-300 hover:border-primary",
-        table.status !== 'available' && "opacity-75"
+        "hover:shadow-lg transition-shadow duration-300",
+        isInteractive ? "cursor-pointer hover:border-primary" : "cursor-not-allowed bg-muted",
+        (table.status !== 'available' && isInteractive) && "opacity-75"
       )}>
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -83,6 +87,7 @@ export function TableCard({ table }: TableCardProps) {
                         <DropdownMenuRadioItem value="available">Available</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="occupied">Occupied</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="reserved">Reserved</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="disabled">Disabled</DropdownMenuRadioItem>
                     </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -90,10 +95,11 @@ export function TableCard({ table }: TableCardProps) {
         </CardHeader>
         <CardContent className="flex items-center justify-between">
             <Badge className={cn(statusStyles[table.status], "capitalize")}>
+                {table.status === 'disabled' && <XCircle className="w-3 h-3 mr-1" />}
                 {table.status}
             </Badge>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Show QR Code">
+            <DialogTrigger asChild disabled={!isInteractive}>
+              <Button variant="ghost" size="icon" aria-label="Show QR Code" disabled={!isInteractive}>
                 <QrCode />
               </Button>
             </DialogTrigger>

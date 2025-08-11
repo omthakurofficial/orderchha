@@ -17,6 +17,6 @@ export interface MenuCategory {
 
 export interface Table {
   id: number;
-  status: 'available' | 'occupied' | 'reserved';
+  status: 'available' | 'occupied' | 'reserved' | 'disabled';
   capacity: number;
 }
