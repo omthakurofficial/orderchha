@@ -17,10 +17,12 @@ import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin } from "lucide-re
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
+import { useApp } from "@/context/app-context";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMounted, setIsMounted] = React.useState(false);
+  const { settings } = useApp();
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -51,7 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <path d="M17 12h.01" />
             </svg>
             <div className="flex flex-col">
-              <h2 className="text-lg font-bold font-headline">Sips & Slices Corner</h2>
+              <h2 className="text-lg font-bold font-headline">{settings.cafeName}</h2>
             </div>
           </div>
         </SidebarHeader>
@@ -112,10 +114,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <CardContent className="p-3">
                     <h3 className="font-bold font-headline text-sm flex items-center gap-2"><MapPin className="w-4 h-4" /> Address</h3>
                     <p className="text-xs text-sidebar-accent-foreground mt-1">
-                        123 Gourmet Street, Foodie City, 98765
+                        {settings.address}
                     </p>
                     <h3 className="font-bold font-headline text-sm mt-3">Phone</h3>
-                    <p className="text-xs text-sidebar-accent-foreground">(555) 123-4567</p>
+                    <p className="text-xs text-sidebar-accent-foreground">{settings.phone}</p>
                 </CardContent>
             </Card>
         </SidebarHeader>
@@ -138,7 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
                     <path d="M17 12h.01" />
                 </svg>
-                <h2 className="text-md font-bold font-headline">Sips & Slices Corner</h2>
+                <h2 className="text-md font-bold font-headline">{settings.cafeName}</h2>
             </div>
             <SidebarTrigger />
         </header>

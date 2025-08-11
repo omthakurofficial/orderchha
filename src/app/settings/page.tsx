@@ -7,17 +7,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useApp } from "@/context/app-context";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 
 export default function SettingsPage() {
     const { toast } = useToast();
+    const { settings, updateSettings } = useApp();
 
     const handleSaveChanges = () => {
+        // Here you would handle form submission, e.g., by calling updateSettings
         toast({
             title: "Settings Saved",
             description: "Your changes have been saved successfully.",
         });
+    }
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { id, value } = e.target;
+        updateSettings({ [id]: value });
     }
 
     return (
@@ -36,12 +44,16 @@ export default function SettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="cafe-name">Cafe Name</Label>
-                                    <Input id="cafe-name" defaultValue="Sips & Slices Corner" />
+                                    <Label htmlFor="cafeName">Cafe Name</Label>
+                                    <Input id="cafeName" value={settings.cafeName} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="cafe-address">Address</Label>
-                                    <Textarea id="cafe-address" defaultValue="123 Gourmet Street, Foodie City, 98765" />
+                                    <Label htmlFor="address">Address</Label>
+                                    <Textarea id="address" value={settings.address} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone">Phone</Label>
+                                    <Input id="phone" value={settings.phone} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="cafe-logo">Cafe Logo</Label>
