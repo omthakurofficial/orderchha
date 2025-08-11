@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { useApp } from "@/context/app-context";
+import { Suspense } from "react";
 
-export default function MenuPage() {
+function MenuPageContent() {
   const { menu: menuCategories, settings } = useApp();
 
   return (
@@ -73,4 +74,12 @@ export default function MenuPage() {
       </aside>
     </div>
   );
+}
+
+export default function MenuPage() {
+  return (
+    <Suspense fallback={<div>Loading menu...</div>}>
+      <MenuPageContent />
+    </Suspense>
+  )
 }

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { PlusCircle } from "lucide-react";
 import { useApp } from "@/context/app-context";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "next/navigation";
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -16,8 +17,10 @@ interface MenuItemCardProps {
 export function MenuItemCard({ item }: MenuItemCardProps) {
   const { settings, addItemToOrder } = useApp();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const tableId = searchParams.get('table');
 
-  const isOrderable = item.inStock && settings.onlineOrderingEnabled;
+  const isOrderable = item.inStock && settings.onlineOrderingEnabled && !!tableId;
 
   const handleAddItem = () => {
     addItemToOrder(item);
@@ -25,6 +28,13 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
       title: "Added to Order",
       description: `${item.name} has been added to your order.`,
     })
+  }
+  
+  const getDisabledTooltip = () => {
+    if (!tableId) return "Please select a table to start an order.";
+    if (!settings.onlineOrderingEnabled) return "Online ordering is currently disabled";
+    if (!item.inStock) return "This item is out of stock";
+    return "Add to order";
   }
 
   return (
@@ -58,7 +68,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
         <Button 
           disabled={!isOrderable} 
           onClick={handleAddItem}
-          title={!settings.onlineOrderingEnabled ? "Online ordering is currently disabled" : !item.inStock ? "This item is out of stock" : "Add to order"}
+          title={getDisabledTooltip()}
         >
           <PlusCircle />
           Add
