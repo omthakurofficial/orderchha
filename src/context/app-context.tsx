@@ -11,6 +11,7 @@ interface AppContextType {
   addMenuItem: (item: MenuItem, categoryName: string) => void;
   // Table state
   tables: Table[];
+  addTable: (capacity: number) => void;
   updateTableStatus: (tableId: number, status: Table['status']) => void;
   // Settings state
   settings: {
@@ -48,6 +49,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const addTable = (capacity: number) => {
+    setTables(prevTables => {
+      const newTableId = prevTables.length > 0 ? Math.max(...prevTables.map(t => t.id)) + 1 : 1;
+      const newTable: Table = {
+        id: newTableId,
+        capacity,
+        status: 'available'
+      };
+      return [...prevTables, newTable];
+    });
+  };
+
   const updateTableStatus = (tableId: number, status: Table['status']) => {
     setTables(prevTables =>
       prevTables.map(table =>
@@ -64,7 +77,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider value={{ 
         menu, 
         addMenuItem, 
-        tables, 
+        tables,
+        addTable, 
         updateTableStatus,
         settings,
         updateSettings 
