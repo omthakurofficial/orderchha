@@ -9,6 +9,10 @@ export interface MenuItem {
   inStock: boolean;
 }
 
+export interface OrderItem extends MenuItem {
+    quantity: number;
+}
+
 export interface MenuCategory {
   id: string;
   name: string;

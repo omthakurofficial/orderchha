@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { MenuCategory, MenuItem, Table, Settings } from '@/types';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
 interface AppContextType {
@@ -14,6 +14,11 @@ interface AppContextType {
   updateTableStatus: (tableId: number, status: Table['status']) => void;
   settings: Settings;
   updateSettings: (newSettings: Partial<Settings>) => void;
+  order: OrderItem[];
+  addItemToOrder: (item: MenuItem) => void;
+  removeItemFromOrder: (itemId: string) => void;
+  updateOrderItemQuantity: (itemId: string, quantity: number) => void;
+  clearOrder: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -63,33 +68,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [menu, setMenu] = useState<MenuCategory[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [settings, setSettings] = useState<Settings>(initialSettings);
+  const [order, setOrder] = useState<OrderItem[]>([]);
 
   // Load initial state from localStorage on mount
   useEffect(() => {
     setMenu(loadState('dineswift-menu', initialMenu));
     setTables(loadState('dineswift-tables', initialTables));
     setSettings(loadState('dineswift-settings', initialSettings));
+    setOrder(loadState('dineswift-order', []));
     setIsLoaded(true);
   }, []);
 
   // Save state to localStorage whenever it changes
-  useEffect(() => {
-    if (isLoaded) {
-        saveState('dineswift-menu', menu);
-    }
-  }, [menu, isLoaded]);
-
-  useEffect(() => {
-    if (isLoaded) {
-        saveState('dineswift-tables', tables);
-    }
-  }, [tables, isLoaded]);
-
-  useEffect(() => {
-    if (isLoaded) {
-        saveState('dineswift-settings', settings);
-    }
-  }, [settings, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('dineswift-menu', menu); }, [menu, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('dineswift-tables', tables); }, [tables, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('dineswift-settings', settings); }, [settings, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('dineswift-order', order); }, [order, isLoaded]);
 
 
   const addMenuItem = (item: MenuItem, categoryName: string) => {
@@ -129,6 +123,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettings(prevSettings => ({ ...prevSettings, ...newSettings }));
   }
 
+  const addItemToOrder = (item: MenuItem) => {
+    setOrder(prevOrder => {
+      const existingItem = prevOrder.find(orderItem => orderItem.id === item.id);
+      if (existingItem) {
+        return prevOrder.map(orderItem =>
+          orderItem.id === item.id
+            ? { ...orderItem, quantity: orderItem.quantity + 1 }
+            : orderItem
+        );
+      }
+      return [...prevOrder, { ...item, quantity: 1 }];
+    });
+  };
+
+  const removeItemFromOrder = (itemId: string) => {
+    setOrder(prevOrder => prevOrder.filter(orderItem => orderItem.id !== itemId));
+  };
+
+  const updateOrderItemQuantity = (itemId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeItemFromOrder(itemId);
+      return;
+    }
+    setOrder(prevOrder =>
+      prevOrder.map(orderItem =>
+        orderItem.id === itemId ? { ...orderItem, quantity } : orderItem
+      )
+    );
+  };
+
+  const clearOrder = () => {
+    setOrder([]);
+  };
+
   const value = { 
     isLoaded,
     menu, 
@@ -137,7 +165,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addTable, 
     updateTableStatus,
     settings,
-    updateSettings 
+    updateSettings,
+    order,
+    addItemToOrder,
+    removeItemFromOrder,
+    updateOrderItemQuantity,
+    clearOrder,
   };
 
   return (

@@ -7,15 +7,25 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { PlusCircle } from "lucide-react";
 import { useApp } from "@/context/app-context";
+import { useToast } from "@/hooks/use-toast";
 
 interface MenuItemCardProps {
   item: MenuItem;
 }
 
 export function MenuItemCard({ item }: MenuItemCardProps) {
-  const { settings } = useApp();
+  const { settings, addItemToOrder } = useApp();
+  const { toast } = useToast();
 
   const isOrderable = item.inStock && settings.onlineOrderingEnabled;
+
+  const handleAddItem = () => {
+    addItemToOrder(item);
+    toast({
+      title: "Added to Order",
+      description: `${item.name} has been added to your order.`,
+    })
+  }
 
   return (
     <Card className="flex flex-col overflow-hidden h-full">
@@ -45,7 +55,11 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
         <p className="text-lg font-bold text-primary">NPR {item.price.toFixed(2)}</p>
-        <Button disabled={!isOrderable} title={!settings.onlineOrderingEnabled ? "Online ordering is currently disabled" : ""}>
+        <Button 
+          disabled={!isOrderable} 
+          onClick={handleAddItem}
+          title={!settings.onlineOrderingEnabled ? "Online ordering is currently disabled" : !item.inStock ? "This item is out of stock" : "Add to order"}
+        >
           <PlusCircle />
           Add
         </Button>
