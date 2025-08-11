@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <path d="M17 12h.01" />
             </svg>
             <div className="flex flex-col">
-              <h2 className="text-lg font-bold font-headline">The hangout spot</h2>
+              <h2 className="text-lg font-bold font-headline">Sips & Slices Corner</h2>
             </div>
           </div>
         </SidebarHeader>
@@ -96,10 +96,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <CardContent className="p-3">
                     <h3 className="font-bold font-headline text-sm flex items-center gap-2"><MapPin className="w-4 h-4" /> Address</h3>
                     <p className="text-xs text-sidebar-accent-foreground mt-1">
-                        Sagarmatha 03, Mount Everest 33400
+                        123 Gourmet Street, Foodie City, 98765
                     </p>
                     <h3 className="font-bold font-headline text-sm mt-3">Phone</h3>
-                    <p className="text-xs text-sidebar-accent-foreground">980-1234567</p>
+                    <p className="text-xs text-sidebar-accent-foreground">(555) 123-4567</p>
                 </CardContent>
             </Card>
         </SidebarHeader>
@@ -122,7 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
                     <path d="M17 12h.01" />
                 </svg>
-                <h2 className="text-md font-bold font-headline">The hangout spot</h2>
+                <h2 className="text-md font-bold font-headline">Sips & Slices Corner</h2>
             </div>
             <SidebarTrigger />
         </header>
