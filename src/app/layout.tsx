@@ -15,6 +15,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isReceiptPage = (children as any)?.props?.childProp?.segment === 'receipt';
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -24,8 +26,12 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AppProvider>
-          <AppShell>{children}</AppShell>
-          <Toaster />
+            {isReceiptPage ? (
+                <main>{children}</main>
+            ) : (
+                <AppShell>{children}</AppShell>
+            )}
+            <Toaster />
         </AppProvider>
       </body>
     </html>

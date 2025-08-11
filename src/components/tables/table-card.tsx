@@ -5,7 +5,7 @@ import type { KitchenOrder, Table } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Users, QrCode, MoreVertical, XCircle, Receipt, Wallet, Radio } from "lucide-react";
+import { Users, QrCode, MoreVertical, XCircle, Receipt, Wallet, Radio, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -51,7 +51,7 @@ export function TableCard({ table }: TableCardProps) {
   const [origin, setOrigin] = useState("");
   const { updateTableStatus, kitchenOrders, processPayment } = useApp();
   const { toast } = useToast();
-
+  
   const ordersForTable = useMemo(() => {
     return kitchenOrders.filter(o => o.tableId === table.id && o.status === 'completed');
   }, [kitchenOrders, table.id]);
@@ -81,25 +81,24 @@ export function TableCard({ table }: TableCardProps) {
   const isInteractive = table.status !== 'disabled';
 
   const renderMainAction = () => {
-    if (table.status === 'billing') {
+      const isBilling = table.status === 'billing';
+      const TriggerComponent = isBilling ? DialogTrigger : 'div';
+      
       return (
-        <DialogTrigger asChild disabled={!isInteractive}>
-          <Button className="w-full mt-4" disabled={!isInteractive}>
-            <div className="flex items-center gap-2 w-full justify-center">
-              <Receipt /> View Bill
-            </div>
-          </Button>
-        </DialogTrigger>
+        <TriggerComponent asChild={isBilling} className="w-full">
+            <Button asChild={!isBilling} className="w-full mt-4" disabled={!isInteractive}>
+                {isBilling ? (
+                    <div className="flex items-center gap-2 w-full justify-center">
+                        <Receipt /> View Bill
+                    </div>
+                ) : (
+                    <Link href={`/menu?table=${table.id}`}>
+                        Go to Menu
+                    </Link>
+                )}
+            </Button>
+        </TriggerComponent>
       );
-    }
-    
-    return (
-      <Button asChild className="w-full mt-4" disabled={!isInteractive}>
-        <Link href={`/menu?table=${table.id}`}>
-          Go to Menu
-        </Link>
-      </Button>
-    );
   }
 
   return (
@@ -119,7 +118,7 @@ export function TableCard({ table }: TableCardProps) {
             </div>
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isInteractive}>
                         <MoreVertical className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
@@ -144,10 +143,10 @@ export function TableCard({ table }: TableCardProps) {
                     {table.status === 'billing' && <Receipt className="w-3 h-3 mr-1" />}
                     {table.status}
                 </Badge>
-                <DialogTrigger asChild disabled={!isInteractive}>
-                <Button variant="ghost" size="icon" aria-label="Show QR Code" disabled={!isInteractive}>
-                    <QrCode />
-                </Button>
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Show QR Code" disabled={!isInteractive}>
+                        <QrCode />
+                    </Button>
                 </DialogTrigger>
             </div>
             {renderMainAction()}
@@ -219,10 +218,30 @@ export function TableCard({ table }: TableCardProps) {
                         <span>NPR {billTotal.toFixed(2)}</span>
                     </div>
                 </div>
+                
+                <Separator className="my-4" />
+
+                <div className="flex flex-col gap-2">
+                     <DialogClose asChild>
+                        <Button variant="outline" asChild>
+                           <Link href={`/receipt/${table.id}?method=cash`} target="_blank">
+                                <ExternalLink /> Generate Cash Receipt
+                           </Link>
+                        </Button>
+                    </DialogClose>
+                     <DialogClose asChild>
+                        <Button variant="outline" asChild>
+                           <Link href={`/receipt/${table.id}?method=online`} target="_blank">
+                                <ExternalLink /> Generate Online Receipt
+                           </Link>
+                        </Button>
+                    </DialogClose>
+                </div>
+
 
                 <DialogFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-4">
                     <DialogClose asChild>
-                        <Button variant="outline" onClick={() => handleProcessPayment('cash')} disabled={ordersForTable.length === 0}>
+                        <Button variant="secondary" onClick={() => handleProcessPayment('cash')} disabled={ordersForTable.length === 0}>
                             <Wallet /> Paid by Cash
                         </Button>
                     </DialogClose>
