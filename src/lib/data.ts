@@ -1,6 +1,5 @@
 import type { MenuCategory, Table } from '@/types';
-import { Flame, GlassWater, IceCream2, Salad, Utensils } from 'lucide-react';
-import UtensilsCrossed from 'lucide-react/dist/esm/icons/utensils-crossed';
+import { Flame, GlassWater, IceCream2, Salad, Utensils, UtensilsCrossed } from 'lucide-react';
 
 export const MENU: MenuCategory[] = [
   {
@@ -27,7 +26,7 @@ export const MENU: MenuCategory[] = [
   {
     id: 'snacks',
     name: 'Snacks',
-    icon: Utensils,
+    icon: UtensilsCrossed,
     items: [
         { id: 'sn1', name: 'French Fries', description: 'Crispy golden fries', price: 4.50, image: 'https://placehold.co/600x400.png', imageHint: 'french fries', inStock: true },
         { id: 'sn2', name: 'Mozzarella Sticks', description: 'Served with marinara sauce', price: 6.00, image: 'https://placehold.co/600x400.png', imageHint: 'mozzarella sticks', inStock: true },
