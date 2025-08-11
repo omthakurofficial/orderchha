@@ -4,8 +4,8 @@ import { AppShell } from '@/components/layout/app-shell';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'DineSwift',
-  description: 'Restaurant management made easy.',
+  title: 'Sips & Slices Corner',
+  description: 'Your favourite cafe corner.',
 };
 
 export default function RootLayout({
