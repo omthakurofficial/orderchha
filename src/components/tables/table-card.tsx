@@ -82,23 +82,24 @@ export function TableCard({ table }: TableCardProps) {
 
   const renderMainAction = () => {
       const isBilling = table.status === 'billing';
-      const TriggerComponent = isBilling ? DialogTrigger : 'div';
-      
+
+      if (isBilling) {
+        return (
+            <DialogTrigger asChild>
+                <Button className="w-full mt-4" disabled={!isInteractive}>
+                    <Receipt /> View Bill
+                </Button>
+            </DialogTrigger>
+        )
+      }
+
       return (
-        <TriggerComponent asChild={isBilling} className="w-full">
-            <Button asChild={!isBilling} className="w-full mt-4" disabled={!isInteractive}>
-                {isBilling ? (
-                    <div className="flex items-center gap-2 w-full justify-center">
-                        <Receipt /> View Bill
-                    </div>
-                ) : (
-                    <Link href={`/menu?table=${table.id}`}>
-                        Go to Menu
-                    </Link>
-                )}
-            </Button>
-        </TriggerComponent>
-      );
+         <Button asChild className="w-full mt-4" disabled={!isInteractive}>
+            <Link href={`/menu?table=${table.id}`}>
+                Go to Menu
+            </Link>
+        </Button>
+      )
   }
 
   return (
