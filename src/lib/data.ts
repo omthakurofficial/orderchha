@@ -1,5 +1,5 @@
 
-import type { MenuCategory, Table } from '@/types';
+import type { MenuCategory, Table, User } from '@/types';
 import { Flame, GlassWater, IceCream2, Salad, Pizza } from 'lucide-react';
 
 export const MENU: MenuCategory[] = [
@@ -69,4 +69,9 @@ export const TABLES: Table[] = [
     { id: 10, status: 'available', capacity: 4 },
     { id: 11, status: 'occupied', capacity: 2 },
     { id: 12, status: 'available', capacity: 6 },
+];
+
+export const USERS: User[] = [
+    { id: 'user-admin-01', name: 'Alex (Admin)', role: 'admin' },
+    { id: 'user-staff-01', name: 'Casey (Staff)', role: 'staff' },
 ];

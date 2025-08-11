@@ -2,8 +2,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction } from '@/types';
-import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User } from '@/types';
+import { MENU as initialMenu, TABLES as initialTables, USERS as initialUsers } from '@/lib/data';
 
 interface AppContextType {
   isLoaded: boolean;
@@ -27,6 +27,9 @@ interface AppContextType {
   rejectPendingOrder: (orderId: string) => void;
   transactions: Transaction[];
   processPayment: (tableId: number, method: 'cash' | 'online') => void;
+  users: User[];
+  currentUser: User | null;
+  setCurrentUser: (userId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -80,6 +83,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [currentUser, _setCurrentUser] = useState<User | null>(null);
 
 
   // Load initial state from localStorage on mount
@@ -91,6 +96,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setKitchenOrders(loadState('dineswift-kitchen-orders', []));
     setPendingOrders(loadState('dineswift-pending-orders', []));
     setTransactions(loadState('dineswift-transactions', []));
+    
+    // Set current user
+    const currentUserId = loadState('dineswift-current-user-id', initialUsers[0]?.id);
+    const user = initialUsers.find(u => u.id === currentUserId) || initialUsers[0] || null;
+    _setCurrentUser(user);
+    
     setIsLoaded(true);
   }, []);
 
@@ -102,6 +113,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (isLoaded) saveState('dineswift-kitchen-orders', kitchenOrders); }, [kitchenOrders, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-pending-orders', pendingOrders); }, [pendingOrders, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-transactions', transactions); }, [transactions, isLoaded]);
+  useEffect(() => { if (isLoaded && currentUser) saveState('dineswift-current-user-id', currentUser.id); }, [currentUser, isLoaded]);
+
+
+  const setCurrentUser = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user) {
+        _setCurrentUser(user);
+    }
+  };
 
 
   const addMenuItem = (item: MenuItem, categoryName: string) => {
@@ -263,6 +283,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     rejectPendingOrder,
     transactions,
     processPayment,
+    users,
+    currentUser,
+    setCurrentUser
   };
 
   return (

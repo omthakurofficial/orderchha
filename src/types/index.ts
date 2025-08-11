@@ -54,3 +54,11 @@ export interface Transaction {
     method: 'cash' | 'online';
     timestamp: string;
 }
+
+export type UserRole = 'admin' | 'staff';
+
+export interface User {
+  id: string;
+  name: string;
+  role: UserRole;
+}

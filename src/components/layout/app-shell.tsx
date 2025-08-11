@@ -13,23 +13,45 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard } from "lucide-react";
+import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, User as UserIcon, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
 import { useApp } from "@/context/app-context";
 import Image from "next/image";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
+
+const adminNavItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/", icon: LayoutGrid, label: "Tables" },
+    { href: "/menu", icon: UtensilsCrossed, label: "Menu" },
+    { href: "/upload-menu", icon: Upload, label: "Manage Menu" },
+    { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders" },
+    { href: "/kitchen", icon: ChefHat, label: "Kitchen" },
+    { href: "/settings", icon: Settings, label: "Settings" },
+];
+
+const staffNavItems = [
+    { href: "/", icon: LayoutGrid, label: "Tables" },
+    { href: "/menu", icon: UtensilsCrossed, label: "Menu" },
+    { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders" },
+    { href: "/kitchen", icon: ChefHat, label: "Kitchen" },
+];
+
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMounted, setIsMounted] = React.useState(false);
-  const { settings } = useApp();
+  const { settings, currentUser, users, setCurrentUser } = useApp();
 
   React.useEffect(() => {
     setIsMounted(true);
   }, []);
+  
+  const navItems = currentUser?.role === 'admin' ? adminNavItems : staffNavItems;
 
-  if (!isMounted) {
+  if (!isMounted || !currentUser) {
     return null;
   }
 
@@ -54,104 +76,57 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </svg>
     )
   );
+  
+  const UserSwitcher = () => (
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-full justify-start text-left font-normal flex items-center gap-2">
+                <UserIcon className="w-4 h-4" />
+                <div className="flex-1 truncate">
+                    <p className="font-semibold text-sm">{currentUser.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{currentUser.role}</p>
+                </div>
+                 <ChevronsUpDown className="w-4 h-4 text-muted-foreground ml-auto" />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-[var(--sidebar-width)]" align="start">
+            {users.map(user => (
+                <DropdownMenuItem key={user.id} onClick={() => setCurrentUser(user.id)}>
+                    {user.name}
+                </DropdownMenuItem>
+            ))}
+        </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="p-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-4">
             <Logo />
             <div className="flex flex-col">
               <h2 className="text-lg font-bold font-headline">{settings.cafeName}</h2>
             </div>
           </div>
+           <UserSwitcher />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/dashboard"}
-                tooltip="Dashboard"
-              >
-                <Link href="/dashboard">
-                  <LayoutDashboard />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/"}
-                tooltip="Tables"
-              >
-                <Link href="/">
-                  <LayoutGrid />
-                  <span>Tables</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/menu"}
-                tooltip="Menu"
-              >
-                <Link href="/menu">
-                  <UtensilsCrossed />
-                  <span>Menu</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    asChild
-                    isActive={pathname === "/upload-menu"}
-                    tooltip="Manage Menu"
-                >
-                    <Link href="/upload-menu">
-                    <Upload />
-                    <span>Manage Menu</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/confirm-order"}
-                tooltip="Confirm Orders"
-              >
-                <Link href="/confirm-order">
-                  <ClipboardCheck />
-                  <span>Confirm Orders</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/kitchen"}
-                tooltip="Kitchen"
-              >
-                <Link href="/kitchen">
-                  <ChefHat />
-                  <span>Kitchen</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                asChild 
-                tooltip="Settings"
-                isActive={pathname === "/settings"}
-              >
-                <Link href="/settings">
-                  <Settings />
-                  <span>Settings</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {navItems.map(item => (
+                 <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname === item.href}
+                        tooltip={item.label}
+                    >
+                        <Link href={item.href}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
           </SidebarMenu>
         </SidebarContent>
         <SidebarHeader className="p-4 mt-auto">
