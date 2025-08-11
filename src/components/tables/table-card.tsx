@@ -79,7 +79,28 @@ export function TableCard({ table }: TableCardProps) {
   }
 
   const isInteractive = table.status !== 'disabled';
-  const MainActionTrigger = table.status === 'billing' ? DialogTrigger : 'div';
+
+  const renderMainAction = () => {
+    if (table.status === 'billing') {
+      return (
+        <DialogTrigger asChild disabled={!isInteractive}>
+          <Button className="w-full mt-4" disabled={!isInteractive}>
+            <div className="flex items-center gap-2 w-full justify-center">
+              <Receipt /> View Bill
+            </div>
+          </Button>
+        </DialogTrigger>
+      );
+    }
+    
+    return (
+      <Button asChild className="w-full mt-4" disabled={!isInteractive}>
+        <Link href={`/menu?table=${table.id}`}>
+          Go to Menu
+        </Link>
+      </Button>
+    );
+  }
 
   return (
     <Dialog>
@@ -129,20 +150,7 @@ export function TableCard({ table }: TableCardProps) {
                 </Button>
                 </DialogTrigger>
             </div>
-            
-            <MainActionTrigger asChild disabled={!isInteractive}>
-                 <Button asChild={table.status !== 'billing'} className="w-full mt-4" disabled={!isInteractive}>
-                    {table.status === 'billing' ? (
-                        <div className="flex items-center gap-2 w-full justify-center">
-                            <Receipt /> View Bill
-                        </div>
-                    ) : (
-                        <Link href={`/menu?table=${table.id}`}>
-                            Go to Menu
-                        </Link>
-                    )}
-                </Button>
-            </MainActionTrigger>
+            {renderMainAction()}
         </CardContent>
       </Card>
       
@@ -178,7 +186,7 @@ export function TableCard({ table }: TableCardProps) {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="max-h-[50vh] overflow-y-auto p-1 -mx-1">
-                    {ordersForTable.map(order => (
+                    {ordersForTable.length > 0 ? ordersForTable.map(order => (
                         <div key={order.id} className="mb-4">
                             <p className="text-sm font-semibold text-muted-foreground">Order placed at {new Date(order.timestamp).toLocaleTimeString()}</p>
                              <ul className="space-y-1 mt-1 text-sm">
@@ -193,7 +201,7 @@ export function TableCard({ table }: TableCardProps) {
                                 ))}
                             </ul>
                         </div>
-                    ))}
+                    )) : <p className="text-sm text-muted-foreground">No completed orders found for this table.</p>}
                 </div>
                  <Separator />
                 <div className="space-y-2 text-sm">
@@ -214,12 +222,12 @@ export function TableCard({ table }: TableCardProps) {
 
                 <DialogFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-4">
                     <DialogClose asChild>
-                        <Button variant="outline" onClick={() => handleProcessPayment('cash')}>
+                        <Button variant="outline" onClick={() => handleProcessPayment('cash')} disabled={ordersForTable.length === 0}>
                             <Wallet /> Paid by Cash
                         </Button>
                     </DialogClose>
                      <DialogClose asChild>
-                        <Button onClick={() => handleProcessPayment('online')}>
+                        <Button onClick={() => handleProcessPayment('online')} disabled={ordersForTable.length === 0}>
                             <Radio /> Paid Online
                         </Button>
                     </DialogClose>
