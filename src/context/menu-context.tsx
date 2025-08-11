@@ -5,6 +5,9 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import type { MenuCategory, MenuItem } from '@/types';
 import { MENU as initialMenu } from '@/lib/data';
 
+// This file is being kept for now to avoid breaking changes, 
+// but will be deprecated in favor of app-context.tsx
+
 interface MenuContextType {
   menu: MenuCategory[];
   addMenuItem: (item: MenuItem, categoryName: string) => void;

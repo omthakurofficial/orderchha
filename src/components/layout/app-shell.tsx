@@ -94,8 +94,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Settings" disabled>
-                <Link href="#">
+              <SidebarMenuButton 
+                asChild 
+                tooltip="Settings"
+                isActive={pathname === "/settings"}
+              >
+                <Link href="/settings">
                   <Settings />
                   <span>Settings</span>
                 </Link>
