@@ -1,0 +1,22 @@
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  imageHint: string;
+  inStock: boolean;
+}
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: MenuItem[];
+}
+
+export interface Table {
+  id: number;
+  status: 'available' | 'occupied' | 'reserved';
+  capacity: number;
+}
