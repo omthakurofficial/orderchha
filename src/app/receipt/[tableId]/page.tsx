@@ -9,13 +9,19 @@ import { Separator } from '@/components/ui/separator';
 import { useApp } from '@/context/app-context';
 import { Printer } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 export default function ReceiptPage() {
   const { tableId: tableIdParam } = useParams();
   const tableId = Number(tableIdParam);
   const searchParams = useSearchParams();
   const { settings, kitchenOrders, isLoaded } = useApp();
+  const [invoiceId, setInvoiceId] = useState('');
+
+  useEffect(() => {
+    // Generate a random 6-digit invoice ID
+    setInvoiceId(`INV-${Math.floor(100000 + Math.random() * 900000)}`);
+  }, []);
 
   const paymentMethod = searchParams.get('method') || 'N/A';
   const transactionDate = new Date().toLocaleString();
@@ -51,7 +57,7 @@ export default function ReceiptPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="customerName">Customer Name</Label>
                     <Input id="customerName" placeholder="Enter customer name" className="print:border-none print:pl-0" />
@@ -60,12 +66,17 @@ export default function ReceiptPage() {
                     <Label htmlFor="customerAddress">Customer Address</Label>
                     <Input id="customerAddress" placeholder="Enter customer address" className="print:border-none print:pl-0" />
                 </div>
+                <div className="space-y-2">
+                    <Label htmlFor="customerPhone">Customer Phone</Label>
+                    <Input id="customerPhone" placeholder="Enter phone number" className="print:border-none print:pl-0" />
+                </div>
             </div>
             
             <Separator />
             
             <div className="grid grid-cols-2 text-sm">
                 <div>
+                    <p><span className="font-semibold">Invoice #:</span> {invoiceId}</p>
                     <p><span className="font-semibold">Invoice For:</span> Table {tableId}</p>
                     <p><span className="font-semibold">Date:</span> {transactionDate}</p>
                 </div>
