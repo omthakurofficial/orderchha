@@ -13,7 +13,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, User as UserIcon, LogOut } from "lucide-react";
+import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, User as UserIcon, LogOut, Users } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
@@ -28,6 +28,7 @@ const adminNavItems = [
     { href: "/upload-menu", icon: Upload, label: "Manage Menu" },
     { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders" },
     { href: "/kitchen", icon: ChefHat, label: "Kitchen" },
+    { href: "/users", icon: Users, label: "Users" },
     { href: "/settings", icon: Settings, label: "Settings" },
 ];
 

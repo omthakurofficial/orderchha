@@ -3,8 +3,8 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
@@ -33,6 +33,7 @@ interface AppContextType {
   processPayment: (tableId: number, method: 'cash' | 'online') => void;
   currentUser: User | null;
   signIn: (email:string, password:string) => Promise<any>;
+  signUp: (email:string, password:string) => Promise<any>;
   signOut: () => Promise<any>;
 }
 
@@ -108,6 +109,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     if (userData.role) {
                         userRole = userData.role;
                     }
+                } else {
+                    // If user document doesn't exist, create it with default 'staff' role
+                    const newUser: User = {
+                        uid: user.uid,
+                        email: user.email,
+                        name: user.displayName || user.email || 'Anonymous',
+                        role: 'staff',
+                    };
+                    await setDoc(userDocRef, newUser);
                 }
             }
            
@@ -152,6 +162,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const signIn = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
   }
+  
+  const signUp = (email: string, password: string) => {
+    return createUserWithEmailAndPassword(auth, email, password);
+  }
 
   const signOut = () => {
     return firebaseSignOut(auth);
@@ -163,8 +177,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const categoryIndex = newMenu.findIndex(cat => cat.name === categoryName);
 
       if (categoryIndex > -1) {
-        const updatedItems = [...newMenu[categoryIndex].items, item];
-        newMenu[categoryIndex] = { ...newMenu[categoryIndex], items: updatedItems };
+        newMenu[categoryIndex] = { ...newMenu[categoryIndex], items: [...newMenu[categoryIndex].items, item] };
       }
       return newMenu;
     });
@@ -320,6 +333,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     currentUser,
     signIn,
     signOut,
+    signUp,
   };
 
   return (
