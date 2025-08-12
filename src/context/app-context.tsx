@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
@@ -31,14 +31,14 @@ interface AppContextType {
   transactions: Transaction[];
   processPayment: (tableId: number, method: 'cash' | 'online') => void;
   currentUser: User | null;
-  signInWithGoogle: () => Promise<any>;
+  signIn: (email:string, password:string) => Promise<any>;
   signOut: () => Promise<any>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const initialSettings: Settings = {
-  cafeName: 'Sips & Slices Corner',
+  cafeName: 'OrderChha',
   address: '123 Gourmet Street, Foodie City, 98765',
   phone: '(555) 123-4567',
   logo: '',
@@ -133,9 +133,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (isLoaded) saveState('orderchha-pending-orders', pendingOrders); }, [pendingOrders, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('orderchha-transactions', transactions); }, [transactions, isLoaded]);
 
-  const signInWithGoogle = () => {
-    const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
+  const signIn = (email: string, password: string) => {
+    return signInWithEmailAndPassword(auth, email, password);
   }
 
   const signOut = () => {
@@ -303,7 +302,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     transactions,
     processPayment,
     currentUser,
-    signInWithGoogle,
+    signIn,
     signOut,
   };
 
