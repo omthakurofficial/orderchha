@@ -94,7 +94,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
         if (user) {
             // Assign role based on email
-            const role: UserRole = user.email === 'admin@dineswift.com' ? 'admin' : 'staff';
+            const role: UserRole = user.email === 'admin@orderchha.com' ? 'admin' : 'staff';
             setCurrentUser({
                 uid: user.uid,
                 email: user.email,
@@ -113,25 +113,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Load initial state from localStorage on mount
   useEffect(() => {
-    setMenu(loadState('dineswift-menu', initialMenu));
-    setTables(loadState('dineswift-tables', initialTables));
-    setSettings(loadState('dineswift-settings', initialSettings));
-    setOrder(loadState('dineswift-order', []));
-    setKitchenOrders(loadState('dineswift-kitchen-orders', []));
-    setPendingOrders(loadState('dineswift-pending-orders', []));
-    setTransactions(loadState('dineswift-transactions', []));
+    setMenu(loadState('orderchha-menu', initialMenu));
+    setTables(loadState('orderchha-tables', initialTables));
+    setSettings(loadState('orderchha-settings', initialSettings));
+    setOrder(loadState('orderchha-order', []));
+    setKitchenOrders(loadState('orderchha-kitchen-orders', []));
+    setPendingOrders(loadState('orderchha-pending-orders', []));
+    setTransactions(loadState('orderchha-transactions', []));
     
     setIsLoaded(true);
   }, []);
 
   // Save state to localStorage whenever it changes
-  useEffect(() => { if (isLoaded) saveState('dineswift-menu', menu); }, [menu, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('dineswift-tables', tables); }, [tables, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('dineswift-settings', settings); }, [settings, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('dineswift-order', order); }, [order, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('dineswift-kitchen-orders', kitchenOrders); }, [kitchenOrders, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('dineswift-pending-orders', pendingOrders); }, [pendingOrders, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('dineswift-transactions', transactions); }, [transactions, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('orderchha-menu', menu); }, [menu, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('orderchha-tables', tables); }, [tables, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('orderchha-settings', settings); }, [settings, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('orderchha-order', order); }, [order, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('orderchha-kitchen-orders', kitchenOrders); }, [kitchenOrders, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('orderchha-pending-orders', pendingOrders); }, [pendingOrders, isLoaded]);
+  useEffect(() => { if (isLoaded) saveState('orderchha-transactions', transactions); }, [transactions, isLoaded]);
 
   const signInWithGoogle = () => {
     const provider = new GoogleAuthProvider();

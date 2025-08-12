@@ -60,7 +60,7 @@ export default function LoginPage() {
           <div className="flex justify-center mb-4">
             <Utensils className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-2xl">DineSwift Login</CardTitle>
+          <CardTitle className="font-headline text-2xl">OrderChha Login</CardTitle>
           <CardDescription>Sign in with your Google account to continue.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,7 +75,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col text-center text-xs text-muted-foreground">
             <p>Use your Google account to access the app.</p>
-            <p>Admin access for: admin@dineswift.com</p>
+            <p>Admin access for: admin@orderchha.com</p>
         </CardFooter>
       </Card>
     </div>
