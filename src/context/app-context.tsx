@@ -3,9 +3,9 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
-import { MENU as initialMenu, TABLES as initialTables, USERS as mockUsers } from '@/lib/data';
+import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
 interface AppContextType {
   isLoaded: boolean;
@@ -31,7 +31,7 @@ interface AppContextType {
   transactions: Transaction[];
   processPayment: (tableId: number, method: 'cash' | 'online') => void;
   currentUser: User | null;
-  signIn: (email: string, pass: string) => Promise<any>;
+  signInWithGoogle: () => Promise<any>;
   signOut: () => Promise<any>;
 }
 
@@ -93,19 +93,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
         if (user) {
-            // Find the corresponding user in our mock user data
-            const appUser = mockUsers.find(u => u.email === user.email);
-            if (appUser) {
-                setCurrentUser(appUser);
-            } else {
-                 // Fallback for unknown user, could be just a basic user
-                setCurrentUser({
-                    uid: user.uid,
-                    email: user.email,
-                    name: user.email || 'Unknown User',
-                    role: 'staff' // default to least privilege
-                });
-            }
+            // Assign role based on email
+            const role: UserRole = user.email === 'admin@dineswift.com' ? 'admin' : 'staff';
+            setCurrentUser({
+                uid: user.uid,
+                email: user.email,
+                name: user.displayName || user.email || 'Anonymous User',
+                role: role,
+            });
         } else {
             setCurrentUser(null);
         }
@@ -138,9 +133,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (isLoaded) saveState('dineswift-pending-orders', pendingOrders); }, [pendingOrders, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-transactions', transactions); }, [transactions, isLoaded]);
 
-
-  const signIn = (email: string, pass: string) => {
-    return signInWithEmailAndPassword(auth, email, pass);
+  const signInWithGoogle = () => {
+    const provider = new GoogleAuthProvider();
+    return signInWithPopup(auth, provider);
   }
 
   const signOut = () => {
@@ -308,7 +303,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     transactions,
     processPayment,
     currentUser,
-    signIn,
+    signInWithGoogle,
     signOut,
   };
 
