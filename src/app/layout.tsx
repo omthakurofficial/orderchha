@@ -1,9 +1,9 @@
 
 import type { Metadata } from 'next';
 import './globals.css';
-import { AppShell } from '@/components/layout/app-shell';
 import { Toaster } from '@/components/ui/toaster';
 import { AppProvider } from '@/context/app-context';
+import { AuthLayout } from '@/components/layout/auth-layout';
 
 export const metadata: Metadata = {
   title: 'Sips & Slices Corner',
@@ -15,8 +15,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const isReceiptPage = (children as any)?.props?.childProp?.segment === 'receipt';
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -26,11 +24,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AppProvider>
-            {isReceiptPage ? (
-                <main>{children}</main>
-            ) : (
-                <AppShell>{children}</AppShell>
-            )}
+            <AuthLayout>
+                {children}
+            </AuthLayout>
             <Toaster />
         </AppProvider>
       </body>

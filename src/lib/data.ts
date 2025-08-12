@@ -72,6 +72,6 @@ export const TABLES: Table[] = [
 ];
 
 export const USERS: User[] = [
-    { id: 'user-admin-01', name: 'Alex (Admin)', role: 'admin' },
-    { id: 'user-staff-01', name: 'Casey (Staff)', role: 'staff' },
+  { uid: 'admin-001', name: 'Admin User', email: 'admin@dineswift.com', role: 'admin' },
+  { uid: 'staff-001', name: 'Staff User', email: 'staff@dineswift.com', role: 'staff' },
 ];

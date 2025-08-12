@@ -13,13 +13,12 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, User as UserIcon, ChevronsUpDown } from "lucide-react";
+import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, User as UserIcon, LogOut } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
 import { useApp } from "@/context/app-context";
 import Image from "next/image";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 
 const adminNavItems = [
@@ -43,7 +42,7 @@ const staffNavItems = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMounted, setIsMounted] = React.useState(false);
-  const { settings, currentUser, users, setCurrentUser } = useApp();
+  const { settings, currentUser, signOut } = useApp();
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -77,26 +76,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     )
   );
   
-  const UserSwitcher = () => (
-    <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="w-full justify-start text-left font-normal flex items-center gap-2">
-                <UserIcon className="w-4 h-4" />
-                <div className="flex-1 truncate">
-                    <p className="font-semibold text-sm">{currentUser.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{currentUser.role}</p>
-                </div>
-                 <ChevronsUpDown className="w-4 h-4 text-muted-foreground ml-auto" />
-            </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[var(--sidebar-width)]" align="start">
-            {users.map(user => (
-                <DropdownMenuItem key={user.id} onClick={() => setCurrentUser(user.id)}>
-                    {user.name}
-                </DropdownMenuItem>
-            ))}
-        </DropdownMenuContent>
-    </DropdownMenu>
+  const UserInfo = () => (
+    <div className="flex flex-col gap-2">
+        <div className="w-full justify-start text-left font-normal flex items-center gap-2 border p-2 rounded-md">
+            <UserIcon className="w-4 h-4" />
+            <div className="flex-1 truncate">
+                <p className="font-semibold text-sm">{currentUser.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">{currentUser.role} role</p>
+            </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={signOut}>
+            <LogOut />
+            Sign Out
+        </Button>
+    </div>
   );
 
   return (
@@ -109,7 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <h2 className="text-lg font-bold font-headline">{settings.cafeName}</h2>
             </div>
           </div>
-           <UserSwitcher />
+           <UserInfo />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>

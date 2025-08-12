@@ -58,7 +58,8 @@ export interface Transaction {
 export type UserRole = 'admin' | 'staff';
 
 export interface User {
-  id: string;
+  uid: string;
+  email: string | null;
   name: string;
   role: UserRole;
 }

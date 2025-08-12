@@ -2,11 +2,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User } from '@/types';
-import { MENU as initialMenu, TABLES as initialTables, USERS as initialUsers } from '@/lib/data';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
+import { MENU as initialMenu, TABLES as initialTables, USERS as mockUsers } from '@/lib/data';
 
 interface AppContextType {
   isLoaded: boolean;
+  isAuthLoading: boolean;
   menu: MenuCategory[];
   addMenuItem: (item: MenuItem, categoryName: string) => void;
   tables: Table[];
@@ -27,9 +30,9 @@ interface AppContextType {
   rejectPendingOrder: (orderId: string) => void;
   transactions: Transaction[];
   processPayment: (tableId: number, method: 'cash' | 'online') => void;
-  users: User[];
   currentUser: User | null;
-  setCurrentUser: (userId: string) => void;
+  signIn: (email: string, pass: string) => Promise<any>;
+  signOut: () => Promise<any>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -76,6 +79,7 @@ const saveState = <T,>(key: string, value: T) => {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [menu, setMenu] = useState<MenuCategory[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [settings, setSettings] = useState<Settings>(initialSettings);
@@ -83,8 +87,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [users, setUsers] = useState<User[]>(initialUsers);
-  const [currentUser, _setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
+  // Handle Auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
+        if (user) {
+            // Find the corresponding user in our mock user data
+            const appUser = mockUsers.find(u => u.email === user.email);
+            if (appUser) {
+                setCurrentUser(appUser);
+            } else {
+                 // Fallback for unknown user, could be just a basic user
+                setCurrentUser({
+                    uid: user.uid,
+                    email: user.email,
+                    name: user.email || 'Unknown User',
+                    role: 'staff' // default to least privilege
+                });
+            }
+        } else {
+            setCurrentUser(null);
+        }
+        setIsAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
 
   // Load initial state from localStorage on mount
@@ -97,11 +126,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPendingOrders(loadState('dineswift-pending-orders', []));
     setTransactions(loadState('dineswift-transactions', []));
     
-    // Set current user
-    const currentUserId = loadState('dineswift-current-user-id', initialUsers[0]?.id);
-    const user = initialUsers.find(u => u.id === currentUserId) || initialUsers[0] || null;
-    _setCurrentUser(user);
-    
     setIsLoaded(true);
   }, []);
 
@@ -113,16 +137,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (isLoaded) saveState('dineswift-kitchen-orders', kitchenOrders); }, [kitchenOrders, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-pending-orders', pendingOrders); }, [pendingOrders, isLoaded]);
   useEffect(() => { if (isLoaded) saveState('dineswift-transactions', transactions); }, [transactions, isLoaded]);
-  useEffect(() => { if (isLoaded && currentUser) saveState('dineswift-current-user-id', currentUser.id); }, [currentUser, isLoaded]);
 
 
-  const setCurrentUser = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if (user) {
-        _setCurrentUser(user);
-    }
-  };
+  const signIn = (email: string, pass: string) => {
+    return signInWithEmailAndPassword(auth, email, pass);
+  }
 
+  const signOut = () => {
+    return firebaseSignOut(auth);
+  }
 
   const addMenuItem = (item: MenuItem, categoryName: string) => {
     setMenu(prevMenu => {
@@ -263,6 +286,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value = { 
     isLoaded,
+    isAuthLoading,
     menu, 
     addMenuItem, 
     tables,
@@ -283,14 +307,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     rejectPendingOrder,
     transactions,
     processPayment,
-    users,
     currentUser,
-    setCurrentUser
+    signIn,
+    signOut,
   };
 
   return (
     <AppContext.Provider value={value}>
-      {isLoaded ? children : null /* Or a loading spinner */}
+      {children}
     </AppContext.Provider>
   );
 }
