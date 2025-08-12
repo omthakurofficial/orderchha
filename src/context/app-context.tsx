@@ -2,8 +2,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
@@ -91,15 +92,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   
   // Handle Auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
         if (user) {
-            // Assign role based on email
-            const role: UserRole = user.email === 'admin@orderchha.com' ? 'admin' : 'staff';
+            let userRole: UserRole = 'staff'; // Default role
+            
+            // Special override for the primary admin email
+            if (user.email === 'admin@orderchha.com') {
+                userRole = 'admin';
+            } else {
+                 // Check for role in Firestore
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.role) {
+                        userRole = userData.role;
+                    }
+                }
+            }
+           
             setCurrentUser({
                 uid: user.uid,
                 email: user.email,
                 name: user.displayName || user.email || 'Anonymous User',
-                role: role,
+                role: userRole,
             });
         } else {
             setCurrentUser(null);
