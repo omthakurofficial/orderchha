@@ -1,10 +1,10 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, writeBatch, query } from 'firebase/firestore';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
@@ -49,36 +49,6 @@ const initialSettings: Settings = {
   paymentQrUrl: 'https://www.example.com/pay',
 };
 
-// Helper to get data from localStorage
-const loadState = <T,>(key: string, defaultValue: T): T => {
-  if (typeof window === 'undefined') {
-    return defaultValue;
-  }
-  try {
-    const serializedState = localStorage.getItem(key);
-    if (serializedState === null) {
-      return defaultValue;
-    }
-    return JSON.parse(serializedState);
-  } catch (error) {
-    console.error(`Error loading state for key "${key}" from localStorage`, error);
-    return defaultValue;
-  }
-};
-
-// Helper to save data to localStorage
-const saveState = <T,>(key: string, value: T) => {
-    if (typeof window === 'undefined') {
-        return;
-    }
-    try {
-        const serializedState = JSON.stringify(value);
-        localStorage.setItem(key, serializedState);
-    } catch (error) {
-        console.error(`Error saving state for key "${key}" to localStorage`, error);
-    }
-};
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -95,30 +65,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
         if (user) {
-            let userRole: UserRole = 'staff'; // Default role
-            
-            // Special override for the primary admin email
+            let userRole: UserRole = 'staff';
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+
             if (user.email === 'admin@orderchha.com') {
                 userRole = 'admin';
-            } else {
-                 // Check for role in Firestore
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    if (userData.role) {
-                        userRole = userData.role;
-                    }
-                } else {
-                    // If user document doesn't exist, create it with default 'staff' role
-                    const newUser: User = {
-                        uid: user.uid,
-                        email: user.email,
-                        name: user.displayName || user.email || 'Anonymous',
-                        role: 'staff',
-                    };
-                    await setDoc(userDocRef, newUser);
-                }
+            } else if (userDoc.exists()) {
+                userRole = userDoc.data()?.role || 'staff';
+            }
+            
+            if (!userDoc.exists()) {
+                 const newUser: User = {
+                    uid: user.uid,
+                    email: user.email,
+                    name: user.displayName || user.email || 'Anonymous',
+                    role: userRole,
+                };
+                await setDoc(userDocRef, newUser);
             }
            
             setCurrentUser({
@@ -137,27 +101,77 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
-  // Load initial state from localStorage on mount
-  useEffect(() => {
-    setMenu(loadState('orderchha-menu', initialMenu));
-    setTables(loadState('orderchha-tables', initialTables));
-    setSettings(loadState('orderchha-settings', initialSettings));
-    setOrder(loadState('orderchha-order', []));
-    setKitchenOrders(loadState('orderchha-kitchen-orders', []));
-    setPendingOrders(loadState('orderchha-pending-orders', []));
-    setTransactions(loadState('orderchha-transactions', []));
+  // Initialize data from Firestore or seed if empty
+  const initializeData = useCallback(async () => {
+    // Settings
+    const settingsDocRef = doc(db, 'app-config', 'settings');
+    const settingsDoc = await getDoc(settingsDocRef);
+    if (settingsDoc.exists()) {
+      setSettings(settingsDoc.data() as Settings);
+    } else {
+      await setDoc(settingsDocRef, initialSettings);
+      setSettings(initialSettings);
+    }
+
+    // Menu
+    const menuCollection = collection(db, 'menu');
+    const menuSnapshot = await getDocs(query(menuCollection));
+    if (menuSnapshot.empty) {
+      const batch = writeBatch(db);
+      initialMenu.forEach(category => {
+        const categoryDocRef = doc(menuCollection, category.id);
+        batch.set(categoryDocRef, category);
+      });
+      await batch.commit();
+      setMenu(initialMenu);
+    } else {
+      const menuData = menuSnapshot.docs.map(doc => doc.data() as MenuCategory);
+      setMenu(menuData);
+    }
+
+    // Tables
+    const tablesCollection = collection(db, 'tables');
+    const tablesSnapshot = await getDocs(query(tablesCollection));
+    if (tablesSnapshot.empty) {
+        const batch = writeBatch(db);
+        initialTables.forEach(table => {
+            const tableDocRef = doc(tablesCollection, table.id.toString());
+            batch.set(tableDocRef, table);
+        });
+        await batch.commit();
+        setTables(initialTables);
+    } else {
+        const tablesData = tablesSnapshot.docs.map(doc => doc.data() as Table).sort((a,b) => a.id - b.id);
+        setTables(tablesData);
+    }
     
+    // Load orders and transactions - it's okay if these are empty
+    const kitchenOrdersCollection = collection(db, 'kitchen-orders');
+    const kitchenOrdersSnapshot = await getDocs(query(kitchenOrdersCollection));
+    setKitchenOrders(kitchenOrdersSnapshot.docs.map(doc => doc.data() as KitchenOrder));
+    
+    const pendingOrdersCollection = collection(db, 'pending-orders');
+    const pendingOrdersSnapshot = await getDocs(query(pendingOrdersCollection));
+    setPendingOrders(pendingOrdersSnapshot.docs.map(doc => doc.data() as KitchenOrder));
+
+    const transactionsCollection = collection(db, 'transactions');
+    const transactionsSnapshot = await getDocs(query(transactionsCollection));
+    setTransactions(transactionsSnapshot.docs.map(doc => doc.data() as Transaction));
+    
+    setOrder(JSON.parse(localStorage.getItem('orderchha-order') || '[]'));
+
+
     setIsLoaded(true);
   }, []);
 
-  // Save state to localStorage whenever it changes
-  useEffect(() => { if (isLoaded) saveState('orderchha-menu', menu); }, [menu, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('orderchha-tables', tables); }, [tables, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('orderchha-settings', settings); }, [settings, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('orderchha-order', order); }, [order, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('orderchha-kitchen-orders', kitchenOrders); }, [kitchenOrders, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('orderchha-pending-orders', pendingOrders); }, [pendingOrders, isLoaded]);
-  useEffect(() => { if (isLoaded) saveState('orderchha-transactions', transactions); }, [transactions, isLoaded]);
+  useEffect(() => {
+    initializeData();
+  }, [initializeData]);
+
+  // Save order to localStorage only
+  useEffect(() => { 
+    if (isLoaded) localStorage.setItem('orderchha-order', JSON.stringify(order)); 
+  }, [order, isLoaded]);
 
   const signIn = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
@@ -171,31 +185,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return firebaseSignOut(auth);
   }
 
-  const addMenuItem = (item: MenuItem, categoryName: string) => {
-    setMenu(prevMenu => {
-      const newMenu = [...prevMenu];
-      const categoryIndex = newMenu.findIndex(cat => cat.name === categoryName);
-
-      if (categoryIndex > -1) {
-        newMenu[categoryIndex] = { ...newMenu[categoryIndex], items: [...newMenu[categoryIndex].items, item] };
-      }
-      return newMenu;
-    });
+  const addMenuItem = async (item: MenuItem, categoryName: string) => {
+    const categoryDocRef = doc(db, 'menu', categoryName);
+    const categoryDoc = await getDoc(categoryDocRef);
+    if (categoryDoc.exists()) {
+        const categoryData = categoryDoc.data() as MenuCategory;
+        const updatedItems = [...categoryData.items, item];
+        await setDoc(categoryDocRef, { ...categoryData, items: updatedItems });
+        setMenu(prevMenu => prevMenu.map(cat => cat.id === categoryName ? { ...cat, items: updatedItems } : cat));
+    }
   };
 
-  const addTable = (capacity: number) => {
-    setTables(prevTables => {
-      const newTableId = prevTables.length > 0 ? Math.max(...prevTables.map(t => t.id)) + 1 : 1;
-      const newTable: Table = {
-        id: newTableId,
-        capacity,
-        status: 'available'
-      };
-      return [...prevTables, newTable];
-    });
+  const addTable = async (capacity: number) => {
+    const tablesCollection = collection(db, 'tables');
+    const newTableId = tables.length > 0 ? Math.max(...tables.map(t => t.id)) + 1 : 1;
+    const newTable: Table = {
+      id: newTableId,
+      capacity,
+      status: 'available'
+    };
+    await setDoc(doc(tablesCollection, newTable.id.toString()), newTable);
+    setTables(prevTables => [...prevTables, newTable]);
   };
 
-  const updateTableStatus = (tableId: number, status: Table['status']) => {
+  const updateTableStatus = async (tableId: number, status: Table['status']) => {
+    const tableDocRef = doc(db, 'tables', tableId.toString());
+    await setDoc(tableDocRef, { status }, { merge: true });
     setTables(prevTables =>
       prevTables.map(table =>
         table.id === tableId ? { ...table, status } : table
@@ -203,7 +218,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const updateSettings = (newSettings: Partial<Settings>) => {
+  const updateSettings = async (newSettings: Partial<Settings>) => {
+    const settingsDocRef = doc(db, 'app-config', 'settings');
+    await setDoc(settingsDocRef, newSettings, { merge: true });
     setSettings(prevSettings => ({ ...prevSettings, ...newSettings }));
   }
 
@@ -241,7 +258,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setOrder([]);
   };
 
-  const placeOrder = (tableId: number) => {
+  const placeOrder = async (tableId: number) => {
     if (order.length === 0) return;
 
     const newPendingOrder: KitchenOrder = {
@@ -253,36 +270,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
         total: order.reduce((acc, item) => acc + item.price * item.quantity, 0)
     };
     
+    await setDoc(doc(db, 'pending-orders', newPendingOrder.id), newPendingOrder);
     setPendingOrders(prev => [...prev, newPendingOrder]);
     clearOrder();
   }
   
-  const completeKitchenOrder = (orderId: string) => {
+  const completeKitchenOrder = async (orderId: string) => {
     const order = kitchenOrders.find(o => o.id === orderId);
     if (!order) return;
+
+    const batch = writeBatch(db);
+    const kitchenOrderRef = doc(db, 'kitchen-orders', orderId);
+    batch.update(kitchenOrderRef, { status: 'completed' });
+    
+    const tableRef = doc(db, 'tables', order.tableId.toString());
+    batch.update(tableRef, { status: 'billing' });
+
+    await batch.commit();
 
     setKitchenOrders(prev => prev.map(o => o.id === orderId ? {...o, status: 'completed'} : o));
     updateTableStatus(order.tableId, 'billing');
   }
   
-  const approvePendingOrder = (orderId: string) => {
+  const approvePendingOrder = async (orderId: string) => {
     const orderToApprove = pendingOrders.find(o => o.id === orderId);
     if (!orderToApprove) return;
 
-    // Move from pending to kitchen
-    setKitchenOrders(prev => [...prev, {...orderToApprove, status: 'in-kitchen'}]);
-    setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+    const batch = writeBatch(db);
+    const pendingOrderRef = doc(db, 'pending-orders', orderId);
+    batch.delete(pendingOrderRef);
 
-    // Update table status
-    updateTableStatus(orderToApprove.tableId, 'occupied');
+    const kitchenOrderRef = doc(db, 'kitchen-orders', orderId);
+    const newKitchenOrder = {...orderToApprove, status: 'in-kitchen' as const};
+    batch.set(kitchenOrderRef, newKitchenOrder);
+    
+    const tableRef = doc(db, 'tables', orderToApprove.tableId.toString());
+    batch.update(tableRef, { status: 'occupied' });
+    
+    await batch.commit();
+
+    setKitchenOrders(prev => [...prev, newKitchenOrder]);
+    setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+    setTables(prev => prev.map(t => t.id === orderToApprove.tableId ? {...t, status: 'occupied'} : t));
   };
 
-  const rejectPendingOrder = (orderId: string) => {
+  const rejectPendingOrder = async (orderId: string) => {
+    await deleteDoc(doc(db, 'pending-orders', orderId));
     setPendingOrders(prev => prev.filter(o => o.id !== orderId));
   };
 
-  const processPayment = (tableId: number, method: 'cash' | 'online') => {
-    // Find all completed orders for the table
+  const processPayment = async (tableId: number, method: 'cash' | 'online') => {
     const ordersToPay = kitchenOrders.filter(o => o.tableId === tableId && o.status === 'completed');
     if (ordersToPay.length === 0) return;
 
@@ -296,13 +333,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
         timestamp: new Date().toISOString(),
     };
 
-    setTransactions(prev => [...prev, newTransaction]);
-
+    const batch = writeBatch(db);
+    
+    // Add transaction
+    batch.set(doc(db, 'transactions', newTransaction.id), newTransaction);
+    
     // Remove paid orders from kitchen list
-    const orderIdsToPay = ordersToPay.map(o => o.id);
-    setKitchenOrders(prev => prev.filter(o => !orderIdsToPay.includes(o.id)));
+    ordersToPay.forEach(order => {
+        const orderRef = doc(db, 'kitchen-orders', order.id);
+        batch.delete(orderRef);
+    });
 
     // Set table back to available
+    const tableRef = doc(db, 'tables', tableId.toString());
+    batch.update(tableRef, { status: 'available' });
+
+    await batch.commit();
+
+    setTransactions(prev => [...prev, newTransaction]);
+    const orderIdsToPay = ordersToPay.map(o => o.id);
+    setKitchenOrders(prev => prev.filter(o => !orderIdsToPay.includes(o.id)));
     updateTableStatus(tableId, 'available');
   };
 

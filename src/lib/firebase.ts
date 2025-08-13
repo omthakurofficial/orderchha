@@ -1,9 +1,8 @@
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, deleteDoc } from 'firebase/firestore';
 
-// TODO: Replace this with the new firebaseConfig object from the new project
 const firebaseConfig = {
   apiKey: "AIzaSyCNSftfKdHRhscdFb1lRVJezwGP1-1X4xwA",
   authDomain: "orderchha-app.firebaseapp.com",
@@ -14,9 +13,10 @@ const firebaseConfig = {
   measurementId: "G-QR6P8WW2Q4"
 };
 
+
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-export { app, auth, db };
+export { app, auth, db, deleteDoc };
