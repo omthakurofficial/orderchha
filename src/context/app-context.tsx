@@ -3,8 +3,8 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser, createUserWithEmailAndPassword, getAuth, updateProfile } from 'firebase/auth';
+import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, getDocs, serverTimestamp } from 'firebase/firestore';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
@@ -62,33 +62,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
-  // Handle Auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
-        setIsAuthLoading(true);
-        if (user) {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-
-            if (userDoc.exists()) {
-                setCurrentUser({
-                    uid: user.uid,
-                    ...userDoc.data()
-                } as User);
-            } else {
-              // This can happen if the user doc creation fails after signup.
-              // We'll create it here as a fallback.
-              await createUserDocument(user);
-            }
-        } else {
-            setCurrentUser(null);
-        }
-        setIsAuthLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   const initializeData = useCallback(async (user: User | null) => {
     if (!user) {
         setIsLoaded(true);
@@ -147,8 +120,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => unsubscribers.forEach(unsub => unsub());
   }, []);
 
+  const fetchUserDocument = useCallback(async (firebaseUser: FirebaseUser) => {
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      setCurrentUser({ uid: firebaseUser.uid, ...userDoc.data() } as User);
+    } else {
+      // This is a fallback, user document should be created on sign up
+      const newUser = await createUserDocument(firebaseUser, 'staff');
+      setCurrentUser(newUser);
+    }
+  }, []);
+
+  // Handle Auth state changes
   useEffect(() => {
-    if (!isAuthLoading) {
+    const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
+      setIsAuthLoading(true);
+      if (user) {
+        await fetchUserDocument(user);
+      } else {
+        setCurrentUser(null);
+      }
+      setIsAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [fetchUserDocument]);
+
+  useEffect(() => {
+    if (!isAuthLoading && currentUser) {
       const cleanupPromise = initializeData(currentUser);
       return () => {
         cleanupPromise.then(cleanup => {
@@ -157,6 +157,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         });
       }
+    } else if (!isAuthLoading && !currentUser) {
+        setIsLoaded(true);
     }
   }, [isAuthLoading, currentUser, initializeData]);
 
@@ -164,58 +166,87 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isLoaded) localStorage.setItem('orderchha-order', JSON.stringify(order)); 
   }, [order, isLoaded]);
   
-  const createUserDocument = async (user: FirebaseUser) => {
+  const createUserDocument = async (
+    user: FirebaseUser,
+    role: UserRole,
+    details?: Omit<User, 'uid' | 'email' | 'role' | 'joiningDate'>
+  ): Promise<User> => {
     const userDocRef = doc(db, 'users', user.uid);
-    const usersSnapshot = await getDocs(query(collection(db, 'users')));
-    const isAdmin = usersSnapshot.empty && user.email?.toLowerCase() === 'admin@orderchha.cafe';
-
+    
     const newUser: User = {
       uid: user.uid,
       email: user.email,
-      name: user.displayName || user.email?.split('@')[0] || 'New User',
-      role: isAdmin ? 'admin' : 'staff',
+      name: details?.name || user.displayName || user.email?.split('@')[0] || 'New User',
+      role: role,
       joiningDate: new Date().toISOString(),
-      photoUrl: user.photoURL || `https://placehold.co/100x100.png`
+      photoUrl: details?.photoUrl || user.photoURL || `https://placehold.co/100x100.png`,
+      mobile: details?.mobile || '',
+      address: details?.address || '',
+      designation: details?.designation || (role === 'admin' ? 'Administrator' : 'Staff'),
     };
-
+  
     await setDoc(userDocRef, newUser);
-    setCurrentUser(newUser); // Immediately update the state
+    return newUser;
   };
 
   const signUp = async (email: string, password: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await createUserDocument(userCredential.user);
+    const user = userCredential.user;
+  
+    const usersSnapshot = await getDocs(query(collection(db, 'users')));
+    const isAdmin = usersSnapshot.empty && user.email?.toLowerCase() === 'admin@orderchha.cafe';
+  
+    const newUser = await createUserDocument(user, isAdmin ? 'admin' : 'staff', {
+        name: user.email?.split('@')[0] || 'New User'
+    });
+    setCurrentUser(newUser);
     return userCredential;
   }
 
-  const signIn = (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const signIn = async (email: string, password: string) => {
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (error: any) {
+      // This logic specifically handles the creation of the *very first* admin user.
+      if (error.code === 'auth/invalid-credential' && email.toLowerCase() === 'admin@orderchha.cafe') {
+        const usersSnapshot = await getDocs(query(collection(db, 'users')));
+        if (usersSnapshot.empty) {
+          console.log('No users found, attempting to create initial admin...');
+          // This is the first user, create as admin
+          return signUp(email, password);
+        }
+      }
+      // Re-throw other errors
+      throw error;
+    }
   };
   
   const addStaffUser = async (userData: Omit<User, 'uid' | 'role' | 'joiningDate'> & {password: string}) => {
-    // This function creates the auth user in a temporary way and then signs out.
-    // The main admin user will need to sign back in. A more robust solution would be to use Firebase Admin SDK on a backend.
-    const tempAuth = getAuth(app); // Use a separate auth instance if needed, or manage sign-in state carefully
-    const userCredential = await createUserWithEmailAndPassword(tempAuth, userData.email!, userData.password);
-    const user = userCredential.user;
+    const originalUser = auth.currentUser;
+  
+    const { getAuth, createUserWithEmailAndPassword: createStaffUser } = await import("firebase/auth");
+    const tempAuth = getAuth(db.app);
     
-    const newUserDoc: Omit<User, 'uid'> = {
-        email: userData.email,
-        name: userData.name,
-        role: 'staff',
-        photoUrl: userData.photoUrl,
-        mobile: userData.mobile,
-        address: userData.address,
-        designation: userData.designation,
-        joiningDate: new Date().toISOString()
-    };
-    
-    await setDoc(doc(db, 'users', user.uid), newUserDoc);
-    
-    // Since we've just created a new user, we should sign them out
-    // and let the admin remain logged in.
-    // NOTE: This is tricky on the client. The most reliable way is for an admin to create users.
-    // For now, the user list will update via snapshot listener.
+    try {
+      const userCredential = await createStaffUser(tempAuth, userData.email!, userData.password);
+      const user = userCredential.user;
+  
+      await createUserDocument(user, 'staff', userData);
+  
+      // After creating the staff, we need to sign out the temporary user and sign the admin back in.
+      // This is a workaround for client-side user creation.
+      await tempAuth.signOut();
+  
+    } catch (error) {
+      console.error("Error creating staff user:", error);
+      throw error; // Propagate the error to be handled in the UI
+    } finally {
+        // Re-authenticate the original admin user
+        if (originalUser) {
+            await auth.updateCurrentUser(originalUser);
+            await fetchUserDocument(originalUser); // Refresh admin user data
+        }
+    }
   }
 
   const signOut = async () => {
@@ -230,15 +261,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPendingOrders([]);
     setTransactions([]);
     localStorage.removeItem('orderchha-order');
+    setIsLoaded(false);
   };
 
   const addMenuItem = async (item: MenuItem, categoryName: string) => {
-    const categoryDocRef = doc(db, 'menu', categoryName);
-    const categoryDoc = await getDoc(categoryDocRef);
-    if (categoryDoc.exists()) {
-        const categoryData = categoryDoc.data() as MenuCategory;
-        const updatedItems = [...categoryData.items, item];
-        await setDoc(categoryDocRef, { ...categoryData, items: updatedItems });
+    const categoryRef = doc(db, 'menu', categoryName);
+    const categorySnap = await getDoc(categoryRef);
+    if (categorySnap.exists()) {
+        const categoryData = categorySnap.data() as MenuCategory;
+        const newItems = [...categoryData.items, item];
+        await setDoc(categoryRef, { ...categoryData, items: newItems });
+    } else {
+        // This handles if somehow a new category name is used in the form
+        const newCategory: MenuCategory = {
+            id: categoryName.toLowerCase().replace(/\s/g, '-'),
+            name: categoryName,
+            icon: 'Utensils', // default icon
+            items: [item]
+        };
+        await setDoc(doc(db, 'menu', newCategory.id), newCategory);
     }
   };
 
@@ -422,3 +463,5 @@ export function useApp() {
   }
   return context;
 }
+
+      
