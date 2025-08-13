@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { PlusCircle } from 'lucide-react';
+import { LoaderCircle, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { useApp } from '@/context/app-context';
@@ -34,6 +34,7 @@ interface MenuUploadFormProps {
 
 export function MenuUploadForm({ categories }: MenuUploadFormProps) {
   const [preview, setPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const { addMenuItem } = useApp();
   
@@ -61,15 +62,60 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
       form.setValue('image', null);
     }
   };
+  
+  const uploadImage = async (file: File): Promise<string | null> => {
+    setIsUploading(true);
+    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+    if (!apiKey || apiKey === 'your_api_key_here') {
+      toast({
+        variant: 'destructive',
+        title: 'Image Upload Failed',
+        description: 'ImgBB API Key is not configured. Please add it to the .env file.',
+      });
+      setIsUploading(false);
+      return null;
+    }
 
-  const onSubmit: SubmitHandler<MenuItemFormValues> = (data) => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      if (result.success) {
+        return result.data.url;
+      } else {
+        throw new Error(result.error.message);
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Image Upload Failed',
+        description: 'Could not upload the image. Please try again.',
+      });
+      return null;
+    } finally {
+        setIsUploading(false);
+    }
+  }
+
+  const onSubmit: SubmitHandler<MenuItemFormValues> = async (data) => {
+    const imageFile = data.image[0] as File;
+    const imageUrl = await uploadImage(imageFile);
+
+    if (!imageUrl) return;
+
     const newItem = {
       id: `item-${Date.now()}`, // simple unique id
       name: data.name,
       description: data.description,
       price: data.price,
       inStock: data.inStock,
-      image: preview!, // We know preview is not null if form is valid
+      image: imageUrl,
       imageHint: `${data.name.toLowerCase()}`
     };
 
@@ -184,7 +230,7 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                             <FormItem>
                             <FormLabel>Item Image</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={handleFileChange} {...rest} />
+                                <Input type="file" accept="image/*" onChange={handleFileChange} {...rest} disabled={isUploading} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -205,9 +251,9 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                 </div>
             </div>
 
-            <Button type="submit" className="w-full mt-6">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Item to Menu
+            <Button type="submit" className="w-full mt-6" disabled={isUploading}>
+                {isUploading ? <LoaderCircle className="animate-spin mr-2" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                {isUploading ? 'Uploading Image...' : 'Add Item to Menu'}
             </Button>
             </form>
         </Form>
