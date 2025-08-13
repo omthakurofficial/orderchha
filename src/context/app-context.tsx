@@ -2,15 +2,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser, createUserWithEmailAndPassword, getAuth, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, getDocs, serverTimestamp } from 'firebase/firestore';
-import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc } from 'firebase/firestore';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
 interface AppContextType {
   isLoaded: boolean;
-  isAuthLoading: boolean;
   menu: MenuCategory[];
   addMenuItem: (item: MenuItem, categoryName: string) => void;
   tables: Table[];
@@ -31,11 +29,7 @@ interface AppContextType {
   rejectPendingOrder: (orderId: string) => void;
   transactions: Transaction[];
   processPayment: (tableId: number, method: 'cash' | 'online') => void;
-  currentUser: User | null;
-  signIn: (email:string, password:string) => Promise<any>;
-  signUp: (email:string, password:string) => Promise<any>;
-  addStaffUser: (userData: Omit<User, 'uid' | 'role' | 'joiningDate'> & {password: string}) => Promise<any>;
-  signOut: () => Promise<any>;
+  currentUser: User | null; // Kept for type consistency, but will be a mock user.
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -50,9 +44,17 @@ const initialSettings: Settings = {
   paymentQrUrl: 'https://www.example.com/pay',
 };
 
+// Create a mock admin user since login is removed
+const mockAdminUser: User = {
+    uid: 'admin-mock-uid',
+    email: 'admin@orderchha.cafe',
+    name: 'Admin',
+    role: 'admin',
+    joiningDate: new Date().toISOString()
+};
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [menu, setMenu] = useState<MenuCategory[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [settings, setSettings] = useState<Settings>(initialSettings);
@@ -60,14 +62,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   
-  const initializeData = useCallback(async (user: User | null) => {
-    if (!user) {
-        setIsLoaded(true);
-        return;
-    };
-
+  // No-op for initializeData as we don't need to wait for a user
+  useEffect(() => {
     const unsubscribers = [
       onSnapshot(doc(db, 'app-config', 'settings'), async (docSnap) => {
         if (docSnap.exists()) {
@@ -120,149 +117,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => unsubscribers.forEach(unsub => unsub());
   }, []);
 
-  const fetchUserDocument = useCallback(async (firebaseUser: FirebaseUser) => {
-    const userDocRef = doc(db, 'users', firebaseUser.uid);
-    const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
-      setCurrentUser({ uid: firebaseUser.uid, ...userDoc.data() } as User);
-    } else {
-      // This is a fallback, user document should be created on sign up
-      const newUser = await createUserDocument(firebaseUser, 'staff');
-      setCurrentUser(newUser);
-    }
-  }, []);
-
-  // Handle Auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
-      setIsAuthLoading(true);
-      if (user) {
-        await fetchUserDocument(user);
-      } else {
-        setCurrentUser(null);
-      }
-      setIsAuthLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [fetchUserDocument]);
-
-  useEffect(() => {
-    if (!isAuthLoading && currentUser) {
-      const cleanupPromise = initializeData(currentUser);
-      return () => {
-        cleanupPromise.then(cleanup => {
-          if (typeof cleanup === 'function') {
-            cleanup();
-          }
-        });
-      }
-    } else if (!isAuthLoading && !currentUser) {
-        setIsLoaded(true);
-    }
-  }, [isAuthLoading, currentUser, initializeData]);
 
   useEffect(() => { 
     if (isLoaded) localStorage.setItem('orderchha-order', JSON.stringify(order)); 
   }, [order, isLoaded]);
-  
-  const createUserDocument = async (
-    user: FirebaseUser,
-    role: UserRole,
-    details?: Omit<User, 'uid' | 'email' | 'role' | 'joiningDate'>
-  ): Promise<User> => {
-    const userDocRef = doc(db, 'users', user.uid);
-    
-    const newUser: User = {
-      uid: user.uid,
-      email: user.email,
-      name: details?.name || user.displayName || user.email?.split('@')[0] || 'New User',
-      role: role,
-      joiningDate: new Date().toISOString(),
-      photoUrl: details?.photoUrl || user.photoURL || `https://placehold.co/100x100.png`,
-      mobile: details?.mobile || '',
-      address: details?.address || '',
-      designation: details?.designation || (role === 'admin' ? 'Administrator' : 'Staff'),
-    };
-  
-    await setDoc(userDocRef, newUser);
-    return newUser;
-  };
-
-  const signUp = async (email: string, password: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-  
-    const usersSnapshot = await getDocs(query(collection(db, 'users')));
-    const isAdmin = usersSnapshot.empty && user.email?.toLowerCase() === 'admin@orderchha.cafe';
-  
-    const newUser = await createUserDocument(user, isAdmin ? 'admin' : 'staff', {
-        name: user.email?.split('@')[0] || 'New User'
-    });
-    setCurrentUser(newUser);
-    return userCredential;
-  }
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      return await signInWithEmailAndPassword(auth, email, password);
-    } catch (error: any) {
-      // This logic specifically handles the creation of the *very first* admin user.
-      if (error.code === 'auth/invalid-credential' && email.toLowerCase() === 'admin@orderchha.cafe') {
-        const usersSnapshot = await getDocs(query(collection(db, 'users')));
-        if (usersSnapshot.empty) {
-          console.log('No users found, attempting to create initial admin...');
-          // This is the first user, create as admin
-          return signUp(email, password);
-        }
-      }
-      // Re-throw other errors
-      throw error;
-    }
-  };
-  
-  const addStaffUser = async (userData: Omit<User, 'uid' | 'role' | 'joiningDate'> & {password: string}) => {
-    const originalUser = auth.currentUser;
-  
-    const { getAuth, createUserWithEmailAndPassword: createStaffUser } = await import("firebase/auth");
-    const tempAuth = getAuth(db.app);
-    
-    try {
-      const userCredential = await createStaffUser(tempAuth, userData.email!, userData.password);
-      const user = userCredential.user;
-  
-      await createUserDocument(user, 'staff', userData);
-  
-      // After creating the staff, we need to sign out the temporary user and sign the admin back in.
-      // This is a workaround for client-side user creation.
-      await tempAuth.signOut();
-  
-    } catch (error) {
-      console.error("Error creating staff user:", error);
-      throw error; // Propagate the error to be handled in the UI
-    } finally {
-        // Re-authenticate the original admin user
-        if (originalUser) {
-            await auth.updateCurrentUser(originalUser);
-            await fetchUserDocument(originalUser); // Refresh admin user data
-        }
-    }
-  }
-
-  const signOut = async () => {
-    await firebaseSignOut(auth);
-    // Clear all local state on sign out
-    setCurrentUser(null);
-    setTables([]);
-    setMenu([]);
-    setSettings(initialSettings);
-    setOrder([]);
-    setKitchenOrders([]);
-    setPendingOrders([]);
-    setTransactions([]);
-    localStorage.removeItem('orderchha-order');
-    setIsLoaded(false);
-  };
 
   const addMenuItem = async (item: MenuItem, categoryName: string) => {
     const categoryRef = doc(db, 'menu', categoryName);
@@ -272,11 +130,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const newItems = [...categoryData.items, item];
         await setDoc(categoryRef, { ...categoryData, items: newItems });
     } else {
-        // This handles if somehow a new category name is used in the form
         const newCategory: MenuCategory = {
             id: categoryName.toLowerCase().replace(/\s/g, '-'),
             name: categoryName,
-            icon: 'Utensils', // default icon
+            icon: 'Utensils',
             items: [item]
         };
         await setDoc(doc(db, 'menu', newCategory.id), newCategory);
@@ -421,7 +278,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value = { 
     isLoaded,
-    isAuthLoading,
     menu, 
     addMenuItem, 
     tables,
@@ -442,11 +298,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     rejectPendingOrder,
     transactions,
     processPayment,
-    currentUser,
-    signIn,
-    signUp,
-    signOut,
-    addStaffUser,
+    currentUser: mockAdminUser,
   };
 
   return (
@@ -463,5 +315,3 @@ export function useApp() {
   }
   return context;
 }
-
-      

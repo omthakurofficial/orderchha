@@ -13,45 +13,34 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, User as UserIcon, LogOut, Users } from "lucide-react";
+import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, Users } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
 import { useApp } from "@/context/app-context";
 import Image from "next/image";
-import { Button } from "../ui/button";
 
-const adminNavItems = [
+const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/", icon: LayoutGrid, label: "Tables" },
     { href: "/menu", icon: UtensilsCrossed, label: "Menu" },
     { href: "/upload-menu", icon: Upload, label: "Manage Menu" },
     { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders" },
     { href: "/kitchen", icon: ChefHat, label: "Kitchen" },
-    { href: "/users", icon: Users, label: "Users" },
     { href: "/settings", icon: Settings, label: "Settings" },
-];
-
-const staffNavItems = [
-    { href: "/", icon: LayoutGrid, label: "Tables" },
-    { href: "/menu", icon: UtensilsCrossed, label: "Menu" },
-    { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders" },
-    { href: "/kitchen", icon: ChefHat, label: "Kitchen" },
 ];
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMounted, setIsMounted] = React.useState(false);
-  const { settings, currentUser, signOut } = useApp();
+  const { settings } = useApp();
 
   React.useEffect(() => {
     setIsMounted(true);
   }, []);
   
-  const navItems = currentUser?.role === 'admin' ? adminNavItems : staffNavItems;
-
-  if (!isMounted || !currentUser) {
+  if (!isMounted) {
     return null;
   }
 
@@ -77,22 +66,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     )
   );
   
-  const UserInfo = () => (
-    <div className="flex flex-col gap-2">
-        <div className="w-full justify-start text-left font-normal flex items-center gap-2 border p-2 rounded-md">
-            <UserIcon className="w-4 h-4" />
-            <div className="flex-1 truncate">
-                <p className="font-semibold text-sm">{currentUser.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">{currentUser.role} role</p>
-            </div>
-        </div>
-        <Button variant="outline" size="sm" onClick={signOut}>
-            <LogOut />
-            Sign Out
-        </Button>
-    </div>
-  );
-
   return (
     <SidebarProvider>
       <Sidebar>
@@ -103,7 +76,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <h2 className="text-lg font-bold font-headline">{settings.cafeName}</h2>
             </div>
           </div>
-           <UserInfo />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
