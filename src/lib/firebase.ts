@@ -3,14 +3,14 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+// TODO: Replace this with the new firebaseConfig object from the new project
 const firebaseConfig = {
-  "projectId": "orderchha-ra62f",
-  "appId": "1:875442706709:web:831b73d0f7748baa3d311c",
-  "storageBucket": "orderchha-ra62f.firebasestorage.app",
-  "apiKey": "AIzaSyCgBg4mHPG1dZ6RUXUfQ4DnIP8T11zFVW4",
-  "authDomain": "orderchha-ra62f.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "875442706709"
+  "projectId": "REPLACE_WITH_YOUR_PROJECT_ID",
+  "appId": "REPLACE_WITH_YOUR_APP_ID",
+  "storageBucket": "REPLACE_WITH_YOUR_STORAGE_BUCKET",
+  "apiKey": "REPLACE_WITH_YOUR_API_KEY",
+  "authDomain": "REPLACE_WITH_YOUR_AUTH_DOMAIN",
+  "messagingSenderId": "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID"
 };
 
 // Initialize Firebase
