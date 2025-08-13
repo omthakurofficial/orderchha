@@ -4,12 +4,13 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore, deleteDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "your_firebase_api_key_here",
-  authDomain: "orderchha-dineswift-ra62f.firebaseapp.com",
-  projectId: "orderchha-dineswift-ra62f",
-  storageBucket: "orderchha-dineswift-ra62f.appspot.com",
-  messagingSenderId: "982935276537",
-  appId: "1:982935276537:web:806201a43a3cf421f66d49"
+  apiKey: "AIzaSyCNSfTfKdHRhsdFb11RVjezwGP1-1X4xwA",
+  authDomain: "orderchha-app.firebaseapp.com",
+  projectId: "orderchha-app",
+  storageBucket: "orderchha-app.appspot.com",
+  messagingSenderId: "442757956859",
+  appId: "1:442757956859:web:54e6935d539b2607785c5e",
+  measurementId: "G-QR6P8WW2Q4"
 };
 
 
