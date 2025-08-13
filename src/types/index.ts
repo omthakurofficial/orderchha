@@ -62,4 +62,9 @@ export interface User {
   email: string | null;
   name: string;
   role: UserRole;
+  photoUrl?: string;
+  mobile?: string;
+  address?: string;
+  designation?: string;
+  joiningDate?: string;
 }
