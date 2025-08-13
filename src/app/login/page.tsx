@@ -55,7 +55,9 @@ export default function LoginPage() {
         title: `${actionTitle} Successful`,
         description: isSigningIn ? 'Welcome back!' : 'Your account has been created.',
       });
-      router.push('/');
+      
+      // The AuthLayout will handle the redirect automatically.
+      // No need to call router.push() here.
 
     } catch (error: any) {
       console.error(error);
