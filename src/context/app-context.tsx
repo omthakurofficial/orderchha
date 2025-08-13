@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, getDocs, writeBatch, query } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, writeBatch, query, deleteDoc } from 'firebase/firestore';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
@@ -65,32 +65,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
         if (user) {
-            let userRole: UserRole = 'staff';
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
 
-            if (user.email === 'admin@orderchha.com') {
-                userRole = 'admin';
-            } else if (userDoc.exists()) {
-                userRole = userDoc.data()?.role || 'staff';
-            }
-            
-            if (!userDoc.exists()) {
-                 const newUser: User = {
+            if (userDoc.exists()) {
+                setCurrentUser({
                     uid: user.uid,
-                    email: user.email,
-                    name: user.displayName || user.email || 'Anonymous',
-                    role: userRole,
-                };
-                await setDoc(userDocRef, newUser);
+                    ...userDoc.data()
+                } as User);
             }
-           
-            setCurrentUser({
-                uid: user.uid,
-                email: user.email,
-                name: user.displayName || user.email || 'Anonymous User',
-                role: userRole,
-            });
+            // If the user doc doesn't exist, it will be created on sign-up.
+            // This handles the case where a user is already logged in from a previous session.
         } else {
             setCurrentUser(null);
         }
@@ -177,8 +162,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return signInWithEmailAndPassword(auth, email, password);
   }
   
-  const signUp = (email: string, password: string) => {
-    return createUserWithEmailAndPassword(auth, email, password);
+  const signUp = async (email: string, password: string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Determine role. Special case for the first admin.
+    const userRole: UserRole = email === 'admin@orderchha.com' ? 'admin' : 'staff';
+    
+    const newUser: User = {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || user.email || 'Anonymous',
+        role: userRole,
+    };
+
+    // Create the user document in Firestore
+    await setDoc(doc(db, 'users', user.uid), newUser);
+    
+    // Manually set current user in state since onAuthStateChanged might be slow
+    setCurrentUser(newUser);
+
+    return userCredential;
   }
 
   const signOut = () => {
@@ -400,3 +404,5 @@ export function useApp() {
   }
   return context;
 }
+
+    
