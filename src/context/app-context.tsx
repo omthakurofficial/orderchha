@@ -161,7 +161,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   
   const signIn = async (email: string, password: string) => {
     // Special logic for first-time admin creation
-    if (email.toLowerCase() === 'admin@orderchha.com') {
+    if (email.toLowerCase() === 'admin@orderchha.cafe') {
       try {
         // First, try to sign in. If it works, the admin already exists.
         return await signInWithEmailAndPassword(auth, email, password);
@@ -212,8 +212,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     
     await setDoc(doc(db, 'users', user.uid), newUser);
-    await firebaseSignOut(auth);
-    // The main admin user will be signed back in by the effect hook
+    // The main admin might need to sign out and sign back in to see the changes if not handled reactively.
+    // However, our onSnapshot for the users collection should handle this.
   }
 
   const signOut = async () => {
@@ -413,5 +413,7 @@ export function useApp() {
   }
   return context;
 }
+
+    
 
     

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -129,7 +130,7 @@ export default function UserManagementPage() {
                       <Select
                         value={user.role}
                         onValueChange={(newRole: UserRole) => handleRoleChange(user.uid, newRole)}
-                        disabled={user.email === 'admin@orderchha.com'}
+                        disabled={user.email === 'admin@orderchha.cafe'}
                       >
                         <SelectTrigger className="w-[120px]">
                           <SelectValue placeholder="Select a role" />
@@ -150,3 +151,5 @@ export default function UserManagementPage() {
     </div>
   );
 }
+
+    
