@@ -17,9 +17,9 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { LoaderCircle, PlusCircle, UserPlus } from 'lucide-react';
-import { useApp } from '@/context/app-context';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { useApp } from '@/context/app-context';
 
 const addStaffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),

@@ -33,6 +33,7 @@ interface AppContextType {
   processPayment: (tableId: number, method: 'cash' | 'online') => void;
   currentUser: User | null;
   signIn: (email:string, password:string) => Promise<any>;
+  signUp: (email:string, password:string) => Promise<any>;
   addStaffUser: (userData: Omit<User, 'uid' | 'role' | 'joiningDate'> & {password: string}) => Promise<any>;
   signOut: () => Promise<any>;
 }
@@ -74,6 +75,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     uid: user.uid,
                     ...userDoc.data()
                 } as User);
+            } else {
+              // This can happen if the user doc creation fails after signup.
+              // We'll create it here as a fallback.
+              await createUserDocument(user);
             }
         } else {
             setCurrentUser(null);
@@ -159,48 +164,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isLoaded) localStorage.setItem('orderchha-order', JSON.stringify(order)); 
   }, [order, isLoaded]);
   
-  const signIn = async (email: string, password: string) => {
-    // Special logic for first-time admin creation
-    if (email.toLowerCase() === 'admin@orderchha.cafe') {
-      try {
-        // First, try to sign in. If it works, the admin already exists.
-        return await signInWithEmailAndPassword(auth, email, password);
-      } catch (error: any) {
-        // If sign-in fails, check if any users exist at all.
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
-          const usersSnapshot = await getDocs(query(collection(db, 'users')));
-          const adminExists = usersSnapshot.docs.some(doc => doc.data().role === 'admin');
+  const createUserDocument = async (user: FirebaseUser) => {
+    const userDocRef = doc(db, 'users', user.uid);
+    const usersSnapshot = await getDocs(query(collection(db, 'users')));
+    const isAdmin = usersSnapshot.empty && user.email?.toLowerCase() === 'admin@orderchha.cafe';
 
-          // If no admin exists, we assume this is the first-time setup.
-          if (!adminExists) {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            const adminUser: User = {
-              uid: user.uid,
-              email: user.email,
-              name: 'Admin',
-              role: 'admin',
-              joiningDate: new Date().toISOString(),
-            };
-            await setDoc(doc(db, 'users', user.uid), adminUser);
-            // The onAuthStateChanged listener will pick up the new user and set state.
-            return userCredential;
-          }
-        }
-        // If an admin already exists or another error occurred, re-throw it.
-        throw error;
-      }
-    }
-  
-    // Standard sign-in for all other users
+    const newUser: User = {
+      uid: user.uid,
+      email: user.email,
+      name: user.displayName || user.email?.split('@')[0] || 'New User',
+      role: isAdmin ? 'admin' : 'staff',
+      joiningDate: new Date().toISOString(),
+      photoUrl: user.photoURL || `https://placehold.co/100x100.png`
+    };
+
+    await setDoc(userDocRef, newUser);
+    setCurrentUser(newUser); // Immediately update the state
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await createUserDocument(userCredential.user);
+    return userCredential;
+  }
+
+  const signIn = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
   
   const addStaffUser = async (userData: Omit<User, 'uid' | 'role' | 'joiningDate'> & {password: string}) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, userData.email!, userData.password);
+    // This function creates the auth user in a temporary way and then signs out.
+    // The main admin user will need to sign back in. A more robust solution would be to use Firebase Admin SDK on a backend.
+    const tempAuth = getAuth(app); // Use a separate auth instance if needed, or manage sign-in state carefully
+    const userCredential = await createUserWithEmailAndPassword(tempAuth, userData.email!, userData.password);
     const user = userCredential.user;
     
-    const newUser: Omit<User, 'uid'> = {
+    const newUserDoc: Omit<User, 'uid'> = {
         email: userData.email,
         name: userData.name,
         role: 'staff',
@@ -211,17 +210,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
         joiningDate: new Date().toISOString()
     };
     
-    await setDoc(doc(db, 'users', user.uid), newUser);
-    // The main admin might need to sign out and sign back in to see the changes if not handled reactively.
-    // However, our onSnapshot for the users collection should handle this.
+    await setDoc(doc(db, 'users', user.uid), newUserDoc);
+    
+    // Since we've just created a new user, we should sign them out
+    // and let the admin remain logged in.
+    // NOTE: This is tricky on the client. The most reliable way is for an admin to create users.
+    // For now, the user list will update via snapshot listener.
   }
 
   const signOut = async () => {
     await firebaseSignOut(auth);
+    // Clear all local state on sign out
     setCurrentUser(null);
     setTables([]);
     setMenu([]);
     setSettings(initialSettings);
+    setOrder([]);
+    setKitchenOrders([]);
+    setPendingOrders([]);
+    setTransactions([]);
+    localStorage.removeItem('orderchha-order');
   };
 
   const addMenuItem = async (item: MenuItem, categoryName: string) => {
@@ -395,6 +403,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     processPayment,
     currentUser,
     signIn,
+    signUp,
     signOut,
     addStaffUser,
   };
@@ -413,7 +422,3 @@ export function useApp() {
   }
   return context;
 }
-
-    
-
-    

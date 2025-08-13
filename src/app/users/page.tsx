@@ -24,8 +24,7 @@ export default function UserManagementPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // This page is for admins only.
-    if (currentUser?.role !== 'admin') {
+    if (isMounted && currentUser?.role !== 'admin') {
       router.push('/');
       return;
     }
@@ -48,8 +47,21 @@ export default function UserManagementPage() {
 
     return () => unsubscribe();
   }, [currentUser, router, toast]);
+  
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
 
   const handleRoleChange = async (uid: string, newRole: UserRole) => {
+    if (currentUser?.uid === uid) {
+      toast({
+        variant: 'destructive',
+        title: 'Action Denied',
+        description: "You cannot change your own role.",
+      });
+      return;
+    }
+
     try {
       const userDocRef = doc(db, 'users', uid);
       await updateDoc(userDocRef, { role: newRole });
@@ -69,10 +81,10 @@ export default function UserManagementPage() {
     }
   };
   
-  if (currentUser?.role !== 'admin') {
+  if (!isMounted || currentUser?.role !== 'admin') {
     return (
         <div className="flex h-screen items-center justify-center">
-            <p>Redirecting...</p>
+            <p>Loading or redirecting...</p>
         </div>
     );
   }
@@ -151,5 +163,3 @@ export default function UserManagementPage() {
     </div>
   );
 }
-
-    

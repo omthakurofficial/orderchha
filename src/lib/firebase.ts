@@ -4,12 +4,12 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore, deleteDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC0qA8jVq8B...YOUR_API_KEY", // Using a placeholder for security, but the real key is in the project
+  apiKey: "your_firebase_api_key_here",
   authDomain: "orderchha-dineswift-ra62f.firebaseapp.com",
   projectId: "orderchha-dineswift-ra62f",
   storageBucket: "orderchha-dineswift-ra62f.appspot.com",
-  messagingSenderId: "987654321098",
-  appId: "1:987654321098:web:a1b2c3d4e5f6g7h8i9j0"
+  messagingSenderId: "982935276537",
+  appId: "1:982935276537:web:806201a43a3cf421f66d49"
 };
 
 
