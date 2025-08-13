@@ -11,11 +11,13 @@ import { useApp } from "@/context/app-context";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { LoaderCircle } from "lucide-react";
 
 export default function SettingsPage() {
     const { toast } = useToast();
     const { settings, updateSettings } = useApp();
     const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
+    const [isUploading, setIsUploading] = useState(false);
 
     const handleSaveChanges = () => {
         toast({
@@ -33,14 +35,57 @@ export default function SettingsPage() {
         updateSettings({ [id]: checked });
     }
 
-    const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadImage = async (file: File): Promise<string | null> => {
+        setIsUploading(true);
+        const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+        if (!apiKey || apiKey === 'your_api_key_here') {
+            toast({
+                variant: 'destructive',
+                title: 'Image Upload Failed',
+                description: 'ImgBB API Key is not configured. Please add it to the .env file.',
+            });
+            setIsUploading(false);
+            return null;
+        }
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            if (result.success) {
+                toast({
+                    title: 'Logo Uploaded',
+                    description: 'Your new logo has been uploaded successfully.',
+                });
+                return result.data.url;
+            } else {
+                throw new Error(result.error.message);
+            }
+        } catch (error) {
+            console.error('Logo upload error:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Logo Upload Failed',
+                description: 'Could not upload the logo. Please try again.',
+            });
+            return null;
+        } finally {
+            setIsUploading(false);
+        }
+    }
+
+    const handleLogoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                updateSettings({ logo: reader.result as string });
-            };
-            reader.readAsDataURL(file);
+            const imageUrl = await uploadImage(file);
+            if (imageUrl) {
+                updateSettings({ logo: imageUrl });
+            }
         }
     };
     
@@ -97,8 +142,11 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="logo">Cafe Logo</Label>
-                                    <Input id="logo" type="file" onChange={handleLogoChange} accept="image/*" />
-                                    <p className="text-xs text-muted-foreground pt-1">Upload a new logo image.</p>
+                                    <div className="flex items-center gap-4">
+                                        <Input id="logo" type="file" onChange={handleLogoChange} accept="image/*" className="flex-1" disabled={isUploading} />
+                                        {isUploading && <LoaderCircle className="animate-spin" />}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground pt-1">Upload a new logo image. Best results with a square image.</p>
                                     {settings.logo && (
                                         <div className="mt-4">
                                             <Image src={settings.logo} alt="Cafe Logo Preview" width={80} height={80} className="rounded-md border p-1" />
