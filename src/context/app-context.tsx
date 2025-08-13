@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, User as FirebaseUser, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserRole } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 
@@ -33,7 +33,7 @@ interface AppContextType {
   processPayment: (tableId: number, method: 'cash' | 'online') => void;
   currentUser: User | null;
   signIn: (email:string, password:string) => Promise<any>;
-  addStaffUser: (userData: Omit<User, 'uid' | 'role'> & {password: string}) => Promise<any>;
+  addStaffUser: (userData: Omit<User, 'uid' | 'role' | 'joiningDate'> & {password: string}) => Promise<any>;
   signOut: () => Promise<any>;
 }
 
@@ -74,19 +74,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     uid: user.uid,
                     ...userDoc.data()
                 } as User);
-            } else {
-                // This handles the first-time admin creation
-                if (user.email === 'admin@orderchha.com') {
-                    const adminUser: User = {
-                        uid: user.uid,
-                        email: user.email,
-                        name: 'Admin',
-                        role: 'admin',
-                        joiningDate: new Date().toISOString(),
-                    };
-                    await setDoc(userDocRef, adminUser);
-                    setCurrentUser(adminUser);
-                }
             }
         } else {
             setCurrentUser(null);
@@ -103,13 +90,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return;
     };
 
-    // Use onSnapshot for real-time updates
     const unsubscribers = [
-      onSnapshot(doc(db, 'app-config', 'settings'), async (doc) => {
-        if (doc.exists()) {
-          setSettings(doc.data() as Settings);
+      onSnapshot(doc(db, 'app-config', 'settings'), async (docSnap) => {
+        if (docSnap.exists()) {
+          setSettings(docSnap.data() as Settings);
         } else {
-          await setDoc(doc.ref, initialSettings);
+          await setDoc(docSnap.ref, initialSettings);
           setSettings(initialSettings);
         }
       }),
@@ -117,7 +103,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (snapshot.empty) {
           const batch = writeBatch(db);
           initialMenu.forEach(category => {
-            const categoryDocRef = doc(collection(db, 'menu'), category.id);
+            const categoryDocRef = doc(db, 'menu', category.id);
             batch.set(categoryDocRef, category);
           });
           await batch.commit();
@@ -130,7 +116,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (snapshot.empty) {
             const batch = writeBatch(db);
             initialTables.forEach(table => {
-                const tableDocRef = doc(collection(db, 'tables'), table.id.toString());
+                const tableDocRef = doc(db, 'tables', table.id.toString());
                 batch.set(tableDocRef, table);
             });
             await batch.commit();
@@ -158,35 +144,63 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isAuthLoading) {
-      const cleanup = initializeData(currentUser);
+      const cleanupPromise = initializeData(currentUser);
       return () => {
-        if (typeof cleanup === 'function') {
-           // This will be a function if the user was logged in
-           cleanup();
-        }
+        cleanupPromise.then(cleanup => {
+          if (typeof cleanup === 'function') {
+            cleanup();
+          }
+        });
       }
     }
   }, [isAuthLoading, currentUser, initializeData]);
 
-  // Save order to localStorage only
   useEffect(() => { 
     if (isLoaded) localStorage.setItem('orderchha-order', JSON.stringify(order)); 
   }, [order, isLoaded]);
-
-  const signIn = async (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
-  }
   
-  const addStaffUser = async (userData: Omit<User, 'uid' | 'role'> & {password: string}) => {
-    // This is a temporary auth instance to create the user without signing in the admin out
-    const tempApp = initializeApp(auth.app.options, `temp-app-${Date.now()}`);
-    const tempAuth = getAuth(tempApp);
-    
-    const userCredential = await createUserWithEmailAndPassword(tempAuth, userData.email!, userData.password);
+  const signIn = async (email: string, password: string) => {
+    // Special logic for first-time admin creation
+    if (email.toLowerCase() === 'admin@orderchha.com') {
+      try {
+        // First, try to sign in. If it works, the admin already exists.
+        return await signInWithEmailAndPassword(auth, email, password);
+      } catch (error: any) {
+        // If sign-in fails, check if any users exist at all.
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
+          const usersSnapshot = await getDocs(query(collection(db, 'users')));
+          const adminExists = usersSnapshot.docs.some(doc => doc.data().role === 'admin');
+
+          // If no admin exists, we assume this is the first-time setup.
+          if (!adminExists) {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            const adminUser: User = {
+              uid: user.uid,
+              email: user.email,
+              name: 'Admin',
+              role: 'admin',
+              joiningDate: new Date().toISOString(),
+            };
+            await setDoc(doc(db, 'users', user.uid), adminUser);
+            // The onAuthStateChanged listener will pick up the new user and set state.
+            return userCredential;
+          }
+        }
+        // If an admin already exists or another error occurred, re-throw it.
+        throw error;
+      }
+    }
+  
+    // Standard sign-in for all other users
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+  
+  const addStaffUser = async (userData: Omit<User, 'uid' | 'role' | 'joiningDate'> & {password: string}) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, userData.email!, userData.password);
     const user = userCredential.user;
     
-    const newUser: User = {
-        uid: user.uid,
+    const newUser: Omit<User, 'uid'> = {
         email: userData.email,
         name: userData.name,
         role: 'staff',
@@ -198,13 +212,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     
     await setDoc(doc(db, 'users', user.uid), newUser);
-    // No need to setCurrentUser as the admin is still logged in
+    await firebaseSignOut(auth);
+    // The main admin user will be signed back in by the effect hook
   }
 
-
-  const signOut = () => {
-    return firebaseSignOut(auth);
-  }
+  const signOut = async () => {
+    await firebaseSignOut(auth);
+    setCurrentUser(null);
+    setTables([]);
+    setMenu([]);
+    setSettings(initialSettings);
+  };
 
   const addMenuItem = async (item: MenuItem, categoryName: string) => {
     const categoryDocRef = doc(db, 'menu', categoryName);
@@ -338,16 +356,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const batch = writeBatch(db);
     
-    // Add transaction
     batch.set(doc(db, 'transactions', newTransaction.id), newTransaction);
     
-    // Remove paid orders from kitchen list
     ordersToPay.forEach(order => {
         const orderRef = doc(db, 'kitchen-orders', order.id);
         batch.delete(orderRef);
     });
 
-    // Set table back to available
     const tableRef = doc(db, 'tables', tableId.toString());
     batch.update(tableRef, { status: 'available' });
 
@@ -398,3 +413,5 @@ export function useApp() {
   }
   return context;
 }
+
+    
