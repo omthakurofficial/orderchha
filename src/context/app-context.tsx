@@ -42,6 +42,7 @@ interface AppContextType {
   inventory: InventoryItem[];
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => Promise<void>;
   updateInventoryItemStock: (itemId: string, amount: number) => Promise<void>;
+  deleteInventoryItem: (itemId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -159,20 +160,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseAuthUser | null) => {
       if (firebaseUser) {
-        // DIRECT FIX: If it's the admin user, use the hardcoded data to grant access immediately.
+        // If it's the admin user, directly use the hardcoded admin object.
         if (firebaseUser.uid === initialAdminUser.uid) {
             await initializeDataForUser(initialAdminUser);
-        } else {
-            // For other users, look them up in the database.
-            const userDocRef = doc(db, 'users', firebaseUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
+            return;
+        }
 
-            if (userDocSnap.exists()) {
-                await initializeDataForUser(userDocSnap.data() as User);
-            } else {
-                console.warn(`No Firestore document found for user ${firebaseUser.uid}. Logging out.`);
-                await signOut(auth);
-            }
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+            await initializeDataForUser(userDocSnap.data() as User);
+        } else {
+            console.warn(`No Firestore document found for user ${firebaseUser.uid}. Logging out.`);
+            await signOut(auth);
         }
       } else {
         clearAppData();
@@ -460,6 +461,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const deleteInventoryItem = async (itemId: string) => {
+    await firestoreDeleteDoc(doc(db, 'inventory', itemId));
+    toast({
+        title: "Item Deleted",
+        description: "The inventory item has been removed.",
+    });
+  };
+
 
   const value = { 
     isLoaded,
@@ -493,6 +502,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     inventory,
     addInventoryItem,
     updateInventoryItemStock,
+    deleteInventoryItem,
   };
 
   return (

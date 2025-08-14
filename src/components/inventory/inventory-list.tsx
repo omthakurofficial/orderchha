@@ -5,14 +5,25 @@ import { useApp } from "@/context/app-context";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Package, Plus, Minus } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Package, Plus, Minus, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { UpdateStockDialog } from "./update-stock-dialog";
 import { useMemo, useState } from "react";
 import type { InventoryItem } from "@/types";
 import type { DateRange } from "react-day-picker";
 import { isWithinInterval } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface InventoryListProps {
     searchTerm: string;
@@ -21,7 +32,7 @@ interface InventoryListProps {
 }
 
 export function InventoryList({ searchTerm, categoryFilter, dateRange }: InventoryListProps) {
-    const { inventory } = useApp();
+    const { inventory, deleteInventoryItem } = useApp();
     const [dialogItem, setDialogItem] = useState<{ item: InventoryItem; mode: 'add' | 'reduce' } | null>(null);
 
     const getStockStatusColor = (stock: number, threshold: number) => {
@@ -122,6 +133,29 @@ export function InventoryList({ searchTerm, categoryFilter, dateRange }: Invento
                                             <Minus className="mr-2 h-4 w-4" />
                                             Reduce Stock
                                         </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                                                     <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete Item
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete the inventory item "{item.name}".
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => deleteInventoryItem(item.id)}>
+                                                    Continue
+                                                </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
