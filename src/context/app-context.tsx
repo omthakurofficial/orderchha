@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, getDocs } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User as FirebaseAuthUser } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
@@ -78,20 +78,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
   
-  const initializeData = useCallback(async (user: User | null) => {
-    if (!user) {
-        setIsLoaded(true);
-        setCurrentUser(null);
-        return;
-    }
-
-    const usersQuery = query(collection(db, 'users'));
-    const usersSnapshot = await getDocs(usersQuery);
-    if (usersSnapshot.empty) {
-        // If no users exist in Firestore, create the initial admin user.
-        // This links the Auth user to the Firestore user profile.
-        await setDoc(doc(db, 'users', initialAdminUser.uid), initialAdminUser);
-    }
+  const initializeDataForUser = useCallback(async (user: User) => {
+    setCurrentUser(user);
 
     const unsubscribers = [
       onSnapshot(doc(db, 'app-config', 'settings'), async (docSnap) => {
@@ -141,40 +129,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setUsers(snapshot.docs.map(doc => doc.data() as User));
        }),
     ];
-
     setOrder(JSON.parse(localStorage.getItem('orderchha-order') || '[]'));
-    setCurrentUser(user);
     setIsLoaded(true);
-
     return () => unsubscribers.forEach(unsub => unsub());
   }, []);
+
+  const clearAppData = () => {
+    setCurrentUser(null);
+    setMenu([]);
+    setTables([]);
+    setKitchenOrders([]);
+    setPendingOrders([]);
+    setTransactions([]);
+    setUsers([]);
+    clearOrder();
+    setIsLoaded(true);
+  }
   
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        
-        // This logic ensures the admin user record is created if it's missing
-        if (user.email === initialAdminUser.email && !userDocSnap.exists()) {
-            await setDoc(doc(db, 'users', initialAdminUser.uid), initialAdminUser);
-             const recheckedSnap = await getDoc(userDocRef);
-             if (recheckedSnap.exists()) {
-                 await initializeData(recheckedSnap.data() as User);
-             }
-        } else if (userDocSnap.exists()) {
-          await initializeData(userDocSnap.data() as User);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseAuthUser | null) => {
+      if (firebaseUser) {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        let userDocSnap = await getDoc(userDocRef);
+
+        // If the admin user logs in but their DB record doesn't exist, create it.
+        if (!userDocSnap.exists() && firebaseUser.uid === initialAdminUser.uid) {
+            const usersSnapshot = await getDocs(query(collection(db, 'users')));
+            if (usersSnapshot.empty) {
+                await setDoc(userDocRef, initialAdminUser);
+                userDocSnap = await getDoc(userDocRef); // Re-fetch the snapshot
+            }
+        }
+
+        if (userDocSnap.exists()) {
+          await initializeDataForUser(userDocSnap.data() as User);
         } else {
-          await initializeData(null); 
+          // This can happen if a user is created in Auth but not in Firestore, or on logout.
+          console.warn(`No Firestore document found for user ${firebaseUser.uid}`);
+          clearAppData();
         }
       } else {
-        await initializeData(null);
+        clearAppData();
       }
     });
 
     return () => unsubscribe();
-  }, [initializeData]);
+  }, [initializeDataForUser]);
 
 
   useEffect(() => { 
@@ -189,16 +190,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const handleSignOut = async () => {
     const auth = getAuth();
     await signOut(auth);
-    setCurrentUser(null);
-    setMenu([]);
-    setTables([]);
-    setSettings(initialSettings);
-    setKitchenOrders([]);
-    setPendingOrders([]);
-    setTransactions([]);
-    setUsers([]);
-    clearOrder();
-    setIsLoaded(false);
   }
 
   const addMenuItem = async (item: MenuItem, categoryName: string) => {
