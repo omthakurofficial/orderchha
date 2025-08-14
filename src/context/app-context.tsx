@@ -151,28 +151,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseAuthUser | null) => {
       if (firebaseUser) {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
-        let userDocSnap = await getDoc(userDocRef);
-
-        // If the admin user logs in but their DB record doesn't exist, create it.
-        if (!userDocSnap.exists() && firebaseUser.uid === initialAdminUser.uid) {
-            const usersSnapshot = await getDocs(query(collection(db, 'users')));
-            if (usersSnapshot.empty) {
-                await setDoc(userDocRef, initialAdminUser);
-                userDocSnap = await getDoc(userDocRef); // Re-fetch the snapshot
-            }
-        }
+        const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
           await initializeDataForUser(userDocSnap.data() as User);
         } else {
-          // This can happen if a user is created in Auth but not in Firestore, or on logout.
-          console.warn(`No Firestore document found for user ${firebaseUser.uid}`);
+          // This case is now less likely for the admin, but good for handling cleanup.
+          console.warn(`No Firestore document found for user ${firebaseUser.uid}. Logging out.`);
+          await signOut(auth);
           clearAppData();
         }
       } else {
         clearAppData();
       }
     });
+
+    // One-time check to ensure admin user exists in Firestore
+    const ensureAdminExists = async () => {
+      const usersSnapshot = await getDocs(query(collection(db, 'users')));
+      if (usersSnapshot.empty) {
+        console.log("No users found in Firestore. Creating initial admin user.");
+        const adminDocRef = doc(db, 'users', initialAdminUser.uid);
+        await setDoc(adminDocRef, initialAdminUser);
+      }
+    };
+
+    ensureAdminExists();
 
     return () => unsubscribe();
   }, [initializeDataForUser]);
@@ -454,3 +458,5 @@ export function useApp() {
   }
   return context;
 }
+
+    
