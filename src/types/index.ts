@@ -16,7 +16,7 @@ export interface OrderItem extends MenuItem {
 }
 
 export interface KitchenOrder {
-    id: string;
+    id:string;
     tableId: number;
     items: OrderItem[];
     status: 'pending' | 'in-kitchen' | 'completed';
