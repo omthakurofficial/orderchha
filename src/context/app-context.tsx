@@ -53,9 +53,8 @@ const initialSettings: Settings = {
   paymentQrUrl: 'https://www.example.com/pay',
 };
 
-// Admin user details from your screenshot and request
 const initialAdminUser: User = {
-    uid: 'lsg4BNvGAre9YZXGBaMonuA9Y7ZXIiA3',
+    uid: 'lsg4BNvGAre9YZXGBaMonuAQR3h2',
     email: 'admin@orderchha.cafe',
     name: 'Admin',
     role: 'admin',
@@ -156,17 +155,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (userDocSnap.exists()) {
           await initializeDataForUser(userDocSnap.data() as User);
         } else {
-          // This case is now less likely for the admin, but good for handling cleanup.
           console.warn(`No Firestore document found for user ${firebaseUser.uid}. Logging out.`);
           await signOut(auth);
-          clearAppData();
         }
       } else {
         clearAppData();
       }
     });
 
-    // One-time check to ensure admin user exists in Firestore
     const ensureAdminExists = async () => {
       const usersSnapshot = await getDocs(query(collection(db, 'users')));
       if (usersSnapshot.empty) {
@@ -406,8 +402,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           });
           return;
       }
-      // In a real app, this would also delete the user from Firebase Auth.
-      // This requires admin privileges on the backend, so we will just delete from firestore.
       const userRef = doc(db, 'users', uid);
       await firestoreDeleteDoc(userRef);
   };
@@ -458,5 +452,3 @@ export function useApp() {
   }
   return context;
 }
-
-    
