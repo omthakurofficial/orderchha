@@ -53,6 +53,18 @@ const initialSettings: Settings = {
   paymentQrUrl: 'https://www.example.com/pay',
 };
 
+// Admin user details from your screenshot and request
+const initialAdminUser: User = {
+    uid: 'lsg4BNvGAre9YZXGBaMonuA9Y7ZXIiA3',
+    email: 'admin@orderchha.cafe',
+    name: 'Admin',
+    role: 'admin',
+    designation: 'Super Admin',
+    joiningDate: new Date().toISOString(),
+    photoUrl: 'https://placehold.co/100x100.png',
+};
+
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [menu, setMenu] = useState<MenuCategory[]>([]);
@@ -72,6 +84,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCurrentUser(null);
         return;
     }
+
+    const usersQuery = query(collection(db, 'users'));
+    const usersSnapshot = await getDocs(usersQuery);
+    if (usersSnapshot.empty) {
+        // If no users exist in Firestore, create the initial admin user.
+        // This links the Auth user to the Firestore user profile.
+        await setDoc(doc(db, 'users', initialAdminUser.uid), initialAdminUser);
+    }
+
     const unsubscribers = [
       onSnapshot(doc(db, 'app-config', 'settings'), async (docSnap) => {
         if (docSnap.exists()) {
@@ -134,10 +155,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (user) {
         const userDocRef = doc(db, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
+        
+        // This logic ensures the admin user record is created if it's missing
+        if (user.email === initialAdminUser.email && !userDocSnap.exists()) {
+            await setDoc(doc(db, 'users', initialAdminUser.uid), initialAdminUser);
+             const recheckedSnap = await getDoc(userDocRef);
+             if (recheckedSnap.exists()) {
+                 await initializeData(recheckedSnap.data() as User);
+             }
+        } else if (userDocSnap.exists()) {
           await initializeData(userDocSnap.data() as User);
         } else {
-          // This case should ideally not happen if users are created properly
           await initializeData(null); 
         }
       } else {
