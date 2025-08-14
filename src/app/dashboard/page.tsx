@@ -4,14 +4,31 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useApp } from "@/context/app-context";
 import { DollarSign, LayoutDashboard, Wallet } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
-    const { transactions } = useApp();
+    const { transactions, currentUser } = useApp();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (currentUser?.role !== 'admin') {
+            router.push('/');
+        }
+    }, [currentUser, router]);
 
     const totalRevenue = transactions.reduce((acc, t) => acc + t.amount, 0);
     const cashRevenue = transactions.filter(t => t.method === 'cash').reduce((acc, t) => acc + t.amount, 0);
     const onlineRevenue = transactions.filter(t => t.method === 'online').reduce((acc, t) => acc + t.amount, 0);
     const totalOrders = transactions.length;
+    
+    if (currentUser?.role !== 'admin') {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p>You do not have permission to view this page.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col h-full">

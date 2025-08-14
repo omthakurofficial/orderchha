@@ -23,15 +23,15 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 
-const navItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/", icon: LayoutGrid, label: "Tables" },
-    { href: "/menu", icon: UtensilsCrossed, label: "Menu" },
-    { href: "/upload-menu", icon: Upload, label: "Manage Menu" },
-    { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders" },
-    { href: "/kitchen", icon: ChefHat, label: "Kitchen" },
-    { href: "/users", icon: Users, label: "Users" },
-    { href: "/settings", icon: Settings, label: "Settings" },
+const allNavItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", role: "admin" },
+    { href: "/", icon: LayoutGrid, label: "Tables", role: "all" },
+    { href: "/menu", icon: UtensilsCrossed, label: "Menu", role: "all" },
+    { href: "/upload-menu", icon: Upload, label: "Manage Menu", role: "all" },
+    { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders", role: "all" },
+    { href: "/kitchen", icon: ChefHat, label: "Kitchen", role: "all" },
+    { href: "/users", icon: Users, label: "Users", role: "admin" },
+    { href: "/settings", icon: Settings, label: "Settings", role: "admin" },
 ];
 
 
@@ -47,6 +47,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!isMounted) {
     return null;
   }
+
+  const navItems = allNavItems.filter(item => {
+    if (item.role === 'all') return true;
+    return item.role === currentUser?.role;
+  });
 
   const Logo = () => (
     settings.logo ? (

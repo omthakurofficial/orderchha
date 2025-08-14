@@ -7,12 +7,28 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useApp } from "@/context/app-context";
 import { PlusCircle, Users } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 
 export default function UsersPage() {
-    const { users, addUser } = useApp();
+    const { users, addUser, currentUser } = useApp();
     const [dialogOpen, setDialogOpen] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        if (currentUser?.role !== 'admin') {
+            router.push('/');
+        }
+    }, [currentUser, router]);
+
+    if (currentUser?.role !== 'admin') {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p>You do not have permission to view this page.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col h-full">

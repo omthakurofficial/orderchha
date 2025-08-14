@@ -12,12 +12,20 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
     const { toast } = useToast();
-    const { settings, updateSettings } = useApp();
+    const { settings, updateSettings, currentUser } = useApp();
     const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
     const [isUploading, setIsUploading] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        if (currentUser?.role !== 'admin') {
+            router.push('/');
+        }
+    }, [currentUser, router]);
 
     const handleSaveChanges = () => {
         toast({
@@ -112,6 +120,14 @@ export default function SettingsPage() {
             setQrCodeUrl("https://placehold.co/256x256.png");
         }
     }, [settings.paymentQrUrl]);
+
+    if (currentUser?.role !== 'admin') {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p>You do not have permission to view this page.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col h-full">
