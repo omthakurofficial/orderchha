@@ -35,7 +35,7 @@ export function UserList({ users }: UserListProps) {
         deleteUser(userId);
         toast({
             title: "User Deleted",
-            description: "The user account has been successfully deleted.",
+            description: "The user account has been successfully deleted from the user list. Note: The Auth record may still exist.",
         })
     }
     
@@ -118,8 +118,8 @@ export function UserList({ users }: UserListProps) {
                                                 <AlertDialogHeader>
                                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete the user account
-                                                    and remove their data from our servers.
+                                                    This action cannot be undone. This will permanently delete the user's information
+                                                    from the user list.
                                                 </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>

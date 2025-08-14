@@ -3,9 +3,10 @@
 
 import { useApp } from "@/context/app-context";
 import { AppShell } from "./app-shell";
+import LoginPage from "@/app/login/page";
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
-    const { isLoaded } = useApp();
+    const { currentUser, isLoaded } = useApp();
 
     if (!isLoaded) {
         return (
@@ -15,10 +16,12 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // Since authentication is removed, we wrap the content in AppShell if data is loaded.
-    // Receipt page is standalone.
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/receipt')) {
         return <main>{children}</main>;
+    }
+
+    if (!currentUser) {
+        return <LoginPage />;
     }
 
     return <AppShell>{children}</AppShell>;

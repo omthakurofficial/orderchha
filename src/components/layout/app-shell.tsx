@@ -11,14 +11,17 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, Users } from "lucide-react";
+import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, Users, LogOut } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
 import { useApp } from "@/context/app-context";
 import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
 
 const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -35,7 +38,7 @@ const navItems = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMounted, setIsMounted] = React.useState(false);
-  const { settings } = useApp();
+  const { settings, currentUser, signOut } = useApp();
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -71,12 +74,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Logo />
-            <div className="flex flex-col">
-              <h2 className="text-lg font-bold font-headline">{settings.cafeName}</h2>
-            </div>
-          </div>
+            <Card className="bg-sidebar-accent">
+                <CardContent className="p-3 flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                        <AvatarImage src={currentUser?.photoUrl} alt={currentUser?.name} />
+                        <AvatarFallback>{currentUser?.name?.charAt(0) ?? 'U'}</AvatarFallback>
+                    </Avatar>
+                     <div>
+                        <h3 className="font-bold font-headline text-md">{currentUser?.name}</h3>
+                        <p className="text-xs text-sidebar-accent-foreground capitalize">{currentUser?.role} Role</p>
+                    </div>
+                </CardContent>
+            </Card>
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -96,18 +105,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarHeader className="p-4 mt-auto">
-            <Card className="bg-sidebar-accent">
-                <CardContent className="p-3">
-                    <h3 className="font-bold font-headline text-sm flex items-center gap-2"><MapPin className="w-4 h-4" /> Address</h3>
-                    <p className="text-xs text-sidebar-accent-foreground mt-1">
-                        {settings.address}
-                    </p>
-                    <h3 className="font-bold font-headline text-sm mt-3">Phone</h3>
-                    <p className="text-xs text-sidebar-accent-foreground">{settings.phone}</p>
-                </CardContent>
-            </Card>
-        </SidebarHeader>
+        <SidebarFooter className="p-2">
+            <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
+                <LogOut />
+                <span>Sign Out</span>
+            </Button>
+        </SidebarFooter>
       </Sidebar>
       <SidebarInset>
         <header className="flex items-center justify-between p-2 border-b h-14 md:hidden">
