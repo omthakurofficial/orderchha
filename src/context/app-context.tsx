@@ -149,14 +149,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseAuthUser | null) => {
       if (firebaseUser) {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-          await initializeDataForUser(userDocSnap.data() as User);
+        // DIRECT FIX: If it's the admin user, use the hardcoded data to grant access immediately.
+        if (firebaseUser.uid === initialAdminUser.uid) {
+            await initializeDataForUser(initialAdminUser);
         } else {
-          console.warn(`No Firestore document found for user ${firebaseUser.uid}. Logging out.`);
-          await signOut(auth);
+            // For other users, look them up in the database.
+            const userDocRef = doc(db, 'users', firebaseUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists()) {
+                await initializeDataForUser(userDocSnap.data() as User);
+            } else {
+                console.warn(`No Firestore document found for user ${firebaseUser.uid}. Logging out.`);
+                await signOut(auth);
+            }
         }
       } else {
         clearAppData();
@@ -164,10 +170,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
 
     const ensureAdminExists = async () => {
-      const usersSnapshot = await getDocs(query(collection(db, 'users')));
-      if (usersSnapshot.empty) {
-        console.log("No users found in Firestore. Creating initial admin user.");
-        const adminDocRef = doc(db, 'users', initialAdminUser.uid);
+      const adminDocRef = doc(db, 'users', initialAdminUser.uid);
+      const docSnap = await getDoc(adminDocRef);
+      if (!docSnap.exists()) {
+        console.log("Admin user not found in Firestore. Creating now.");
         await setDoc(adminDocRef, initialAdminUser);
       }
     };
