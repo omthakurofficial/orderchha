@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, getDocs } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User as FirebaseAuthUser } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData } from '@/types';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
@@ -37,8 +37,10 @@ interface AppContextType {
   signOut: () => Promise<void>;
   users: User[];
   addUser: (userData: UserFormData, photoFile: File | null) => Promise<void>;
-  updateUserRole: (uid: string, role: 'admin' | 'staff') => Promise<void>;
+  updateUserRole: (uid: string, role: User['role']) => Promise<void>;
   deleteUser: (uid: string) => Promise<void>;
+  inventory: InventoryItem[];
+  addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -74,6 +76,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
   
@@ -126,6 +129,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ),
        onSnapshot(query(collection(db, 'users')), (snapshot) => {
             setUsers(snapshot.docs.map(doc => doc.data() as User));
+       }),
+       onSnapshot(query(collection(db, 'inventory')), (snapshot) => {
+            setInventory(snapshot.docs.map(doc => doc.data() as InventoryItem));
        }),
     ];
     setOrder(JSON.parse(localStorage.getItem('orderchha-order') || '[]'));
@@ -386,7 +392,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await setDoc(doc(db, 'users', user.uid), newUser);
   };
 
-  const updateUserRole = async (uid: string, role: 'admin' | 'staff') => {
+  const updateUserRole = async (uid: string, role: User['role']) => {
       if (uid === currentUser?.uid) {
           toast({
               variant: 'destructive',
@@ -410,6 +416,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       const userRef = doc(db, 'users', uid);
       await firestoreDeleteDoc(userRef);
+  };
+
+  const addInventoryItem = async (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => {
+    const id = `inv-${Date.now()}`;
+    const lastUpdated = new Date().toISOString();
+    const newItem: InventoryItem = { ...item, id, lastUpdated };
+    await setDoc(doc(db, 'inventory', id), newItem);
   };
 
 
@@ -442,6 +455,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addUser,
     updateUserRole,
     deleteUser,
+    inventory,
+    addInventoryItem,
   };
 
   return (

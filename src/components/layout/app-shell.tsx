@@ -14,7 +14,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, Users, LogOut } from "lucide-react";
+import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, Users, LogOut, Package } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
@@ -22,12 +22,14 @@ import { useApp } from "@/context/app-context";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
+import { SheetTitle } from "../ui/sheet";
 
 const allNavItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", role: "admin" },
     { href: "/", icon: LayoutGrid, label: "Tables", role: "all" },
     { href: "/menu", icon: UtensilsCrossed, label: "Menu", role: "all" },
     { href: "/upload-menu", icon: Upload, label: "Manage Menu", role: "all" },
+    { href: "/inventory", icon: Package, label: "Inventory", role: "admin" },
     { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders", role: "all" },
     { href: "/kitchen", icon: ChefHat, label: "Kitchen", role: "all" },
     { href: "/users", icon: Users, label: "Users", role: "admin" },

@@ -55,7 +55,7 @@ export interface Transaction {
     timestamp: string;
 }
 
-export type UserRole = 'admin' | 'staff';
+export type UserRole = 'admin' | 'staff' | 'cashier' | 'accountant' | 'waiter' | 'kitchen';
 
 export interface User {
   uid: string;
@@ -78,4 +78,24 @@ export interface UserFormData {
     address?: string;
     designation?: string;
     joiningDate?: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contactPerson?: string;
+  phone: string;
+  email?: string;
+  address?: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: string;
+  stock: number;
+  unit: 'kg' | 'g' | 'ltr' | 'ml' | 'pcs' | 'pack';
+  lowStockThreshold: number;
+  supplierId?: string;
+  lastUpdated: string;
 }
