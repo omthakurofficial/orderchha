@@ -41,16 +41,21 @@ export default function InventoryPage() {
 
     return (
         <div className="flex flex-col h-full">
-            <header className="p-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold font-headline flex items-center gap-2">
-                        <Package />
-                        Inventory Management
-                    </h1>
-                    <p className="text-muted-foreground">Track and manage your cafe's stock levels.</p>
+            <header className="p-4 border-b space-y-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex-1">
+                        <h1 className="text-2xl font-bold font-headline flex items-center gap-2">
+                            <Package />
+                            Inventory Management
+                        </h1>
+                        <p className="text-muted-foreground">Track and manage your cafe's stock levels.</p>
+                    </div>
+                    <div className="hidden md:block">
+                        <AddInventoryItemDialog />
+                    </div>
                 </div>
-                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full md:w-auto">
-                    <div className="relative flex-1 md:flex-initial">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                    <div className="relative flex-1 md:flex-grow-0">
                          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                          <Input 
                             type="search"
@@ -71,7 +76,9 @@ export default function InventoryPage() {
                         </SelectContent>
                     </Select>
                     <DateRangePicker onDateChange={setDateRange} />
-                    <AddInventoryItemDialog />
+                    <div className="block md:hidden">
+                        <AddInventoryItemDialog />
+                    </div>
                 </div>
             </header>
             <main className="flex-1 p-4 md:p-6 overflow-auto">
