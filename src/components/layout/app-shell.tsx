@@ -27,6 +27,7 @@ const navItems = [
     { href: "/upload-menu", icon: Upload, label: "Manage Menu" },
     { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders" },
     { href: "/kitchen", icon: ChefHat, label: "Kitchen" },
+    { href: "/users", icon: Users, label: "Users" },
     { href: "/settings", icon: Settings, label: "Settings" },
 ];
 

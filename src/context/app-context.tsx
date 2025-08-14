@@ -4,8 +4,10 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc } from 'firebase/firestore';
-import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User } from '@/types';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppContextType {
   isLoaded: boolean;
@@ -29,7 +31,11 @@ interface AppContextType {
   rejectPendingOrder: (orderId: string) => void;
   transactions: Transaction[];
   processPayment: (tableId: number, method: 'cash' | 'online') => void;
-  currentUser: User | null; // Kept for type consistency, but will be a mock user.
+  currentUser: User | null;
+  users: User[];
+  addUser: (userData: UserFormData, photoFile: File | null) => Promise<void>;
+  updateUserRole: (uid: string, role: 'admin' | 'staff') => Promise<void>;
+  deleteUser: (uid: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -48,7 +54,7 @@ const initialSettings: Settings = {
 const mockAdminUser: User = {
     uid: 'admin-mock-uid',
     email: 'admin@orderchha.cafe',
-    name: 'Admin',
+    name: 'Admin User',
     role: 'admin',
     joiningDate: new Date().toISOString()
 };
@@ -62,6 +68,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const { toast } = useToast();
   
   // No-op for initializeData as we don't need to wait for a user
   useEffect(() => {
@@ -109,6 +117,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       onSnapshot(query(collection(db, 'transactions')), (snapshot) => 
         setTransactions(snapshot.docs.map(doc => doc.data() as Transaction))
       ),
+       onSnapshot(query(collection(db, 'users')), (snapshot) => {
+        if (snapshot.empty) {
+            // If no users exist, create the default admin user.
+            const adminUserDocRef = doc(db, 'users', mockAdminUser.uid);
+            setDoc(adminUserDocRef, mockAdminUser);
+            setUsers([mockAdminUser]);
+        } else {
+            setUsers(snapshot.docs.map(doc => doc.data() as User));
+        }
+       }),
     ];
 
     setOrder(JSON.parse(localStorage.getItem('orderchha-order') || '[]'));
@@ -275,6 +293,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await batch.commit();
   };
 
+  const uploadImage = async (file: File, path: string): Promise<string> => {
+    const storage = getStorage();
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    return getDownloadURL(storageRef);
+  };
+  
+  const addUser = async (userData: UserFormData, photoFile: File | null) => {
+      // In a real app, this would use Firebase Auth to create a user
+      // then save their data to Firestore. Here, we just add to Firestore.
+      const uid = `user-${Date.now()}`;
+      let photoUrl = 'https://placehold.co/100x100.png';
+
+      if (photoFile) {
+          photoUrl = await uploadImage(photoFile, `user-photos/${uid}/${photoFile.name}`);
+      }
+
+      const newUser: User = {
+          uid,
+          email: userData.email,
+          name: userData.name,
+          role: 'staff',
+          mobile: userData.mobile,
+          address: userData.address,
+          designation: userData.designation,
+          joiningDate: userData.joiningDate,
+          photoUrl,
+      };
+
+      await setDoc(doc(db, 'users', uid), newUser);
+      // We don't handle password here as auth is removed.
+  };
+
+  const updateUserRole = async (uid: string, role: 'admin' | 'staff') => {
+      const userRef = doc(db, 'users', uid);
+      await setDoc(userRef, { role }, { merge: true });
+  };
+  
+  const deleteUser = async (uid: string) => {
+      // In a real app, this would also delete the user from Firebase Auth.
+      const userRef = doc(db, 'users', uid);
+      await firestoreDeleteDoc(userRef);
+  };
+
 
   const value = { 
     isLoaded,
@@ -299,6 +361,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     transactions,
     processPayment,
     currentUser: mockAdminUser,
+    users,
+    addUser,
+    updateUserRole,
+    deleteUser,
   };
 
   return (

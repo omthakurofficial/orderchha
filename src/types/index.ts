@@ -68,3 +68,14 @@ export interface User {
   designation?: string;
   joiningDate?: string;
 }
+
+export interface UserFormData {
+    name: string;
+    email: string;
+    password?: string; // Password is used for creation, but not stored in Firestore doc
+    role: UserRole;
+    mobile?: string;
+    address?: string;
+    designation?: string;
+    joiningDate?: string;
+}
