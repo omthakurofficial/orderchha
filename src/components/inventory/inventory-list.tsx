@@ -62,7 +62,7 @@ export function InventoryList() {
                                <div className="flex items-center gap-2">
                                     <Progress 
                                         value={(item.stock / (item.lowStockThreshold * 3)) * 100} 
-                                        className="w-24 h-2 [&>div]:bg-primary"
+                                        className="w-24 h-2"
                                         indicatorClassName={getStockStatusColor(item.stock, item.lowStockThreshold)}
                                     />
                                      {item.stock <= item.lowStockThreshold && (
@@ -97,10 +97,4 @@ export function InventoryList() {
             </Table>
         </div>
     );
-}
-
-declare module 'react' {
-    interface ComponentProps<T> {
-        indicatorClassName?: string;
-    }
 }
