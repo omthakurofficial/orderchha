@@ -29,6 +29,7 @@ const inventoryItemSchema = z.object({
   category: z.string().min(2, "Category is required."),
   stock: z.coerce.number().min(0, "Stock cannot be negative."),
   unit: z.enum(['kg', 'g', 'ltr', 'ml', 'pcs', 'pack']),
+  purchasePrice: z.coerce.number().positive("Purchase price must be a positive number."),
   lowStockThreshold: z.coerce.number().positive("Threshold must be a positive number."),
 });
 
@@ -46,6 +47,7 @@ export function AddInventoryItemDialog() {
       category: '',
       stock: 0,
       unit: 'pcs',
+      purchasePrice: 0,
       lowStockThreshold: 10,
     },
   });
@@ -152,6 +154,19 @@ export function AddInventoryItemDialog() {
                     )}
                     />
             </div>
+             <FormField
+              control={form.control}
+              name="purchasePrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Purchase Price (per unit)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 150.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="lowStockThreshold"

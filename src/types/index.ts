@@ -95,6 +95,7 @@ export interface InventoryItem {
   category: string;
   stock: number;
   unit: 'kg' | 'g' | 'ltr' | 'ml' | 'pcs' | 'pack';
+  purchasePrice: number;
   lowStockThreshold: number;
   supplierId?: string;
   lastUpdated: string;

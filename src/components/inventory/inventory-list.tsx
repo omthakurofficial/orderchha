@@ -38,6 +38,8 @@ export function InventoryList() {
                         <TableHead>Item Name</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Current Stock</TableHead>
+                        <TableHead>Purchase Price</TableHead>
+                        <TableHead>Total Value</TableHead>
                         <TableHead>Stock Level</TableHead>
                         <TableHead>Last Updated</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -54,6 +56,8 @@ export function InventoryList() {
                                 <span className="font-bold">{item.stock}</span>
                                 <span className="text-xs text-muted-foreground ml-1">{item.unit}</span>
                             </TableCell>
+                            <TableCell>NPR {item.purchasePrice.toFixed(2)}</TableCell>
+                            <TableCell className="font-semibold">NPR {(item.stock * item.purchasePrice).toFixed(2)}</TableCell>
                             <TableCell>
                                <div className="flex items-center gap-2">
                                     <Progress 
