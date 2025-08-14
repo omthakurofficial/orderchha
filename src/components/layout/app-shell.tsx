@@ -22,7 +22,6 @@ import { useApp } from "@/context/app-context";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { SheetTitle } from "../ui/sheet";
 
 const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -75,7 +74,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="p-4">
-            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             <Card className="bg-sidebar-accent">
                 <CardContent className="p-3 flex items-center gap-3">
                     <Avatar className="h-12 w-12">
