@@ -8,10 +8,17 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Package, Plus, Minus } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+import { UpdateStockDialog } from "./update-stock-dialog";
+import { useMemo, useState } from "react";
+import type { InventoryItem } from "@/types";
 
-export function InventoryList() {
+interface InventoryListProps {
+    searchTerm: string;
+}
+
+export function InventoryList({ searchTerm }: InventoryListProps) {
     const { inventory } = useApp();
+    const [dialogItem, setDialogItem] = useState<{ item: InventoryItem; mode: 'add' | 'reduce' } | null>(null);
 
     const getStockStatusColor = (stock: number, threshold: number) => {
         const percentage = (stock / (threshold * 3)) * 100; // Assume 'full' is 3x threshold
@@ -19,6 +26,13 @@ export function InventoryList() {
         if (percentage < 50) return 'bg-yellow-500'; // Medium stock
         return 'bg-green-500'; // Healthy stock
     };
+
+    const filteredInventory = useMemo(() => {
+        if (!searchTerm) return inventory;
+        return inventory.filter(item => 
+            item.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [inventory, searchTerm]);
 
     if (inventory.length === 0) {
         return (
@@ -30,7 +44,18 @@ export function InventoryList() {
         )
     }
 
+    if (filteredInventory.length === 0) {
+         return (
+            <div className="flex flex-col items-center justify-center text-center p-8 rounded-lg bg-muted/40 h-64">
+                <Package className="w-16 h-16 text-muted-foreground mb-4" />
+                <h2 className="text-xl font-bold text-muted-foreground">No Items Match Your Search</h2>
+                <p className="text-muted-foreground">Try a different search term.</p>
+          </div>
+        )
+    }
+
     return (
+        <>
         <div className="border rounded-lg">
             <Table>
                 <TableHeader>
@@ -46,7 +71,7 @@ export function InventoryList() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {inventory.map(item => (
+                    {filteredInventory.map(item => (
                         <TableRow key={item.id}>
                             <TableCell className="font-medium">{item.name}</TableCell>
                             <TableCell>
@@ -80,11 +105,11 @@ export function InventoryList() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setDialogItem({ item, mode: 'add' })}>
                                             <Plus className="mr-2 h-4 w-4" />
                                             Add Stock
                                         </DropdownMenuItem>
-                                         <DropdownMenuItem>
+                                         <DropdownMenuItem onSelect={() => setDialogItem({ item, mode: 'reduce' })}>
                                             <Minus className="mr-2 h-4 w-4" />
                                             Reduce Stock
                                         </DropdownMenuItem>
@@ -96,5 +121,14 @@ export function InventoryList() {
                 </TableBody>
             </Table>
         </div>
+        {dialogItem && (
+            <UpdateStockDialog 
+                isOpen={!!dialogItem}
+                onOpenChange={(open) => !open && setDialogItem(null)}
+                item={dialogItem.item}
+                mode={dialogItem.mode}
+            />
+        )}
+        </>
     );
 }

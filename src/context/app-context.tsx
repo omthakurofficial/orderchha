@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, getDocs, updateDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User as FirebaseAuthUser } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem } from '@/types';
@@ -41,6 +41,7 @@ interface AppContextType {
   deleteUser: (uid: string) => Promise<void>;
   inventory: InventoryItem[];
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => Promise<void>;
+  updateInventoryItemStock: (itemId: string, amount: number) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -81,7 +82,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
   const initializeDataForUser = useCallback(async (user: User) => {
-    setCurrentUser(user);
+    // If the user is the hardcoded admin, use the initialAdminUser object directly.
+    // This guarantees access even if the Firestore doc is momentarily out of sync.
+    const userToSet = user.uid === initialAdminUser.uid ? initialAdminUser : user;
+    setCurrentUser(userToSet);
 
     const unsubscribers = [
       onSnapshot(doc(db, 'app-config', 'settings'), async (docSnap) => {
@@ -424,6 +428,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const newItem: InventoryItem = { ...item, id, lastUpdated };
     await setDoc(doc(db, 'inventory', id), newItem);
   };
+  
+  const updateInventoryItemStock = async (itemId: string, amount: number) => {
+    const itemRef = doc(db, 'inventory', itemId);
+    const itemDoc = await getDoc(itemRef);
+
+    if (!itemDoc.exists()) {
+      throw new Error("Inventory item not found");
+    }
+
+    const currentStock = itemDoc.data().stock;
+    const newStock = currentStock + amount;
+
+    if (newStock < 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Operation',
+        description: 'Stock quantity cannot be negative.',
+      });
+      return;
+    }
+
+    await updateDoc(itemRef, {
+      stock: newStock,
+      lastUpdated: new Date().toISOString(),
+    });
+
+     toast({
+      title: 'Stock Updated',
+      description: `Stock for ${itemDoc.data().name} has been updated.`,
+    });
+  };
 
 
   const value = { 
@@ -457,6 +492,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deleteUser,
     inventory,
     addInventoryItem,
+    updateInventoryItemStock,
   };
 
   return (
