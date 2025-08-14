@@ -11,12 +11,16 @@ import { Progress } from "@/components/ui/progress";
 import { UpdateStockDialog } from "./update-stock-dialog";
 import { useMemo, useState } from "react";
 import type { InventoryItem } from "@/types";
+import type { DateRange } from "react-day-picker";
+import { isWithinInterval } from "date-fns";
 
 interface InventoryListProps {
     searchTerm: string;
+    categoryFilter: string;
+    dateRange?: DateRange;
 }
 
-export function InventoryList({ searchTerm }: InventoryListProps) {
+export function InventoryList({ searchTerm, categoryFilter, dateRange }: InventoryListProps) {
     const { inventory } = useApp();
     const [dialogItem, setDialogItem] = useState<{ item: InventoryItem; mode: 'add' | 'reduce' } | null>(null);
 
@@ -28,11 +32,16 @@ export function InventoryList({ searchTerm }: InventoryListProps) {
     };
 
     const filteredInventory = useMemo(() => {
-        if (!searchTerm) return inventory;
-        return inventory.filter(item => 
-            item.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [inventory, searchTerm]);
+        return inventory.filter(item => {
+            const nameMatch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            const categoryMatch = categoryFilter === 'all' || item.category === categoryFilter;
+
+            const dateMatch = !dateRange || !dateRange.from || !dateRange.to || isWithinInterval(new Date(item.lastUpdated), { start: dateRange.from, end: dateRange.to });
+
+            return nameMatch && categoryMatch && dateMatch;
+        });
+    }, [inventory, searchTerm, categoryFilter, dateRange]);
 
     if (inventory.length === 0) {
         return (
@@ -49,7 +58,7 @@ export function InventoryList({ searchTerm }: InventoryListProps) {
             <div className="flex flex-col items-center justify-center text-center p-8 rounded-lg bg-muted/40 h-64">
                 <Package className="w-16 h-16 text-muted-foreground mb-4" />
                 <h2 className="text-xl font-bold text-muted-foreground">No Items Match Your Search</h2>
-                <p className="text-muted-foreground">Try a different search term.</p>
+                <p className="text-muted-foreground">Try different filter combinations.</p>
           </div>
         )
     }
@@ -75,7 +84,7 @@ export function InventoryList({ searchTerm }: InventoryListProps) {
                         <TableRow key={item.id}>
                             <TableCell className="font-medium">{item.name}</TableCell>
                             <TableCell>
-                                <Badge variant="outline">{item.category}</Badge>
+                                <Badge variant="outline" className="capitalize">{item.category}</Badge>
                             </TableCell>
                             <TableCell>
                                 <span className="font-bold">{item.stock}</span>
