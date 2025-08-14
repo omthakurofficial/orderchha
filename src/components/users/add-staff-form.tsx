@@ -11,12 +11,14 @@ import { LoaderCircle, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import Image from 'next/image';
-import type { UserFormData } from '@/types';
+import type { UserFormData, UserRole } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const staffFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  role: z.enum(['admin', 'staff'], { required_error: "Please select a role."}),
   mobile: z.string().optional(),
   address: z.string().optional(),
   designation: z.string().optional(),
@@ -42,6 +44,7 @@ export function AddStaffForm({ onFormSubmit, onSuccess }: AddStaffFormProps) {
             name: '',
             email: '',
             password: '',
+            role: 'staff',
             mobile: '',
             address: '',
             designation: 'Staff',
@@ -70,7 +73,7 @@ export function AddStaffForm({ onFormSubmit, onSuccess }: AddStaffFormProps) {
                 name: data.name,
                 email: data.email,
                 password: data.password,
-                role: 'staff',
+                role: data.role,
                 mobile: data.mobile,
                 address: data.address,
                 designation: data.designation,
@@ -78,16 +81,16 @@ export function AddStaffForm({ onFormSubmit, onSuccess }: AddStaffFormProps) {
             };
             await onFormSubmit(formData, photoFile);
             toast({
-                title: 'Staff Member Added',
-                description: `${data.name} has been added and can now log in.`,
+                title: 'User Added',
+                description: `${data.name} has been added to the system.`,
             });
             onSuccess();
         } catch (error) {
             console.error(error);
             toast({
                 variant: 'destructive',
-                title: 'Error Adding Staff',
-                description: 'Could not add the staff member. Please try again.',
+                title: 'Error Adding User',
+                description: 'Could not add the user. Please try again.',
             });
         } finally {
             setIsSubmitting(false);
@@ -103,13 +106,13 @@ export function AddStaffForm({ onFormSubmit, onSuccess }: AddStaffFormProps) {
                             <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="email" render={({ field }) => (
-                             <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="e.g., staff@orderchha.cafe" {...field} /></FormControl><FormMessage /></FormItem>
+                             <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="e.g., user@orderchha.cafe" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="password" render={({ field }) => (
                             <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="Min. 6 characters" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                          <FormField control={form.control} name="designation" render={({ field }) => (
-                             <FormItem><FormLabel>Designation</FormLabel><FormControl><Input placeholder="e.g., Waiter, Barista" {...field} /></FormControl><FormMessage /></FormItem>
+                             <FormItem><FormLabel>Designation</FormLabel><FormControl><Input placeholder="e.g., Waiter, Manager" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                     </div>
                     <div className="space-y-4">
@@ -119,9 +122,30 @@ export function AddStaffForm({ onFormSubmit, onSuccess }: AddStaffFormProps) {
                         <FormField control={form.control} name="address" render={({ field }) => (
                            <FormItem><FormLabel>Address</FormLabel><FormControl><Input placeholder="Enter address" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
+                        <FormField
+                            control={form.control}
+                            name="role"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Role</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="staff">Staff</SelectItem>
+                                        <SelectItem value="admin">Admin</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField control={form.control} name="photo" render={() => (
                             <FormItem>
-                                <FormLabel>Staff Photo</FormLabel>
+                                <FormLabel>User Photo</FormLabel>
                                 <FormControl>
                                     <Input type="file" accept="image/*" onChange={handleFileChange} disabled={isSubmitting} />
                                 </FormControl>
@@ -139,11 +163,10 @@ export function AddStaffForm({ onFormSubmit, onSuccess }: AddStaffFormProps) {
                 <div className="flex justify-end pt-4">
                     <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        {isSubmitting ? 'Saving...' : 'Save Staff Member'}
+                        {isSubmitting ? 'Saving...' : 'Save User'}
                     </Button>
                 </div>
             </form>
         </Form>
     );
 }
-

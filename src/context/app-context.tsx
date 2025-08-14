@@ -314,7 +314,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           uid,
           email: userData.email,
           name: userData.name,
-          role: 'staff',
+          role: userData.role,
           mobile: userData.mobile,
           address: userData.address,
           designation: userData.designation,
