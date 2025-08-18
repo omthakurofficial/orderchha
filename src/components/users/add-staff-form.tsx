@@ -18,7 +18,7 @@ const staffFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-  role: z.enum(['admin', 'staff'], { required_error: "Please select a role."}),
+  role: z.enum(['admin', 'staff', 'cashier', 'accountant', 'waiter', 'kitchen'], { required_error: "Please select a role."}),
   mobile: z.string().optional(),
   address: z.string().optional(),
   designation: z.string().optional(),
@@ -135,8 +135,12 @@ export function AddStaffForm({ onFormSubmit, onSuccess }: AddStaffFormProps) {
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="staff">Staff</SelectItem>
                                         <SelectItem value="admin">Admin</SelectItem>
+                                        <SelectItem value="cashier">Cashier</SelectItem>
+                                        <SelectItem value="accountant">Accountant</SelectItem>
+                                        <SelectItem value="waiter">Waiter</SelectItem>
+                                        <SelectItem value="kitchen">Kitchen Staff</SelectItem>
+                                        <SelectItem value="staff">Staff (Generic)</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />

@@ -23,18 +23,19 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Sheet, SheetContent, SheetTitle } from "../ui/sheet";
+import type { UserRole } from "@/types";
 
 const allNavItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", role: "admin" },
-    { href: "/", icon: LayoutGrid, label: "Tables", role: "all" },
-    { href: "/menu", icon: UtensilsCrossed, label: "Menu", role: "all" },
-    { href: "/upload-menu", icon: Upload, label: "Manage Menu", role: "all" },
-    { href: "/inventory", icon: Package, label: "Inventory", role: "admin" },
-    { href: "/billing", icon: Receipt, label: "Billing", role: "staff" },
-    { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders", role: "all" },
-    { href: "/kitchen", icon: ChefHat, label: "Kitchen", role: "all" },
-    { href: "/users", icon: Users, label: "Users", role: "admin" },
-    { href: "/settings", icon: Settings, label: "Settings", role: "admin" },
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", roles: ["admin"] },
+    { href: "/", icon: LayoutGrid, label: "Tables", roles: ["admin", "waiter"] },
+    { href: "/menu", icon: UtensilsCrossed, label: "Menu", roles: ["admin", "cashier", "accountant", "waiter"] },
+    { href: "/upload-menu", icon: Upload, label: "Manage Menu", roles: ["admin", "cashier"] },
+    { href: "/inventory", icon: Package, label: "Inventory", roles: ["admin"] },
+    { href: "/billing", icon: Receipt, label: "Billing", roles: ["admin", "cashier", "accountant"] },
+    { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders", roles: ["admin", "cashier", "waiter"] },
+    { href: "/kitchen", icon: ChefHat, label: "Kitchen", roles: ["admin", "waiter", "kitchen"] },
+    { href: "/users", icon: Users, label: "Users", roles: ["admin"] },
+    { href: "/settings", icon: Settings, label: "Settings", roles: ["admin"] },
 ];
 
 
@@ -52,9 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const navItems = allNavItems.filter(item => {
-    if (item.role === 'all') return true;
-    if (currentUser?.role === 'admin') return true; // Admins see everything
-    return item.role === currentUser?.role;
+    return currentUser?.role && item.roles.includes(currentUser.role);
   });
 
   const Logo = () => (

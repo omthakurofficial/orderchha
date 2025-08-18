@@ -4,9 +4,19 @@
 import { KitchenOrderCard } from '@/components/kitchen/kitchen-order-card';
 import { useApp } from '@/context/app-context';
 import { ChefHat } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function KitchenPage() {
-  const { kitchenOrders, isLoaded } = useApp();
+  const { kitchenOrders, isLoaded, currentUser } = useApp();
+  const router = useRouter();
+
+  useEffect(() => {
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'waiter' && currentUser?.role !== 'kitchen') {
+          router.push('/');
+      }
+  }, [currentUser, router]);
+
   const activeOrders = kitchenOrders.filter(o => o.status === 'in-kitchen');
 
   if (!isLoaded) {
@@ -15,6 +25,14 @@ export default function KitchenPage() {
             <p>Loading kitchen orders...</p>
         </div>
     )
+  }
+
+  if (currentUser?.role !== 'admin' && currentUser?.role !== 'waiter' && currentUser?.role !== 'kitchen') {
+      return (
+          <div className="flex items-center justify-center h-full">
+              <p>You do not have permission to view this page.</p>
+          </div>
+      )
   }
 
   return (

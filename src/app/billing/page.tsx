@@ -5,9 +5,29 @@ import { ActiveBills } from '@/components/billing/active-bills';
 import { ChangeCalculator } from '@/components/billing/change-calculator';
 import { TransactionList } from '@/components/billing/transaction-list';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useApp } from '@/context/app-context';
 import { Receipt } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function BillingPage() {
+    const { currentUser } = useApp();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (currentUser?.role !== 'admin' && currentUser?.role !== 'cashier' && currentUser?.role !== 'accountant') {
+            router.push('/');
+        }
+    }, [currentUser, router]);
+
+    if (currentUser?.role !== 'admin' && currentUser?.role !== 'cashier' && currentUser?.role !== 'accountant') {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p>You do not have permission to view this page.</p>
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col h-full">
             <header className="p-4 border-b">
