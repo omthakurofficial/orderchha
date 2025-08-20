@@ -1,4 +1,5 @@
 
+
 import type { ComponentType } from "react";
 
 export interface MenuItem {
@@ -19,7 +20,7 @@ export interface KitchenOrder {
     id:string;
     tableId: number;
     items: OrderItem[];
-    status: 'pending' | 'in-kitchen' | 'completed';
+    status: 'pending' | 'in-kitchen' | 'completed' | 'paid';
     timestamp: string;
     total: number;
 }

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -353,7 +354,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     ordersToPay.forEach(order => {
         const orderRef = doc(db, 'kitchen-orders', order.id);
-        batch.delete(orderRef);
+        batch.update(orderRef, { status: 'paid' });
     });
 
     const tableRef = doc(db, 'tables', tableId.toString());
@@ -419,8 +420,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           });
           return;
       }
-      const userRef = doc(db, 'users', uid);
-      await firestoreDeleteDoc(userRef);
+      await firestoreDeleteDoc(doc(db, 'users', uid));
   };
 
   const addInventoryItem = async (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => {

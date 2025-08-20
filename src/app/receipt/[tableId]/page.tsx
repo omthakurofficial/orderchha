@@ -27,7 +27,7 @@ export default function ReceiptPage() {
   const transactionDate = new Date().toLocaleString();
 
   const ordersForTable = useMemo(() => {
-    return kitchenOrders.filter(o => o.tableId === tableId && o.status === 'completed');
+    return kitchenOrders.filter(o => o.tableId === tableId && (o.status === 'completed' || o.status === 'paid'));
   }, [kitchenOrders, tableId]);
 
   const billDetails = useMemo(() => {
