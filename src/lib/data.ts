@@ -57,18 +57,18 @@ export const MENU: MenuCategory[] = [
 
 
 export const TABLES: Table[] = [
-    { id: 1, status: 'available', capacity: 4 },
-    { id: 2, status: 'occupied', capacity: 2 },
-    { id: 3, status: 'available', capacity: 2 },
-    { id: 4, status: 'reserved', capacity: 6 },
-    { id: 5, status: 'available', capacity: 4 },
-    { id: 6, status: 'available', capacity: 4 },
-    { id: 7, status: 'occupied', capacity: 8 },
-    { id: 8, status: 'available', capacity: 2 },
-    { id: 9, status: 'reserved', capacity: 4 },
-    { id: 10, status: 'available', capacity: 4 },
-    { id: 11, status: 'occupied', capacity: 2 },
-    { id: 12, status: 'available', capacity: 6 },
+    { id: 1, name: 'Table 1', location: 'Indoors', status: 'available', capacity: 4 },
+    { id: 2, name: 'Table 2', location: 'Indoors', status: 'occupied', capacity: 2 },
+    { id: 3, name: 'Table 3', location: 'Indoors', status: 'available', capacity: 2 },
+    { id: 4, name: 'Table 4', location: 'Patio', status: 'reserved', capacity: 6 },
+    { id: 5, name: 'Table 5', location: 'Patio', status: 'available', capacity: 4 },
+    { id: 6, name: 'Table 6', location: 'Indoors', status: 'available', capacity: 4 },
+    { id: 7, name: 'Table 7', location: 'Upstairs', status: 'occupied', capacity: 8 },
+    { id: 8, name: 'Table 8', location: 'Upstairs', status: 'available', capacity: 2 },
+    { id: 9, name: 'Table 9', location: 'Indoors', status: 'reserved', capacity: 4 },
+    { id: 10, name: 'Table 10', location: 'Patio', status: 'available', capacity: 4 },
+    { id: 11, name: 'Table 11', location: 'Indoors', status: 'occupied', capacity: 2 },
+    { id: 12, name: 'Table 12', location: 'Upstairs', status: 'available', capacity: 6 },
 ];
 
 export const USERS: User[] = [

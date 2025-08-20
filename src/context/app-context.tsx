@@ -16,7 +16,8 @@ interface AppContextType {
   menu: MenuCategory[];
   addMenuItem: (item: MenuItem, categoryName: string) => void;
   tables: Table[];
-  addTable: (capacity: number) => void;
+  addTable: (tableData: Omit<Table, 'id' | 'status'>) => void;
+  updateTable: (tableId: number, tableData: Partial<Omit<Table, 'id'>>) => void;
   updateTableStatus: (tableId: number, status: Table['status']) => void;
   settings: Settings;
   updateSettings: (newSettings: Partial<Settings>) => void;
@@ -228,19 +229,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addTable = async (capacity: number) => {
+  const addTable = async (tableData: Omit<Table, 'id' | 'status'>) => {
     const newTableId = tables.length > 0 ? Math.max(...tables.map(t => t.id)) + 1 : 1;
     const newTable: Table = {
       id: newTableId,
-      capacity,
-      status: 'available'
+      status: 'available',
+      ...tableData
     };
     await setDoc(doc(db, 'tables', newTable.id.toString()), newTable);
   };
 
+  const updateTable = async (tableId: number, tableData: Partial<Omit<Table, 'id'>>) => {
+    const tableDocRef = doc(db, 'tables', tableId.toString());
+    await updateDoc(tableDocRef, tableData);
+  }
+
   const updateTableStatus = async (tableId: number, status: Table['status']) => {
     const tableDocRef = doc(db, 'tables', tableId.toString());
-    await setDoc(tableDocRef, { status }, { merge: true });
+    await updateDoc(tableDocRef, { status });
   };
 
   const updateSettings = async (newSettings: Partial<Settings>) => {
@@ -477,6 +483,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addMenuItem, 
     tables,
     addTable, 
+    updateTable,
     updateTableStatus,
     settings,
     updateSettings,

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,34 +18,65 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Edit } from 'lucide-react';
 import { useApp } from '@/context/app-context';
 import { useToast } from '@/hooks/use-toast';
+import type { Table } from '@/types';
 
-const addTableSchema = z.object({
-  capacity: z.coerce.number().int().positive({ message: "Number of seats must be a positive number." }).min(1, { message: "Table must have at least 1 seat."}),
+const tableFormSchema = z.object({
+  name: z.string().min(1, { message: "Table name is required." }),
+  capacity: z.coerce.number().int().positive({ message: "Capacity must be a positive number." }).min(1, { message: "Table must have at least 1 seat."}),
+  location: z.string().min(1, { message: "Location is required." }),
 });
 
-type AddTableFormValues = z.infer<typeof addTableSchema>;
+type TableFormValues = z.infer<typeof tableFormSchema>;
 
-export function AddTableDialog() {
+interface AddTableDialogProps {
+    table?: Table;
+    trigger?: React.ReactNode;
+}
+
+export function AddTableDialog({ table, trigger }: AddTableDialogProps) {
   const [open, setOpen] = useState(false);
-  const { addTable } = useApp();
+  const { addTable, updateTable } = useApp();
   const { toast } = useToast();
+  const isEditMode = !!table;
 
-  const form = useForm<AddTableFormValues>({
-    resolver: zodResolver(addTableSchema),
+  const form = useForm<TableFormValues>({
+    resolver: zodResolver(tableFormSchema),
     defaultValues: {
+      name: '',
       capacity: 2,
+      location: 'Indoors',
     },
   });
 
-  const onSubmit: SubmitHandler<AddTableFormValues> = (data) => {
-    addTable(data.capacity);
-    toast({
-      title: 'Table Added',
-      description: `A new table with ${data.capacity} seats has been added.`,
-    });
+  useEffect(() => {
+    if (table) {
+      form.reset(table);
+    } else {
+        form.reset({
+            name: '',
+            capacity: 2,
+            location: 'Indoors',
+        });
+    }
+  }, [table, form]);
+
+  const onSubmit: SubmitHandler<TableFormValues> = (data) => {
+    if (isEditMode) {
+        updateTable(table.id, data);
+        toast({
+            title: 'Table Updated',
+            description: `Table ${data.name} has been updated.`,
+        });
+    } else {
+        addTable(data);
+        toast({
+            title: 'Table Added',
+            description: `A new table named ${data.name} has been added.`,
+        });
+    }
     form.reset();
     setOpen(false);
   };
@@ -53,28 +84,56 @@ export function AddTableDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <PlusCircle />
-          Add New Table
-        </Button>
+        {trigger || (
+             <Button>
+                <PlusCircle />
+                Add New Table
+            </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add a New Table</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Table' : 'Add a New Table'}</DialogTitle>
           <DialogDescription>
-            Specify the number of seats for the new table.
+            {isEditMode ? `Update the details for ${table.name}.` : 'Enter the details for the new table.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+             <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Table Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Table 1, Patio Booth" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="capacity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Number of Seats</FormLabel>
+                  <FormLabel>Capacity (Seats)</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="e.g., 4" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Indoors, Patio, Upstairs" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -86,7 +145,7 @@ export function AddTableDialog() {
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit">Add Table</Button>
+              <Button type="submit">{isEditMode ? 'Save Changes' : 'Add Table'}</Button>
             </DialogFooter>
           </form>
         </Form>

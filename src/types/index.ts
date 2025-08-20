@@ -34,8 +34,10 @@ export interface MenuCategory {
 
 export interface Table {
   id: number;
+  name: string;
   status: 'available' | 'occupied' | 'reserved' | 'disabled' | 'billing';
   capacity: number;
+  location: string;
 }
 
 export interface Settings {

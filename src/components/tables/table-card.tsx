@@ -5,7 +5,7 @@ import type { Table } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Users, QrCode, MoreVertical, XCircle, Receipt, Wallet, Radio, ExternalLink } from "lucide-react";
+import { Users, QrCode, MoreVertical, XCircle, Receipt, Wallet, Radio, ExternalLink, MapPin, Edit } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +35,7 @@ import { Separator } from "../ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
+import { AddTableDialog } from "./add-table-dialog";
 
 interface TableCardProps {
   table: Table;
@@ -51,7 +52,7 @@ const statusStyles = {
 export function TableCard({ table }: TableCardProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
   const [applyVat, setApplyVat] = useState(false);
-  const { updateTableStatus, kitchenOrders, processPayment } = useApp();
+  const { updateTableStatus, kitchenOrders, processPayment, currentUser } = useApp();
   const { toast } = useToast();
   
   const ordersForTable = useMemo(() => {
@@ -78,7 +79,7 @@ export function TableCard({ table }: TableCardProps) {
     processPayment(table.id, method, applyVat);
     toast({
         title: "Payment Processed",
-        description: `Table ${table.id}'s bill has been paid. The table is now available.`,
+        description: `Table ${table.name}'s bill has been paid. The table is now available.`,
     });
   }
 
@@ -115,10 +116,14 @@ export function TableCard({ table }: TableCardProps) {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="font-headline">Table {table.id}</CardTitle>
+              <CardTitle className="font-headline">{table.name}</CardTitle>
               <CardDescription className="flex items-center gap-2 pt-2">
                 <Users className="w-4 h-4" />
                 <span>{table.capacity} Seats</span>
+              </CardDescription>
+               <CardDescription className="flex items-center gap-2 pt-1">
+                <MapPin className="w-4 h-4" />
+                <span>{table.location}</span>
               </CardDescription>
             </div>
              <DropdownMenu>
@@ -129,14 +134,27 @@ export function TableCard({ table }: TableCardProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
                     <DropdownMenuRadioGroup value={table.status} onValueChange={(status) => updateTableStatus(table.id, status as Table['status'])}>
                         <DropdownMenuRadioItem value="available">Available</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="occupied">Occupied</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="reserved">Reserved</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="billing">Billing</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="disabled">Disabled</DropdownMenuRadioItem>
+                         {currentUser?.role === 'admin' && <DropdownMenuRadioItem value="disabled">Disabled</DropdownMenuRadioItem>}
                     </DropdownMenuRadioGroup>
+                    {currentUser?.role === 'admin' && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <AddTableDialog 
+                                table={table} 
+                                trigger={
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Edit Table
+                                    </DropdownMenuItem>
+                                }
+                            />
+                        </>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -163,7 +181,7 @@ export function TableCard({ table }: TableCardProps) {
                 <DialogHeader>
                 <DialogTitle className="font-headline flex items-center gap-2"><QrCode /> Scan to view menu</DialogTitle>
                 <DialogDescription>
-                    Customers at Table {table.id} can scan this QR code to access the digital menu on their smartphones.
+                    Customers at {table.name} can scan this QR code to access the digital menu.
                 </DialogDescription>
                 </DialogHeader>
                 <div className="flex justify-center p-4">
@@ -183,7 +201,7 @@ export function TableCard({ table }: TableCardProps) {
                 <DialogHeader>
                     <DialogTitle className="font-headline flex items-center gap-2">
                         <Receipt />
-                        Bill for Table {table.id}
+                        Bill for {table.name}
                     </DialogTitle>
                     <DialogDescription>
                         Review the bill details below before processing the payment.
