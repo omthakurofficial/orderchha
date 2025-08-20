@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { KitchenOrder, Table } from "@/types";
+import type { Table } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -33,6 +33,8 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 import { Separator } from "../ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
 
 interface TableCardProps {
   table: Table;
@@ -48,7 +50,7 @@ const statusStyles = {
 
 export function TableCard({ table }: TableCardProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
-  const [origin, setOrigin] = useState("");
+  const [applyVat, setApplyVat] = useState(false);
   const { updateTableStatus, kitchenOrders, processPayment } = useApp();
   const { toast } = useToast();
   
@@ -56,22 +58,24 @@ export function TableCard({ table }: TableCardProps) {
     return kitchenOrders.filter(o => o.tableId === table.id && o.status === 'completed');
   }, [kitchenOrders, table.id]);
 
-  const billTotal = useMemo(() => {
+  const billDetails = useMemo(() => {
     const subtotal = ordersForTable.reduce((acc, order) => acc + order.total, 0);
-    return subtotal * 1.13; // with VAT
-  }, [ordersForTable]);
+    const vat = applyVat ? subtotal * 0.13 : 0;
+    const total = subtotal + vat;
+    return { subtotal, vat, total };
+  }, [ordersForTable, applyVat]);
+
 
   useEffect(() => {
     if (typeof window !== "undefined") {
         const currentOrigin = window.location.origin;
-        setOrigin(currentOrigin);
         const menuUrl = `${currentOrigin}/menu?table=${table.id}`;
         setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(menuUrl)}`);
     }
   }, [table.id]);
 
   const handleProcessPayment = (method: 'cash' | 'online') => {
-    processPayment(table.id, method);
+    processPayment(table.id, method, applyVat);
     toast({
         title: "Payment Processed",
         description: `Table ${table.id}'s bill has been paid. The table is now available.`,
@@ -190,8 +194,8 @@ export function TableCard({ table }: TableCardProps) {
                         <div key={order.id} className="mb-4">
                             <p className="text-sm font-semibold text-muted-foreground">Order placed at {new Date(order.timestamp).toLocaleTimeString()}</p>
                              <ul className="space-y-1 mt-1 text-sm">
-                                {order.items.map(item => (
-                                    <li key={item.id} className="flex justify-between items-center">
+                                {order.items.map((item, index) => (
+                                    <li key={`${item.id}-${index}`} className="flex justify-between items-center">
                                         <div>
                                             <span>{item.name}</span>
                                             <span className="text-muted-foreground font-bold ml-2">x{item.quantity}</span>
@@ -207,16 +211,24 @@ export function TableCard({ table }: TableCardProps) {
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                         <span>Subtotal</span>
-                        <span className="font-medium">NPR {(billTotal / 1.13).toFixed(2)}</span>
+                        <span className="font-medium">NPR {billDetails.subtotal.toFixed(2)}</span>
                     </div>
-                     <div className="flex justify-between">
-                        <span>VAT (13%)</span>
-                        <span className="font-medium">NPR {(billTotal - (billTotal / 1.13)).toFixed(2)}</span>
+                     <div className="flex items-center justify-between">
+                        <Label htmlFor="vat-switch" className="flex items-center gap-2">
+                            Apply 13% VAT
+                        </Label>
+                        <Switch id="vat-switch" checked={applyVat} onCheckedChange={setApplyVat} />
                     </div>
+                     {applyVat && (
+                         <div className="flex justify-between">
+                            <span>VAT (13%)</span>
+                            <span className="font-medium">NPR {billDetails.vat.toFixed(2)}</span>
+                        </div>
+                    )}
                     <Separator />
                      <div className="flex justify-between text-lg font-bold text-primary">
                         <span>Total Due</span>
-                        <span>NPR {billTotal.toFixed(2)}</span>
+                        <span>NPR {billDetails.total.toFixed(2)}</span>
                     </div>
                 </div>
                 
@@ -225,14 +237,14 @@ export function TableCard({ table }: TableCardProps) {
                 <div className="flex flex-col gap-2">
                      <DialogClose asChild>
                         <Button variant="outline" asChild>
-                           <Link href={`/receipt/${table.id}?method=cash`} target="_blank">
+                           <Link href={`/receipt/${table.id}?method=cash&vat=${applyVat}`} target="_blank">
                                 <ExternalLink /> Generate Cash Receipt
                            </Link>
                         </Button>
                     </DialogClose>
                      <DialogClose asChild>
                         <Button variant="outline" asChild>
-                           <Link href={`/receipt/${table.id}?method=online`} target="_blank">
+                           <Link href={`/receipt/${table.id}?method=online&vat=${applyVat}`} target="_blank">
                                 <ExternalLink /> Generate Online Receipt
                            </Link>
                         </Button>

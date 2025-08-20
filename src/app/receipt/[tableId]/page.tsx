@@ -24,6 +24,7 @@ export default function ReceiptPage() {
   }, []);
 
   const paymentMethod = searchParams.get('method') || 'N/A';
+  const applyVat = searchParams.get('vat') === 'true';
   const transactionDate = new Date().toLocaleString();
 
   const ordersForTable = useMemo(() => {
@@ -32,10 +33,10 @@ export default function ReceiptPage() {
 
   const billDetails = useMemo(() => {
     const subtotal = ordersForTable.reduce((acc, order) => acc + order.total, 0);
-    const vat = subtotal * 0.13;
+    const vat = applyVat ? subtotal * 0.13 : 0;
     const total = subtotal + vat;
-    return { subtotal, vat, total };
-  }, [ordersForTable]);
+    return { subtotal, vat, total, applyVat };
+  }, [ordersForTable, applyVat]);
 
   if (!isLoaded) {
     return <div>Loading receipt...</div>;
@@ -94,13 +95,13 @@ export default function ReceiptPage() {
                     <div className="text-right">Amount</div>
                 </div>
                  <div className="p-2 space-y-2">
-                    {ordersForTable.flatMap(order => order.items).map(item => (
-                        <div key={item.id} className="grid grid-cols-4 text-sm">
+                    {ordersForTable.flatMap(order => order.items.map((item, index) => (
+                        <div key={`${order.id}-${item.id}-${index}`} className="grid grid-cols-4 text-sm">
                             <div className="col-span-2">{item.name}</div>
                             <div className="text-center">x{item.quantity}</div>
                             <div className="text-right">NPR {(item.price * item.quantity).toFixed(2)}</div>
                         </div>
-                    ))}
+                    )))}
                 </div>
               </div>
             </div>
@@ -112,10 +113,12 @@ export default function ReceiptPage() {
                         <span>Subtotal</span>
                         <span className="font-medium">NPR {billDetails.subtotal.toFixed(2)}</span>
                     </div>
-                     <div className="flex justify-between">
-                        <span>VAT (13%)</span>
-                        <span className="font-medium">NPR {billDetails.vat.toFixed(2)}</span>
-                    </div>
+                    {billDetails.applyVat && (
+                         <div className="flex justify-between">
+                            <span>VAT (13%)</span>
+                            <span className="font-medium">NPR {billDetails.vat.toFixed(2)}</span>
+                        </div>
+                    )}
                     <Separator />
                      <div className="flex justify-between text-lg font-bold text-primary">
                         <span>Total Due</span>
@@ -125,7 +128,7 @@ export default function ReceiptPage() {
             </div>
             
              <div className="text-center text-xs text-muted-foreground pt-4">
-                Thank you for your visit!
+                Thank you for your visit! Prices are VAT inclusive where applicable.
             </div>
           </CardContent>
         </Card>

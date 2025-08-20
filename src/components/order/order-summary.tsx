@@ -73,19 +73,11 @@ function OrderSummaryContent() {
         </div>
       </ScrollArea>
       <div className="p-4 border-t mt-auto space-y-3">
-        <div className="flex justify-between font-semibold">
-          <span>Subtotal</span>
-          <span>NPR {total.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <span>VAT (13%)</span>
-          <span>NPR {(total * 0.13).toFixed(2)}</span>
-        </div>
-        <Separator />
         <div className="flex justify-between text-lg font-bold text-primary">
           <span>Total</span>
-          <span>NPR {(total * 1.13).toFixed(2)}</span>
+          <span>NPR {total.toFixed(2)}</span>
         </div>
+        <p className="text-xs text-muted-foreground text-center">Prices are inclusive of VAT where applicable.</p>
         <Button className="w-full" size="lg" onClick={handlePlaceOrder} disabled={!tableId}>
           Submit Order for Confirmation
         </Button>

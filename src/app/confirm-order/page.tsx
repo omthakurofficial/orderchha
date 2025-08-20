@@ -58,7 +58,7 @@ export default function ConfirmOrderPage() {
                         <Separator />
                         <div className="flex justify-between text-lg font-bold text-primary">
                             <span>Total</span>
-                            <span>NPR {(order.total * 1.13).toFixed(2)}</span>
+                            <span>NPR {order.total.toFixed(2)}</span>
                         </div>
 
                     </CardContent>

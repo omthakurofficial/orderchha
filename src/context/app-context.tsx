@@ -32,7 +32,7 @@ interface AppContextType {
   approvePendingOrder: (orderId: string) => void;
   rejectPendingOrder: (orderId: string) => void;
   transactions: Transaction[];
-  processPayment: (tableId: number, method: 'cash' | 'online') => void;
+  processPayment: (tableId: number, method: 'cash' | 'online', applyVat: boolean) => void;
   currentUser: User | null;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -334,16 +334,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await firestoreDeleteDoc(doc(db, 'pending-orders', orderId));
   };
 
-  const processPayment = async (tableId: number, method: 'cash' | 'online') => {
+  const processPayment = async (tableId: number, method: 'cash' | 'online', applyVat: boolean) => {
     const ordersToPay = kitchenOrders.filter(o => o.tableId === tableId && o.status === 'completed');
     if (ordersToPay.length === 0) return;
 
-    const totalAmount = ordersToPay.reduce((acc, order) => acc + order.total, 0);
+    const subtotal = ordersToPay.reduce((acc, order) => acc + order.total, 0);
+    const totalAmount = applyVat ? subtotal * 1.13 : subtotal;
 
     const newTransaction: Transaction = {
         id: `txn-${Date.now()}`,
         tableId,
-        amount: totalAmount * 1.13, // Apply VAT
+        amount: totalAmount,
         method,
         timestamp: new Date().toISOString(),
     };
