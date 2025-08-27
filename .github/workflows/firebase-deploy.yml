@@ -33,6 +33,10 @@ jobs:
         env:
           NEXT_PUBLIC_FIREBASE_CONFIG: ${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}
       
+      # Enable Firebase Web Frameworks experiment
+      - name: Enable Firebase Web Frameworks
+        run: npx firebase-tools@13.0.2 experiments:enable webframeworks
+        
       # Deploy to Firebase
       - name: Deploy to Firebase
         run: npx firebase-tools@13.0.2 deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
