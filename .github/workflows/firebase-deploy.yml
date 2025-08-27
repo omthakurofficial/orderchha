@@ -46,16 +46,32 @@ jobs:
         env:
           NEXT_PUBLIC_FIREBASE_CONFIG: ${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}
       
+      # Verify Firebase project access
+      - name: Verify Firebase project access
+        run: |
+          echo "Verifying Firebase project access..."
+          npx firebase-tools@13.0.2 projects:list --token "${{ secrets.FIREBASE_TOKEN }}" || echo "⚠️ Could not list projects, but continuing..."
+      
       # Build the Next.js application
       - name: Build Next.js app
         run: npm run build
         env:
           NEXT_PUBLIC_FIREBASE_CONFIG: ${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}
       
-      # Enable Firebase Web Frameworks experiment
-      - name: Enable Firebase Web Frameworks
-        run: npx firebase-tools@13.0.2 experiments:enable webframeworks
-        
       # Deploy to Firebase
       - name: Deploy to Firebase
-        run: npx firebase-tools@13.0.2 deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
+        run: |
+          # Enable required experiments
+          npx firebase-tools@13.0.2 experiments:enable webframeworks
+          
+          # Set project explicitly
+          npx firebase-tools@13.0.2 use ${{ secrets.FIREBASE_PROJECT_ID }} --token "${{ secrets.FIREBASE_TOKEN }}"
+          
+          # Deploy with additional flags to handle potential issues
+          npx firebase-tools@13.0.2 deploy \
+            --only hosting \
+            --token "${{ secrets.FIREBASE_TOKEN }}" \
+            --project ${{ secrets.FIREBASE_PROJECT_ID }} \
+            --non-interactive \
+            --force \
+            --debug

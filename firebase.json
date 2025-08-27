@@ -9,7 +9,10 @@
       "**/node_modules/**"
     ],
     "frameworksBackend": {
-      "region": "us-central1"
+      "region": "us-central1",
+      "concurrency": 1000,
+      "memory": "1GiB",
+      "timeoutSeconds": 60
     },
     "headers": [
       {
