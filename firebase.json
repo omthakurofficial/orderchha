@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "source": ".",
+    "public": "out",
     "cleanUrls": true,
     "trailingSlash": false,
     "ignore": [
@@ -8,12 +8,6 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "frameworksBackend": {
-      "region": "us-central1",
-      "concurrency": 1000,
-      "memory": "1GiB",
-      "timeoutSeconds": 60
-    },
     "headers": [
       {
         "source": "**/*.@(js|css)",
@@ -32,6 +26,12 @@
             "value": "max-age=31536000"
           }
         ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
       }
     ]
   }
