@@ -3,15 +3,14 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, deleteDoc } from 'firebase/firestore';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCNSfTfKdHRhsdFb11RVjezwGP1-1X4xwA",
-  authDomain: "orderchha-app.firebaseapp.com",
-  projectId: "orderchha-app",
-  storageBucket: "orderchha-app.appspot.com",
-  messagingSenderId: "442757956859",
-  appId: "1:442757956859:web:54e6935d539b2607785c5e",
-  measurementId: "G-QR6P8WW2Q4"
-};
+// Parse the Firebase config from the environment variable
+const firebaseConfigString = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
+
+if (!firebaseConfigString) {
+    throw new Error("Firebase config not found. Please set NEXT_PUBLIC_FIREBASE_CONFIG in your environment variables.");
+}
+
+const firebaseConfig = JSON.parse(firebaseConfigString);
 
 
 // Initialize Firebase
