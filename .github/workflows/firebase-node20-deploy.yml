@@ -1,4 +1,4 @@
-name: Firebase Deploy with Node.js 20
+name: Firebase Deploy (CLI)
 
 on:
   push:
@@ -7,15 +7,16 @@ on:
 
 jobs:
   deploy:
+    name: Build & Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      # Set up Node.js version 20 (required by latest Firebase CLI)
+      # Set up Node.js version 20 (required by Firebase CLI)
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '20.10.0' # Explicitly specify a version that's compatible with Firebase CLI
+          node-version: '20' # Use Node.js 20+ for Firebase
           cache: 'npm'
       
       # Install dependencies
@@ -33,10 +34,10 @@ jobs:
         env:
           NEXT_PUBLIC_FIREBASE_CONFIG: ${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}
       
-      # Enable Firebase Web Frameworks experiment
-      - name: Enable Firebase Web Frameworks
-        run: npx firebase-tools@13.0.2 experiments:enable webframeworks
-        
-      # Deploy to Firebase
+      # Enable Firebase Web Frameworks experiment and deploy
+      - name: Deploy to Firebase
+        run: |
+          npx firebase-tools@13.0.2 experiments:enable webframeworks
+          npx firebase-tools@13.0.2 deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
       - name: Deploy to Firebase
         run: npx firebase-tools@13.0.2 deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
