@@ -26,14 +26,19 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Create env file
+    - name: Create Firebase Config File
       run: |
-        echo "NEXT_PUBLIC_FIREBASE_CONFIG=${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}" > .env.local
+        cat > .env.local << EOL
+        NEXT_PUBLIC_FIREBASE_CONFIG='${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}'
+        EOL
+        cat .env.local
     
     - name: Type check
       run: npm run typecheck
     
     - name: Build
+      env:
+        NEXT_PUBLIC_FIREBASE_CONFIG: '${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}'
       run: npm run build
     
     - name: Lint
