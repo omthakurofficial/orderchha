@@ -1,0 +1,37 @@
+name: Deploy to Vercel (Fast)
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: Create Environment File
+        run: |
+          cat > .env.local << EOL
+          # Firebase stubs for deployment
+          NEXT_PUBLIC_FIREBASE_CONFIG='{"apiKey":"stub","authDomain":"stub.firebaseapp.com","projectId":"stub","storageBucket":"stub.firebasestorage.app","messagingSenderId":"123","appId":"1:123:web:stub","measurementId":"G-STUB"}'
+          NEXT_PUBLIC_APPWRITE_URL=https://cloud.appwrite.io/v1
+          NEXT_PUBLIC_APPWRITE_PROJECT_ID=orderchha-app
+          EOL
+      
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      
+      - name: Deploy to Vercel
+        run: |
+          vercel --token=${{ secrets.VERCEL_TOKEN }} --prod --yes --confirm
