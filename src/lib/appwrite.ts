@@ -23,25 +23,64 @@ export const functions = new Functions(client);
 // Auth helpers (compatible with your existing Firebase auth usage)
 export const auth = {
   signIn: async (email: string, password: string) => {
-    const session = await account.createEmailSession(email, password);
-    return session;
+    try {
+      // First, ensure we're starting clean
+      try {
+        await account.deleteSession('current');
+      } catch (e) {
+        // Ignore errors when clearing sessions
+      }
+      
+      const session = await account.createEmailPasswordSession(email, password);
+      return session;
+    } catch (error) {
+      console.error('Appwrite signIn error:', error);
+      throw error;
+    }
   },
   
   signUp: async (email: string, password: string, name: string) => {
-    const user = await account.create(ID.unique(), email, password, name);
-    return user;
+    try {
+      const user = await account.create(ID.unique(), email, password, name);
+      return user;
+    } catch (error) {
+      console.error('Appwrite signUp error:', error);
+      throw error;
+    }
   },
   
   signOut: async () => {
-    await account.deleteSession('current');
+    try {
+      // Try to delete current session
+      await account.deleteSession('current');
+    } catch (error) {
+      // If that fails, try to delete all sessions
+      try {
+        await account.deleteSessions();
+      } catch (e) {
+        console.error('Error clearing all sessions:', e);
+      }
+    }
   },
   
   getCurrentUser: async (): Promise<Models.User<Models.Preferences> | null> => {
     try {
       const user = await account.get();
       return user;
-    } catch {
+    } catch (error: any) {
+      // Always return null for any error - don't try to be smart about it
+      console.log('getCurrentUser failed (expected if no session):', error.message);
       return null;
+    }
+  },
+  
+  // Force clear all sessions - nuclear option
+  clearAllSessions: async () => {
+    try {
+      await account.deleteSessions();
+      console.log('✅ All sessions cleared');
+    } catch (error) {
+      console.log('ℹ️ No sessions to clear');
     }
   },
   
