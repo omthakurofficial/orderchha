@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20.10.0' # Explicitly specify a version that's compatible with Firebase CLI
+          node-version: '20.10.0'
           cache: 'npm'
       
       # Install dependencies
@@ -64,14 +64,12 @@ jobs:
           # Enable required experiments
           npx firebase-tools@13.0.2 experiments:enable webframeworks
           
+          # Verify authentication
+          echo "Testing Firebase authentication..."
+          npx firebase-tools@13.0.2 projects:list --token "${{ secrets.FIREBASE_TOKEN }}"
+          
           # Set project explicitly
           npx firebase-tools@13.0.2 use ${{ secrets.FIREBASE_PROJECT_ID }} --token "${{ secrets.FIREBASE_TOKEN }}"
           
-          # Deploy with additional flags to handle potential issues
-          npx firebase-tools@13.0.2 deploy 
-            --only hosting 
-            --token "${{ secrets.FIREBASE_TOKEN }}" 
-            --project ${{ secrets.FIREBASE_PROJECT_ID }} 
-            --non-interactive 
-            --force 
-            --debug
+          # Deploy with consolidated command
+          npx firebase-tools@13.0.2 deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive --force --debug
