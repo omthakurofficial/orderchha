@@ -6,6 +6,9 @@ export async function generateStaticParams() {
   return tableIds;
 }
 
+// Disable dynamic params to force all routes to be static
+export const dynamicParams = false;
+
 interface ReceiptPageProps {
   params: {
     tableId: string;
