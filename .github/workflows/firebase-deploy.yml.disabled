@@ -1,9 +1,32 @@
-name: Deploy to Firebase
+# DISABLED: This workflow is disabled because we're not using Firebase hosting
+# We've migrated to Vercel for hosting and using Firebase stubs locally
+# 
+# To re-enable Firebase deployment:
+# 1. Uncomment the workflow below
+# 2. Set up Firebase billing 
+# 3. Configure Firebase secrets in GitHub
+# 4. Remove the Firebase stubs and use real Firebase
 
-on:
-  push:
-    branches: [ master ]
-  workflow_dispatch:
+name: Deploy to Firebase (DISABLED)
+
+# Workflow is disabled - uncomment 'on:' section to re-enable
+# on:
+#   push:
+#     branches: [ master ]
+#   workflow_dispatch:
+
+jobs:
+  info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Info
+        run: |
+          echo "🚨 Firebase deployment is currently DISABLED"
+          echo "✅ Using Vercel deployment instead (see vercel-deploy.yml)"
+          echo "📝 To re-enable Firebase deployment:"
+          echo "   1. Set up Firebase billing"
+          echo "   2. Configure Firebase secrets" 
+          echo "   3. Uncomment the 'on:' section above"
 
 jobs:
   deploy:

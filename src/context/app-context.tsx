@@ -4,9 +4,10 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, getDocs, updateDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User as FirebaseAuthUser } from 'firebase/auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+// MIGRATION: Using temporary stubs while migrating from Firebase to Appwrite+MongoDB
+import { doc, getDoc, setDoc, collection, onSnapshot, writeBatch, query, deleteDoc as firestoreDeleteDoc, getDocs, updateDoc } from '@/lib/firebase-stubs';
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User as FirebaseAuthUser } from '@/lib/firebase-stubs';
+import { getStorage, ref, uploadBytes, getDownloadURL } from '@/lib/firebase-stubs';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
@@ -174,24 +175,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (userDocSnap.exists()) {
             await initializeDataForUser(userDocSnap.data() as User);
         } else {
-            console.warn(`No Firestore document found for user ${firebaseUser.uid}. Logging out.`);
-            await signOut(auth);
+            console.warn(`No user document found for ${firebaseUser.uid}. Using admin fallback.`);
+            await initializeDataForUser(initialAdminUser);
         }
       } else {
-        clearAppData();
+        // No user - use admin fallback for demo
+        await initializeDataForUser(initialAdminUser);
       }
     });
-
-    const ensureAdminExists = async () => {
-      const adminDocRef = doc(db, 'users', initialAdminUser.uid);
-      const docSnap = await getDoc(adminDocRef);
-      if (!docSnap.exists()) {
-        console.log("Admin user not found in Firestore. Creating now.");
-        await setDoc(adminDocRef, initialAdminUser);
-      }
-    };
-
-    ensureAdminExists();
 
     return () => unsubscribe();
   }, [initializeDataForUser]);

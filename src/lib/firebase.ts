@@ -1,7 +1,14 @@
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, deleteDoc } from 'firebase/firestore';
+// MIGRATION: Firebase being replaced with Appwrite + MongoDB
+// These are temporary stubs to prevent import errors
+
+// Temporary stubs - will be replaced with Appwrite
+const initializeApp = (config?: any) => ({ name: 'stub' });
+const getApps = () => [];
+const getApp = () => ({ name: 'stub' });
+const getAuth = (app?: any) => ({ name: 'auth-stub' });
+const getFirestore = (app?: any) => ({ name: 'firestore-stub' });
+const deleteDoc = () => Promise.resolve();
 
 // Parse the Firebase config from the environment variable
 const firebaseConfigString = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
