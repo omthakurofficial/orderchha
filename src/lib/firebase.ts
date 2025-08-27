@@ -6,11 +6,24 @@ import { getFirestore, deleteDoc } from 'firebase/firestore';
 // Parse the Firebase config from the environment variable
 const firebaseConfigString = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
 
-if (!firebaseConfigString) {
-    throw new Error("Firebase config not found. Please set NEXT_PUBLIC_FIREBASE_CONFIG in your environment variables.");
-}
+let firebaseConfig;
 
-const firebaseConfig = JSON.parse(firebaseConfigString);
+if (firebaseConfigString) {
+    try {
+        firebaseConfig = JSON.parse(firebaseConfigString);
+    } catch (error) {
+        console.error("Failed to parse Firebase config:", error);
+        console.error("Config string:", firebaseConfigString);
+        throw new Error("Invalid Firebase config JSON. Please check your NEXT_PUBLIC_FIREBASE_CONFIG environment variable.");
+    }
+} else {
+    // Fallback to the config from firebase-config.json for development
+    try {
+        firebaseConfig = require('../../firebase-config.json');
+    } catch (error) {
+        throw new Error("Firebase config not found. Please set NEXT_PUBLIC_FIREBASE_CONFIG in your environment variables or ensure firebase-config.json exists.");
+    }
+}
 
 
 // Initialize Firebase

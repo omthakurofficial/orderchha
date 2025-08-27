@@ -25,7 +25,26 @@ jobs:
       # Create environment file with Firebase config
       - name: Create .env.local file
         run: |
-          echo "NEXT_PUBLIC_FIREBASE_CONFIG=${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}" > .env.local
+          echo 'NEXT_PUBLIC_FIREBASE_CONFIG=${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}' > .env.local
+          
+      # Verify the config is valid JSON
+      - name: Verify Firebase config
+        run: |
+          echo "Verifying Firebase config..."
+          node -e "
+            const fs = require('fs');
+            const config = process.env.NEXT_PUBLIC_FIREBASE_CONFIG || fs.readFileSync('.env.local', 'utf8').split('=')[1];
+            try {
+              JSON.parse(config);
+              console.log('✅ Firebase config is valid JSON');
+            } catch (e) {
+              console.error('❌ Invalid Firebase config JSON:', e.message);
+              console.error('Config value:', config);
+              process.exit(1);
+            }
+          "
+        env:
+          NEXT_PUBLIC_FIREBASE_CONFIG: ${{ secrets.NEXT_PUBLIC_FIREBASE_CONFIG }}
       
       # Build the Next.js application
       - name: Build Next.js app
@@ -38,7 +57,5 @@ jobs:
         run: npx firebase-tools@13.0.2 experiments:enable webframeworks
         
       # Deploy to Firebase
-      - name: Deploy to Firebase
-        run: npx firebase-tools@13.0.2 deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
       - name: Deploy to Firebase
         run: npx firebase-tools@13.0.2 deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
