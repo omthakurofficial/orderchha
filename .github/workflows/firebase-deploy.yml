@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '20.10.0' # Explicitly specify a version that's compatible with Firebase CLI
           cache: 'npm'
       
       # Install dependencies
@@ -38,5 +38,7 @@ jobs:
         run: npx firebase-tools@13.0.2 experiments:enable webframeworks
         
       # Deploy to Firebase
+      - name: Deploy to Firebase
+        run: npx firebase-tools@13.0.2 deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
       - name: Deploy to Firebase
         run: npx firebase-tools@13.0.2 deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
