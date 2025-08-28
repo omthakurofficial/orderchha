@@ -1,18 +1,28 @@
 import { Client, Account, Databases, Storage, Functions, ID, Models } from 'appwrite';
 
-// Appwrite configuration
+// Environment validation with detailed logging
 const appwriteUrl = process.env.NEXT_PUBLIC_APPWRITE_URL;
 const appwriteProjectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 
+console.log('🔧 Appwrite Environment Check:', {
+  url: appwriteUrl ? '✅ URL Set' : '❌ URL Missing',
+  projectId: appwriteProjectId ? '✅ Project ID Set' : '❌ Project ID Missing',
+  nodeEnv: process.env.NODE_ENV || 'unknown'
+});
+
 if (!appwriteUrl || !appwriteProjectId) {
-  throw new Error('Missing Appwrite environment variables. Please check NEXT_PUBLIC_APPWRITE_URL and NEXT_PUBLIC_APPWRITE_PROJECT_ID.');
+  console.error('❌ CRITICAL: Missing Appwrite environment variables');
+  console.error('Required variables:', {
+    NEXT_PUBLIC_APPWRITE_URL: appwriteUrl || 'MISSING ❌',
+    NEXT_PUBLIC_APPWRITE_PROJECT_ID: appwriteProjectId || 'MISSING ❌'
+  });
 }
 
-// Initialize Appwrite client
+// Initialize Appwrite client with fallback values
 const client = new Client();
 client
-  .setEndpoint(appwriteUrl)
-  .setProject(appwriteProjectId);
+  .setEndpoint(appwriteUrl || 'https://cloud.appwrite.io/v1')
+  .setProject(appwriteProjectId || 'orderchha-app');
 
 // Export services
 export const account = new Account(client);
