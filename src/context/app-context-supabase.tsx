@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { auth } from '@/lib/appwrite'; // Keep Appwrite for authentication
 import { db, supabase } from '@/lib/supabase'; // Use Supabase for data
-import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem } from '@/types';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem, UserRole } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface AppContextType {
@@ -36,6 +36,7 @@ interface AppContextType {
   users: User[];
   addUser: (userData: UserFormData) => void;
   removeUser: (userId: string) => void;
+  signIn: (email: string, password: string) => Promise<void>;
   logout: () => void;
   completedTransactions: Transaction[];
 }
@@ -69,6 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [completedTransactions, setCompletedTransactions] = useState<Transaction[]>([]);
+  const [initError, setInitError] = useState<string | null>(null);
   
   const { toast } = useToast();
 
@@ -76,6 +78,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadDataFromSupabase = useCallback(async () => {
     try {
       console.log('🔄 Loading data from Supabase...');
+
+      // Check if user is already logged in with Appwrite
+      try {
+        const user = await auth.getCurrentUser();
+        if (user) {
+          const currentUserData = {
+            uid: user.$id,
+            name: user.name,
+            email: user.email,
+            role: 'admin' as UserRole, // Default role, you can enhance this later
+          };
+          setCurrentUser(currentUserData);
+          // Also add to users list for the users page
+          setUsers([currentUserData]);
+          console.log('✅ User already logged in:', user.name);
+        }
+      } catch (authError) {
+        console.log('ℹ️ No user session found');
+        setCurrentUser(null);
+        setUsers([]);
+      }
 
       // Load Menu - Transform Supabase data to app format
       try {
@@ -189,6 +212,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     } catch (error) {
       console.error('❌ Critical error during data loading:', error);
+      setInitError(error instanceof Error ? error.message : 'Unknown initialization error');
       setIsLoaded(true); // Still set loaded to true to prevent infinite loading
       toast({
         title: '⚠️ Partial Database Connection',
@@ -408,8 +432,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Implementation needed
   }, []);
 
-  const logout = useCallback(() => {
-    // Implementation needed
+  const signIn = useCallback(async (email: string, password: string) => {
+    try {
+      console.log('🔐 Signing in with Appwrite...');
+      const session = await auth.signIn(email, password);
+      console.log('✅ Appwrite sign in successful:', session);
+      
+      // Get user details from Appwrite
+      const user = await auth.getCurrentUser();
+      if (user) {
+        const newUser = {
+          uid: user.$id,
+          name: user.name,
+          email: user.email,
+          role: 'admin' as UserRole, // Default role, you can enhance this later
+        };
+        setCurrentUser(newUser);
+        // Also add to users list for the users page
+        setUsers([newUser]);
+        console.log('✅ User set:', user.name);
+      }
+    } catch (error) {
+      console.error('❌ Sign in failed:', error);
+      throw error;
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      console.log('🚪 Logging out...');
+      await auth.signOut();
+      setCurrentUser(null);
+      setUsers([]);
+      console.log('✅ Logged out successfully');
+    } catch (error) {
+      console.error('❌ Logout failed:', error);
+      // Still clear local state even if logout fails
+      setCurrentUser(null);
+      setUsers([]);
+    }
   }, []);
 
   const contextValue = {
@@ -441,13 +502,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     users,
     addUser,
     removeUser,
+    signIn,
     logout,
     completedTransactions,
   };
 
   return (
     <AppContext.Provider value={contextValue}>
-      {children}
+      {initError ? (
+        <div className="flex items-center justify-center h-screen bg-red-50">
+          <div className="text-center p-8">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Initialization Error</h1>
+            <p className="text-red-800 mb-4">{initError}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Reload App
+            </button>
+          </div>
+        </div>
+      ) : (
+        children
+      )}
     </AppContext.Provider>
   );
 }
@@ -455,7 +532,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 export const useApp = () => {
   const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error('useApp must be used within an AppProvider');
+    console.error('useApp called outside of AppProvider. Component stack:', new Error().stack);
+    throw new Error('useApp must be used within an AppProvider. Check that your component is wrapped in <AppProvider>.');
   }
   return context;
 };
