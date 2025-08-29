@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useApp } from "@/context/app-context";
+import { useApp } from "@/context/app-context-supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMemo } from "react";
 import { TableCard } from "../tables/table-card";

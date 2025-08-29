@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useApp } from "@/context/app-context";
+import { useApp } from "@/context/app-context-supabase";
 import { DollarSign, LayoutDashboard, Package, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

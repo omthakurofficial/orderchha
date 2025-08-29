@@ -1,6 +1,9 @@
+// STEP 1: Replace fake data with customizable real data
+// This is a transition step before moving to MongoDB
+
 import type { MenuCategory, Table, User } from '@/types';
 
-// 🍕 REAL MENU DATA - Updated with proper pricing and real items
+// 🍕 REAL MENU DATA - Customize this for your restaurant
 export const MENU: MenuCategory[] = [
   {
     id: 'pizza',
@@ -79,7 +82,7 @@ export const MENU: MenuCategory[] = [
       },
       { 
         id: 'b4', 
-        name: 'Sweet Lassi', 
+        name: 'Lassi (Sweet)', 
         description: 'Traditional Nepali yogurt drink', 
         price: 100.00, 
         image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop', 
@@ -90,7 +93,7 @@ export const MENU: MenuCategory[] = [
   },
   {
     id: 'snacks',
-    name: '🍟 Snacks & Appetizers',
+    name: '🍟 Snacks',
     icon: 'Pizza',
     items: [
       { 
@@ -113,20 +116,11 @@ export const MENU: MenuCategory[] = [
       },
       { 
         id: 'sn3', 
-        name: 'Steam Momo', 
+        name: 'Momo (Steam)', 
         description: 'Traditional Nepali dumplings (10 pieces)', 
         price: 200.00, 
         image: 'https://images.unsplash.com/photo-1626804475297-41608ea09aeb?w=400&h=300&fit=crop', 
         imageHint: 'steamed momo', 
-        inStock: true 
-      },
-      { 
-        id: 'sn4', 
-        name: 'Fried Momo', 
-        description: 'Crispy fried dumplings (10 pieces)', 
-        price: 220.00, 
-        image: 'https://images.unsplash.com/photo-1496412705862-e0088f16f791?w=400&h=300&fit=crop', 
-        imageHint: 'fried momo', 
         inStock: true 
       },
     ]
@@ -154,34 +148,23 @@ export const MENU: MenuCategory[] = [
         imageHint: 'kulfi ice cream', 
         inStock: true 
       },
-      { 
-        id: 'd3', 
-        name: 'Gulab Jamun', 
-        description: 'Sweet milk-based balls in syrup (4 pieces)', 
-        price: 150.00, 
-        image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop', 
-        imageHint: 'gulab jamun', 
-        inStock: true 
-      },
     ],
   },
 ];
 
-// 🪑 REAL TABLE LAYOUT - Updated for typical restaurant
+// 🪑 REAL TABLE LAYOUT - Customize for your restaurant floor plan
 export const TABLES: Table[] = [
     { id: 1, name: 'Table 1', location: 'Ground Floor', status: 'available', capacity: 4 },
     { id: 2, name: 'Table 2', location: 'Ground Floor', status: 'available', capacity: 2 },
     { id: 3, name: 'Table 3', location: 'Ground Floor', status: 'available', capacity: 6 },
-    { id: 4, name: 'Table 4', location: 'Ground Floor', status: 'available', capacity: 4 },
+    { id: 4, name: 'Table 4', location: 'First Floor', status: 'available', capacity: 4 },
     { id: 5, name: 'Table 5', location: 'First Floor', status: 'available', capacity: 2 },
-    { id: 6, name: 'Table 6', location: 'First Floor', status: 'available', capacity: 4 },
-    { id: 7, name: 'Table 7', location: 'First Floor', status: 'available', capacity: 8 },
-    { id: 8, name: 'Table 8', location: 'Outdoor', status: 'available', capacity: 6 },
-    { id: 9, name: 'Table 9', location: 'Outdoor', status: 'available', capacity: 4 },
-    { id: 10, name: 'Table 10', location: 'Ground Floor', status: 'available', capacity: 2 },
+    { id: 6, name: 'Table 6', location: 'Outdoor', status: 'available', capacity: 4 },
+    { id: 7, name: 'Table 7', location: 'Outdoor', status: 'available', capacity: 6 },
+    { id: 8, name: 'Table 8', location: 'Ground Floor', status: 'available', capacity: 8 },
 ];
 
-// 👥 REAL STAFF DATA
+// 👥 REAL USER DATA - Your staff accounts
 export const USERS: User[] = [
   { 
     uid: 'admin-001', 
@@ -190,15 +173,22 @@ export const USERS: User[] = [
     role: 'admin' 
   },
   { 
-    uid: 'kitchen-001', 
-    name: 'Head Chef', 
-    email: 'chef@orderchha.cafe', 
+    uid: 'staff-001', 
+    name: 'Kitchen Staff', 
+    email: 'kitchen@orderchha.cafe', 
     role: 'staff' 
   },
   { 
     uid: 'waiter-001', 
-    name: 'Senior Waiter', 
+    name: 'Wait Staff', 
     email: 'waiter@orderchha.cafe', 
     role: 'staff' 
   },
 ];
+
+// 📊 MONGODB INTEGRATION STATUS
+export const MONGODB_STATUS = {
+  enabled: true,
+  collections: ['orders', 'transactions', 'analytics'],
+  note: 'Menu and tables use static data, orders use MongoDB for persistence'
+};

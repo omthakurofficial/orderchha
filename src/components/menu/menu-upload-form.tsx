@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { LoaderCircle, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import { useApp } from '@/context/app-context';
+import { useApp } from '@/context/app-context-supabase';
 
 const menuItemSchema = z.object({
   name: z.string().min(2, { message: "Item name must be at least 2 characters." }),

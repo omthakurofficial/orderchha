@@ -1,0 +1,14 @@
+# PRODUCTION Environment Variables for Vercel
+# Copy these to Vercel Dashboard → Settings → Environment Variables
+
+# Supabase (Real-time Database)
+NEXT_PUBLIC_SUPABASE_URL=https://quzgqrcoatbdcxoexvpy.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1enFxcGN4YXRiZGN4b2V2ZXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNjUwNjEsImV4cCI6MjA3MTk0MTA2MX0.JkywYdsGZ4ZEF-Mloo3gDr85gqwhJ6iKuka3-ZQvrew
+
+# Appwrite (Authentication) - Keep existing
+NEXT_PUBLIC_APPWRITE_PROJECT_ID=orderchha-app
+NEXT_PUBLIC_APPWRITE_URL=https://cloud.appwrite.io/v1
+
+# Remove these (no longer needed):
+# MONGODB_URI=...
+# NEXT_PUBLIC_FIREBASE_CONFIG=...

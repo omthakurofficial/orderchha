@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useApp } from "@/context/app-context";
+import { useApp } from "@/context/app-context-supabase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";

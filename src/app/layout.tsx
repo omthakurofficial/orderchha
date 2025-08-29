@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { AppProvider } from '@/context/app-context';
+import { AppProvider } from '@/context/app-context-supabase';
 import { AuthLayout } from '@/components/layout/auth-layout';
 
 export const metadata: Metadata = {

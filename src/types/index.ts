@@ -17,12 +17,12 @@ export interface OrderItem extends MenuItem {
 }
 
 export interface KitchenOrder {
-    id:string;
+    id: string;
     tableId: number;
     items: OrderItem[];
-    status: 'pending' | 'in-kitchen' | 'completed' | 'paid';
+    status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
     timestamp: string;
-    total: number;
+    totalAmount: number;
 }
 
 export interface MenuCategory {
@@ -45,6 +45,10 @@ export interface Settings {
     address: string;
     phone: string;
     logo: string;
+    currency: string;
+    taxRate: number;
+    serviceCharge: number;
+    receiptNote: string;
     aiSuggestionsEnabled: boolean;
     onlineOrderingEnabled: boolean;
     paymentQrUrl: string;

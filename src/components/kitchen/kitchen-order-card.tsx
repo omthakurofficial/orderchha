@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useApp } from "@/context/app-context";
+import { useApp } from "@/context/app-context-supabase";
 import { useToast } from "@/hooks/use-toast";
 import type { KitchenOrder } from "@/types";
 import { formatDistanceToNow } from 'date-fns';

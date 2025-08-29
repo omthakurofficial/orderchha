@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { useApp } from "@/context/app-context";
+import { useApp } from "@/context/app-context-supabase";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { Separator } from "../ui/separator";

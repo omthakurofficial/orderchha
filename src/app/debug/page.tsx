@@ -3,8 +3,8 @@
 
 export default function DiagnosticPage() {
   const diagnosticInfo = {
-    appwriteUrl: process.env.NEXT_PUBLIC_APPWRITE_URL || 'MISSING',
-    appwriteProjectId: process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || 'MISSING',
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'MISSING',
+    supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET (hidden)' : 'MISSING',
     nodeEnv: process.env.NODE_ENV || 'unknown',
     timestamp: new Date().toISOString(),
     domain: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
@@ -17,8 +17,8 @@ export default function DiagnosticPage() {
       
       <h2>Environment Variables:</h2>
       <ul>
-        <li><strong>APPWRITE_URL:</strong> {diagnosticInfo.appwriteUrl}</li>
-        <li><strong>APPWRITE_PROJECT_ID:</strong> {diagnosticInfo.appwriteProjectId}</li>
+        <li><strong>SUPABASE_URL:</strong> {diagnosticInfo.supabaseUrl}</li>
+        <li><strong>SUPABASE_ANON_KEY:</strong> {diagnosticInfo.supabaseKey}</li>
         <li><strong>NODE_ENV:</strong> {diagnosticInfo.nodeEnv}</li>
       </ul>
 
@@ -29,36 +29,39 @@ export default function DiagnosticPage() {
         <li><strong>Timestamp:</strong> {diagnosticInfo.timestamp}</li>
       </ul>
 
-      <h2>Appwrite Connection Test:</h2>
-      <div id="appwrite-test">Testing Appwrite connection...</div>
+      <h2>Supabase Connection Test:</h2>
+      <div id="supabase-test">Testing Supabase connection...</div>
 
       <script dangerouslySetInnerHTML={{
         __html: `
-          async function testAppwrite() {
-            const testDiv = document.getElementById('appwrite-test');
+          async function testSupabase() {
+            const testDiv = document.getElementById('supabase-test');
             try {
-              const response = await fetch('${diagnosticInfo.appwriteUrl}/health', {
+              const response = await fetch('${diagnosticInfo.supabaseUrl}/rest/v1/menu_items?select=id,name&limit=1', {
                 method: 'GET',
                 headers: {
-                  'X-Appwrite-Project': '${diagnosticInfo.appwriteProjectId}'
+                  'apikey': '${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}',
+                  'Authorization': 'Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}',
+                  'Content-Type': 'application/json'
                 }
               });
               
               if (response.ok) {
-                testDiv.innerHTML = '✅ Appwrite connection successful!';
+                const data = await response.json();
+                testDiv.innerHTML = '✅ Supabase connection successful! Data: ' + JSON.stringify(data);
                 testDiv.style.color = 'green';
               } else {
-                testDiv.innerHTML = '❌ Appwrite connection failed: ' + response.status;
+                testDiv.innerHTML = '❌ Supabase connection failed: ' + response.status + ' - ' + await response.text();
                 testDiv.style.color = 'red';
               }
             } catch (error) {
-              testDiv.innerHTML = '❌ Appwrite connection error: ' + error.message;
+              testDiv.innerHTML = '❌ Supabase connection error: ' + error.message;
               testDiv.style.color = 'red';
             }
           }
           
           if (typeof window !== 'undefined') {
-            setTimeout(testAppwrite, 1000);
+            setTimeout(testSupabase, 1000);
           }
         `
       }} />

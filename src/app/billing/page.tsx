@@ -5,7 +5,7 @@ import { ActiveBills } from '@/components/billing/active-bills';
 import { ChangeCalculator } from '@/components/billing/change-calculator';
 import { TransactionList } from '@/components/billing/transaction-list';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useApp } from '@/context/app-context';
+import { useApp } from '@/context/app-context-supabase';
 import { Receipt } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useApp } from "@/context/app-context";
+import { useApp } from "@/context/app-context-supabase";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, LogIn } from "lucide-react";
 import Image from "next/image";

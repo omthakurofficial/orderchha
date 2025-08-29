@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { useApp } from '@/context/app-context';
+import { useApp } from '@/context/app-context-supabase';
 import { Printer } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useMemo, useState, useEffect } from 'react';
