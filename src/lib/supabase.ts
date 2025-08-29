@@ -1,24 +1,86 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Get environment variables with fallbacks
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://duzqqpcxatbdcxoevepy.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1enFxcGN4YXRiZGN4b2V2ZXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNjUwNjEsImV4cCI6MjA3MTk0MTA2MX0.JkywYdsGZ4ZEF-Mloo3gDr85gqwhJ6iKuka3-ZQvrew';
 
-// Debug configuration
-console.log('🔧 Supabase Configuration:', {
-  url: supabaseUrl ? '✅ URL Set' : '❌ URL Missing',
-  key: supabaseAnonKey ? '✅ Key Set' : '❌ Key Missing',
-});
+// Enhanced error handling for connection issues
+let supabaseClient;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
+try {
+  // Debug configuration
+  console.log('🔧 Supabase Configuration:', {
+    url: supabaseUrl ? '✅ URL Set' : '❌ URL Missing',
+    key: supabaseAnonKey ? '✅ Key Set' : '❌ Key Missing',
+  });
+
+  // Create the Supabase client
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
     },
-  },
-  auth: {
-    persistSession: false, // Since we're using Appwrite for auth
-  },
-});
+    auth: {
+      persistSession: false, // Since we're using Appwrite for auth
+    },
+  });
+  
+  console.log('✅ Supabase client initialized successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize Supabase client:', error);
+  
+  // Create a type-safe mock client to prevent app crashes
+  // This handles all the common PostgrestFilterBuilder methods
+  const mockPostgrestBuilder = {
+    select: () => ({
+      data: [],
+      error: new Error('Supabase client failed to initialize'),
+      order: () => mockPostgrestBuilder.select(),
+      limit: () => mockPostgrestBuilder.select(),
+      eq: () => mockPostgrestBuilder.select(),
+      in: () => mockPostgrestBuilder.select(),
+      single: () => ({ data: null, error: new Error('Supabase client failed to initialize') }),
+    }),
+    insert: () => ({
+      data: null,
+      error: new Error('Supabase client failed to initialize'),
+      select: () => mockPostgrestBuilder.select(),
+    }),
+    update: () => ({
+      data: null,
+      error: new Error('Supabase client failed to initialize'),
+      eq: () => ({
+        data: null,
+        error: new Error('Supabase client failed to initialize'),
+        select: () => mockPostgrestBuilder.select(),
+      }),
+    }),
+    delete: () => ({
+      data: null,
+      error: new Error('Supabase client failed to initialize'),
+      eq: () => mockPostgrestBuilder.select(),
+    }),
+    upsert: () => ({
+      data: null,
+      error: new Error('Supabase client failed to initialize'),
+      select: () => mockPostgrestBuilder.select(),
+    }),
+  };
+  
+  // The mock channel with proper TypeScript types
+  const mockChannel = {
+    on: (event: string, filter: any, callback: any) => mockChannel,
+    subscribe: () => ({ unsubscribe: () => {} }),
+  };
+  
+  supabaseClient = {
+    from: () => mockPostgrestBuilder,
+    channel: (name: string) => mockChannel,
+  };
+}
+
+export const supabase = supabaseClient;
 
 // Database helper functions for restaurant operations
 export const db = {
@@ -119,18 +181,30 @@ export const db = {
     return data[0];
   },
 
-  // Real-time subscriptions
+  // Real-time subscriptions with type safety
   subscribeToTables(callback: (payload: any) => void) {
-    return supabase
-      .channel('tables')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, callback)
-      .subscribe();
+    try {
+      // Use a type assertion to handle the postgres_changes event
+      return (supabase
+        .channel('tables') as any)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, callback)
+        .subscribe();
+    } catch (error) {
+      console.error('Failed to subscribe to tables changes:', error);
+      return { unsubscribe: () => {} }; // Return a dummy unsubscribe function
+    }
   },
 
   subscribeToOrders(callback: (payload: any) => void) {
-    return supabase
-      .channel('orders')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, callback)
-      .subscribe();
+    try {
+      // Use a type assertion to handle the postgres_changes event
+      return (supabase
+        .channel('orders') as any)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, callback)
+        .subscribe();
+    } catch (error) {
+      console.error('Failed to subscribe to orders changes:', error);
+      return { unsubscribe: () => {} }; // Return a dummy unsubscribe function
+    }
   },
 };
