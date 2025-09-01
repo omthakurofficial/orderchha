@@ -40,20 +40,20 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
         id: `sample-${tableId}`,
         tableId,
         items: [
-          { name: 'Margherita Pizza', price: 12.99, quantity: 2 },
-          { name: 'Caesar Salad', price: 8.50, quantity: 1 },
-          { name: 'Coca Cola', price: 2.50, quantity: 2 }
+          { name: 'Margherita Pizza', price: 12.99, quantity: 2, id: 'sample-1' },
+          { name: 'Caesar Salad', price: 8.50, quantity: 1, id: 'sample-2' },
+          { name: 'Coca Cola', price: 2.50, quantity: 2, id: 'sample-3' }
         ],
         status: 'completed' as const,
-        createdAt: new Date(),
-        total: 37.48
+        timestamp: new Date().toISOString(),
+        totalAmount: 37.48
       }];
     }
     
     return orders;
   }, [kitchenOrders, tableId, isLoaded]);
 
-  const totalAmount = ordersForTable.reduce((sum, order) => sum + (order.total || 0), 0);
+  const totalAmount = ordersForTable.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const vatAmount = applyVat ? totalAmount * 0.1 : 0;
   const finalAmount = totalAmount + vatAmount;
 

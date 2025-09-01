@@ -8,22 +8,40 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function DashboardPage() {
-    const { transactions, currentUser, inventory } = useApp();
+    const { completedTransactions, currentUser, inventory, isLoaded } = useApp();
     const router = useRouter();
 
     useEffect(() => {
-        if (currentUser?.role !== 'admin') {
+        if (isLoaded && currentUser?.role !== 'admin') {
             router.push('/');
         }
-    }, [currentUser, router]);
+    }, [currentUser, router, isLoaded]);
 
-    const totalRevenue = transactions.reduce((acc, t) => acc + t.amount, 0);
-    const cashRevenue = transactions.filter(t => t.method === 'cash').reduce((acc, t) => acc + t.amount, 0);
-    const onlineRevenue = transactions.filter(t => t.method === 'online').reduce((acc, t) => acc + t.amount, 0);
+    // Make sure completedTransactions exists before using it
+    const transactions = completedTransactions || [];
+    
+    const totalRevenue = transactions.reduce((acc, t) => acc + (t.amount || 0), 0);
+    const cashRevenue = transactions.filter(t => t?.method === 'cash').reduce((acc, t) => acc + (t.amount || 0), 0);
+    const onlineRevenue = transactions.filter(t => t?.method === 'online').reduce((acc, t) => acc + (t.amount || 0), 0);
     const totalOrders = transactions.length;
 
-    const totalInventoryValue = inventory.reduce((acc, item) => acc + (item.stock * item.purchasePrice), 0);
+    // Make sure inventory exists before using it
+    const inventoryItems = inventory || [];
+    const totalInventoryValue = inventoryItems.reduce(
+        (acc, item) => acc + ((item?.stock || 0) * (item?.purchasePrice || 0)), 
+        0
+    );
     
+    // If not yet loaded, show loading state
+    if (!isLoaded) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p>Loading dashboard...</p>
+            </div>
+        )
+    }
+    
+    // If loaded but not admin, show permission error
     if (currentUser?.role !== 'admin') {
         return (
             <div className="flex items-center justify-center h-full">
@@ -63,7 +81,7 @@ export default function DashboardPage() {
                         <CardContent>
                             <div className="text-2xl font-bold">NPR {cashRevenue.toFixed(2)}</div>
                              <p className="text-xs text-muted-foreground">
-                                {((cashRevenue / totalRevenue) * 100 || 0).toFixed(1)}% of total
+                                {totalRevenue > 0 ? ((cashRevenue / totalRevenue) * 100).toFixed(1) : "0.0"}% of total
                             </p>
                         </CardContent>
                     </Card>
@@ -77,7 +95,7 @@ export default function DashboardPage() {
                         <CardContent>
                             <div className="text-2xl font-bold">NPR {onlineRevenue.toFixed(2)}</div>
                              <p className="text-xs text-muted-foreground">
-                                {((onlineRevenue / totalRevenue) * 100 || 0).toFixed(1)}% of total
+                                {totalRevenue > 0 ? ((onlineRevenue / totalRevenue) * 100).toFixed(1) : "0.0"}% of total
                             </p>
                         </CardContent>
                     </Card>

@@ -187,10 +187,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }))
         })) || [];
         setKitchenOrders(transformedOrders);
+        setPendingOrders(transformedOrders.filter(order => order.status === 'pending'));
         console.log('✅ Orders loaded:', transformedOrders.length, 'orders');
       } catch (ordersError) {
         console.error('❌ Orders loading failed:', ordersError);
         setKitchenOrders([]);
+        setPendingOrders([]);
       }
 
       // Load Inventory - TEMPORARILY DISABLED FOR DEBUGGING
@@ -370,6 +372,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
 
       setKitchenOrders(prev => [...prev, kitchenOrder]);
+      setPendingOrders(prev => [...prev, kitchenOrder]);
       clearOrder();
       await updateTableStatus(tableId, 'occupied');
 
@@ -387,7 +390,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [order, toast, clearOrder, updateTableStatus]);
 
-  // Placeholder implementations for other functions
+  // Table operations
   const addTable = useCallback((tableData: Omit<Table, 'id' | 'status'>) => {
     // Implementation needed
   }, []);
@@ -400,17 +403,160 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettings(prev => ({ ...prev, ...newSettings }));
   }, []);
 
-  const completeKitchenOrder = useCallback((orderId: string) => {
-    // Implementation needed
-  }, []);
+  // Kitchen order management
+  const completeKitchenOrder = useCallback(async (orderId: string) => {
+    try {
+      // Update order status in the database
+      await db.updateOrder(orderId, { status: 'completed' });
+      
+      // Update the kitchen orders state
+      setKitchenOrders(prev => 
+        prev.map(order => 
+          order.id === orderId 
+            ? { ...order, status: 'completed' } 
+            : order
+        )
+      );
+      
+      // Create transaction record for completed order
+      const completedOrder = kitchenOrders.find(order => order.id === orderId);
+      if (completedOrder) {
+        const transaction: Transaction = {
+          id: `tr-${Date.now()}`,
+          tableId: completedOrder.tableId,
+          amount: completedOrder.totalAmount,
+          method: 'cash', // Default to cash, this can be changed in the billing page
+          timestamp: new Date().toISOString()
+        };
+        
+        // Add to completed transactions
+        setCompletedTransactions(prev => [...prev, transaction]);
+        
+        // Update table status to 'cleaning' after the order is completed
+        await updateTableStatus(completedOrder.tableId, 'cleaning');
+        
+        toast({
+          title: '✅ Order Completed',
+          description: `Order for Table ${completedOrder.tableId} is now ready for billing`,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to complete order:', error);
+      toast({
+        title: '❌ Error',
+        description: 'Failed to complete order.',
+        variant: 'destructive',
+      });
+    }
+  }, [kitchenOrders, toast, db, updateTableStatus]);
 
-  const approvePendingOrder = useCallback((orderId: string) => {
-    // Implementation needed
-  }, []);
+  const approvePendingOrder = useCallback(async (orderId: string) => {
+    try {
+      console.log('Approving order with ID:', orderId);
+      const orderToApprove = pendingOrders.find(order => order.id === orderId);
+      
+      if (!orderToApprove) {
+        console.error('Order not found in pendingOrders:', orderId);
+        toast({
+          title: '❌ Error',
+          description: 'Order not found in pending orders.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      console.log('Order found:', orderToApprove);
+      
+      try {
+        // Update order status in database
+        const updatedOrderData = await db.updateOrder(orderId, { status: 'preparing' });
+        console.log('Order updated in database:', updatedOrderData);
+      } catch (dbError: any) {
+        console.error('Database error updating order:', dbError?.message, dbError?.details);
+        toast({
+          title: '❌ Database Error',
+          description: `Failed to update order: ${dbError?.message || 'Unknown error'}`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Update the order status to 'preparing'
+      const updatedOrder = { ...orderToApprove, status: 'preparing' as const };
+      
+      // Update kitchenOrders
+      setKitchenOrders(prev => prev.map(order => order.id === orderId ? updatedOrder : order));
+      
+      // Remove from pendingOrders
+      setPendingOrders(prev => prev.filter(order => order.id !== orderId));
+      
+      toast({
+        title: '✅ Order Approved',
+        description: `Order for Table ${orderToApprove.tableId} sent to kitchen`,
+      });
+    } catch (error) {
+      console.error('Failed to approve order:', error);
+      toast({
+        title: '❌ Error',
+        description: 'Failed to approve order.',
+        variant: 'destructive',
+      });
+    }
+  }, [pendingOrders, toast, db]);
 
-  const rejectPendingOrder = useCallback((orderId: string) => {
-    // Implementation needed
-  }, []);
+  const rejectPendingOrder = useCallback(async (orderId: string) => {
+    try {
+      console.log('Rejecting order with ID:', orderId);
+      const orderToReject = pendingOrders.find(order => order.id === orderId);
+      
+      if (!orderToReject) {
+        console.error('Order not found in pendingOrders for rejection:', orderId);
+        toast({
+          title: '❌ Error',
+          description: 'Order not found in pending orders.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      console.log('Order found for rejection:', orderToReject);
+      
+      try {
+        // Update order status in database
+        const updatedOrderData = await db.updateOrder(orderId, { status: 'cancelled' });
+        console.log('Order marked as cancelled in database:', updatedOrderData);
+      } catch (dbError: any) {
+        console.error('Database error rejecting order:', dbError?.message);
+        toast({
+          title: '❌ Database Error',
+          description: `Failed to reject order: ${dbError?.message || 'Unknown error'}`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Update the order status to 'cancelled'
+      const updatedOrder = { ...orderToReject, status: 'cancelled' as const };
+      
+      // Update kitchenOrders
+      setKitchenOrders(prev => prev.map(order => order.id === orderId ? updatedOrder : order));
+      
+      // Remove from pendingOrders
+      setPendingOrders(prev => prev.filter(order => order.id !== orderId));
+      
+      toast({
+        title: '❌ Order Rejected',
+        description: `Order for Table ${orderToReject.tableId} has been cancelled`,
+      });
+    } catch (error) {
+      console.error('Failed to reject order:', error);
+      toast({
+        title: '❌ Error',
+        description: 'Failed to reject order.',
+        variant: 'destructive',
+      });
+    }
+  }, [pendingOrders, toast, db]);
 
   const updateInventory = useCallback((itemId: string, updates: Partial<InventoryItem>) => {
     // Implementation needed

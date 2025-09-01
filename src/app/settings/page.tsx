@@ -16,16 +16,16 @@ import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
     const { toast } = useToast();
-    const { settings, updateSettings, currentUser } = useApp();
+    const { settings, updateSettings, currentUser, isLoaded } = useApp();
     const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
     const [isUploading, setIsUploading] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
-        if (currentUser?.role !== 'admin') {
+        if (isLoaded && currentUser?.role !== 'admin') {
             router.push('/');
         }
-    }, [currentUser, router]);
+    }, [currentUser, router, isLoaded]);
 
     const handleSaveChanges = () => {
         toast({
@@ -98,7 +98,7 @@ export default function SettingsPage() {
     };
     
     const generateQrCode = () => {
-        if (settings.paymentQrUrl && settings.paymentQrUrl.trim() !== '') {
+        if (settings?.paymentQrUrl && settings.paymentQrUrl.trim() !== '') {
             setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(settings.paymentQrUrl)}`);
             toast({
               title: "QR Code Generated",
@@ -114,19 +114,27 @@ export default function SettingsPage() {
     }
     
     useEffect(() => {
-        if (settings.paymentQrUrl && settings.paymentQrUrl.trim() !== '') {
+        if (settings?.paymentQrUrl && settings.paymentQrUrl.trim() !== '') {
             setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(settings.paymentQrUrl)}`);
         } else {
             setQrCodeUrl("https://placehold.co/256x256.png");
         }
-    }, [settings.paymentQrUrl]);
+    }, [settings?.paymentQrUrl]);
 
+    if (!isLoaded) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p>Loading settings...</p>
+            </div>
+        );
+    }
+    
     if (currentUser?.role !== 'admin') {
         return (
             <div className="flex items-center justify-center h-full">
                 <p>You do not have permission to view this page.</p>
             </div>
-        )
+        );
     }
 
     return (
@@ -146,15 +154,15 @@ export default function SettingsPage() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="cafeName">Cafe Name</Label>
-                                    <Input id="cafeName" value={settings.cafeName} onChange={handleInputChange} />
+                                    <Input id="cafeName" value={settings?.cafeName || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="address">Address</Label>
-                                    <Textarea id="address" value={settings.address} onChange={handleInputChange} />
+                                    <Textarea id="address" value={settings?.address || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone</Label>
-                                    <Input id="phone" value={settings.phone} onChange={handleInputChange} />
+                                    <Input id="phone" value={settings?.phone || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="logo">Cafe Logo</Label>
@@ -163,7 +171,7 @@ export default function SettingsPage() {
                                         {isUploading && <LoaderCircle className="animate-spin" />}
                                     </div>
                                     <p className="text-xs text-muted-foreground pt-1">Upload a new logo image. Best results with a square image.</p>
-                                    {settings.logo && (
+                                    {settings?.logo && (
                                         <div className="mt-4">
                                             <Image src={settings.logo} alt="Cafe Logo Preview" width={80} height={80} className="rounded-md border p-1" />
                                         </div>
@@ -182,14 +190,22 @@ export default function SettingsPage() {
                                         <Label htmlFor="aiSuggestionsEnabled">AI Combo Suggestions</Label>
                                         <p className="text-xs text-muted-foreground">Show AI-powered meal recommendations to customers.</p>
                                     </div>
-                                    <Switch id="aiSuggestionsEnabled" checked={settings.aiSuggestionsEnabled} onCheckedChange={(checked) => handleSwitchChange('aiSuggestionsEnabled', checked)} />
+                                    <Switch 
+                                        id="aiSuggestionsEnabled" 
+                                        checked={settings?.aiSuggestionsEnabled || false} 
+                                        onCheckedChange={(checked) => handleSwitchChange('aiSuggestionsEnabled', checked)} 
+                                    />
                                 </div>
                                 <div className="flex items-center justify-between p-3 shadow-sm border rounded-lg">
                                      <div>
                                         <Label htmlFor="onlineOrderingEnabled">Online Ordering</Label>
                                         <p className="text-xs text-muted-foreground">Allow customers to place orders directly from the menu.</p>
                                     </div>
-                                    <Switch id="onlineOrderingEnabled" checked={settings.onlineOrderingEnabled} onCheckedChange={(checked) => handleSwitchChange('onlineOrderingEnabled', checked)} />
+                                    <Switch 
+                                        id="onlineOrderingEnabled" 
+                                        checked={settings?.onlineOrderingEnabled || false} 
+                                        onCheckedChange={(checked) => handleSwitchChange('onlineOrderingEnabled', checked)} 
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -203,7 +219,12 @@ export default function SettingsPage() {
                             <CardContent className="flex flex-col items-center justify-center">
                                 <div className="w-full space-y-2 mb-4">
                                     <Label htmlFor="paymentQrUrl">Payment URL</Label>
-                                    <Input id="paymentQrUrl" placeholder="https://your-payment-link.com" value={settings.paymentQrUrl} onChange={handleInputChange} />
+                                    <Input 
+                                        id="paymentQrUrl" 
+                                        placeholder="https://your-payment-link.com" 
+                                        value={settings?.paymentQrUrl || ''} 
+                                        onChange={handleInputChange} 
+                                    />
                                 </div>
                                 <div className="p-4 border rounded-lg">
                                      <Image

@@ -132,6 +132,39 @@ export const db = {
     return data[0];
   },
 
+  async updateOrder(orderId: string, orderData: any) {
+    console.log('Updating order in Supabase:', orderId, orderData);
+    
+    if (!orderId) {
+      console.error('Invalid order ID provided for update:', orderId);
+      throw new Error('Invalid order ID provided for update');
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .update(orderData)
+        .eq('id', orderId)
+        .select();
+        
+      if (error) {
+        console.error('Supabase error updating order:', error.message);
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        console.error('Order not found for ID:', orderId);
+        throw new Error('Order not found');
+      }
+      
+      console.log('Successfully updated order:', data[0]);
+      return data[0];
+    } catch (err) {
+      console.error('Error in updateOrder:', err);
+      throw err;
+    }
+  },
+
   async getKitchenOrders() {
     const { data, error } = await supabase
       .from('orders')
@@ -142,7 +175,7 @@ export const db = {
           menu_items (name, image)
         )
       `)
-      .in('status', ['pending', 'preparing'])
+      .in('status', ['pending', 'preparing', 'in-kitchen'])
       .order('created_at');
     if (error) throw error;
     return data;

@@ -11,14 +11,23 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function BillingPage() {
-    const { currentUser } = useApp();
+    const { currentUser, isLoaded } = useApp();
     const router = useRouter();
 
     useEffect(() => {
-        if (currentUser?.role !== 'admin' && currentUser?.role !== 'cashier' && currentUser?.role !== 'accountant') {
+        if (isLoaded && currentUser?.role !== 'admin' && currentUser?.role !== 'cashier' && currentUser?.role !== 'accountant') {
             router.push('/');
         }
-    }, [currentUser, router]);
+    }, [currentUser, router, isLoaded]);
+
+    // Show loading state if data is not yet loaded
+    if (!isLoaded) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p>Loading billing data...</p>
+            </div>
+        );
+    }
 
     if (currentUser?.role !== 'admin' && currentUser?.role !== 'cashier' && currentUser?.role !== 'accountant') {
         return (

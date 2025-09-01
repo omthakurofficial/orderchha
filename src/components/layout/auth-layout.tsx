@@ -29,7 +29,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
     );
 
     if (isPublicRoute) {
-        return <main>{children}</main>;
+        return <div className="flex flex-col h-screen">{children}</div>;
     }
 
     if (!isLoaded) {

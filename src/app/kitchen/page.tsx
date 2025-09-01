@@ -17,7 +17,8 @@ export default function KitchenPage() {
       }
   }, [currentUser, router]);
 
-  const activeOrders = kitchenOrders.filter(o => o.status === 'in-kitchen');
+  // Only show orders that have been approved ('preparing' status)
+  const activeOrders = kitchenOrders.filter(o => o.status === 'preparing');
 
   if (!isLoaded) {
     return (

@@ -48,7 +48,7 @@ export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
                 <Separator />
                  <div className="flex justify-between text-lg font-bold text-primary">
                     <span>Total</span>
-                    <span>NPR {order.total.toFixed(2)}</span>
+                    <span>NPR {order.totalAmount.toFixed(2)}</span>
                 </div>
 
             </CardContent>

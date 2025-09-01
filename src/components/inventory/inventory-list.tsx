@@ -101,8 +101,8 @@ export function InventoryList({ searchTerm, categoryFilter, dateRange }: Invento
                                 <span className="font-bold">{item.stock}</span>
                                 <span className="text-xs text-muted-foreground ml-1">{item.unit}</span>
                             </TableCell>
-                            <TableCell>NPR {item.purchasePrice.toFixed(2)}</TableCell>
-                            <TableCell className="font-semibold">NPR {(item.stock * item.purchasePrice).toFixed(2)}</TableCell>
+                            <TableCell>NPR {item.purchasePrice?.toFixed(2) || '0.00'}</TableCell>
+                            <TableCell className="font-semibold">NPR {(item.stock * (item.purchasePrice || 0)).toFixed(2)}</TableCell>
                             <TableCell>
                                <div className="flex items-center gap-2">
                                     <Progress 

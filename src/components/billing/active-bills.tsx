@@ -7,11 +7,14 @@ import { useMemo } from "react";
 import { TableCard } from "../tables/table-card";
 
 export function ActiveBills() {
-    const { tables } = useApp();
+    const { tables, isLoaded } = useApp();
 
+    // Use defensive programming with a fallback
+    const availableTables = tables || [];
+    
     const tablesInBilling = useMemo(() => {
-        return tables.filter(t => t.status === 'billing');
-    }, [tables]);
+        return availableTables.filter(t => t && t.status === 'cleaning');
+    }, [availableTables]);
 
     return (
         <Card>
@@ -20,7 +23,11 @@ export function ActiveBills() {
                 <CardDescription>Tables that are ready for payment.</CardDescription>
             </CardHeader>
             <CardContent>
-                 {tablesInBilling.length === 0 ? (
+                {!isLoaded ? (
+                    <div className="text-center p-8">
+                        <div className="animate-pulse">Loading tables...</div>
+                    </div>
+                ) : tablesInBilling.length === 0 ? (
                     <div className="text-center text-muted-foreground p-8">
                         <p>No tables are currently waiting for a bill.</p>
                     </div>
@@ -33,5 +40,5 @@ export function ActiveBills() {
                 )}
             </CardContent>
         </Card>
-    )
+    );
 }

@@ -7,16 +7,18 @@ Orderchha is a point-of-sale / restaurant management web application built with 
 - Language: TypeScript
 - Framework: Next.js (app router)
 - UI: React 18 + Tailwind CSS
-- Hosting / Backend integrations: Firebase (Auth + Firestore) for realtime data and authentication
+- Database: Supabase (PostgreSQL)
+- Authentication: Appwrite
 - Other notable libraries: GenKit (AI helpers), Radix UI, react-hook-form, date-fns
 
-The project was scaffolded as a Next.js app and contains both frontend pages and Firebase client wiring under `src/lib/firebase.ts`.
+The project was scaffolded as a Next.js app and contains both frontend pages and Supabase client wiring under `src/lib/supabase.ts`.
 
 ## What you'll find in this repo
 
 - `src/app` — Next.js app routes and pages (app router)
 - `src/components` — UI components grouped by feature
-- `src/lib/firebase.ts` — Firebase initialization (reads `NEXT_PUBLIC_FIREBASE_CONFIG`)
+- `src/lib/supabase.ts` — Supabase initialization and database helpers
+- `src/lib/appwrite.ts` — Appwrite authentication service
 - `package.json` — scripts and dependency list
 - `next.config.ts` — Next configuration (images, typescript/eslint settings)
 
@@ -28,23 +30,30 @@ The project was scaffolded as a Next.js app and contains both frontend pages and
 npm install
 ```
 
-2. Create a local environment file `.env.local` at the project root and add your Firebase config as a single JSON string assigned to `NEXT_PUBLIC_FIREBASE_CONFIG` (example below).
+2. Create a local environment file `.env.local` at the project root and add your Supabase and Appwrite credentials:
 
 Example `.env.local`:
 
 ```bash
-# Copy the JSON object you get from Firebase console and stringify it into this variable.
-NEXT_PUBLIC_FIREBASE_CONFIG='{"apiKey":"YOUR_API_KEY","authDomain":"YOUR_PROJECT.firebaseapp.com","projectId":"YOUR_PROJECT","storageBucket":"YOUR_PROJECT.appspot.com","messagingSenderId":"...","appId":"...","measurementId":"..."}'
+# Supabase credentials
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# Appwrite credentials
+NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+NEXT_PUBLIC_APPWRITE_PROJECT_ID=your-project-id
 ```
 
-3. Start dev server (the project uses port 9002 in package.json dev script):
+3. Set up the database by running the SQL scripts in the `/sql` directory or use the complete schema in `supabase-schema.sql`.
+
+4. Start dev server:
 
 ```bash
 npm run dev
 # or with pnpm/yarn if you use them
 ```
 
-Open http://localhost:9002 in your browser.
+Open http://localhost:3000 in your browser.
 
 There are also GenKit helper scripts if you use the AI flows in `src/ai`:
 
