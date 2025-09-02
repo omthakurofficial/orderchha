@@ -14,10 +14,20 @@ export function ActiveBills() {
     // Use defensive programming with a fallback
     const availableTables = tables || [];
     
+    // Debug logging
+    console.log('🔍 ActiveBills Debug:', {
+        isLoaded,
+        tablesCount: availableTables.length,
+        billingOrdersCount: billingOrders.length,
+        billingOrders: billingOrders
+    });
+    
     const tablesInBilling = useMemo(() => {
         // Find tables that have orders ready for billing
         const tablesWithBillingOrders = billingOrders.map(order => order.tableId);
         const uniqueTableIds = [...new Set(tablesWithBillingOrders)];
+        
+        console.log('📊 Tables with billing orders:', uniqueTableIds);
         
         // Return tables that have billing orders
         return availableTables.filter(table => uniqueTableIds.includes(table.id));
@@ -31,7 +41,11 @@ export function ActiveBills() {
                         <CardTitle>Active Bills</CardTitle>
                         <CardDescription>Tables that are ready for payment.</CardDescription>
                     </div>
-                    <Button variant="outline" size="sm" onClick={refreshDataFromDatabase}>
+                    <Button variant="outline" size="sm" onClick={() => {
+                        console.log('🔄 Manual refresh triggered');
+                        console.log('📊 Current billing orders before refresh:', billingOrders);
+                        refreshDataFromDatabase();
+                    }}>
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Refresh
                     </Button>

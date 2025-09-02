@@ -51,11 +51,12 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
                 description: menuItem?.description || '',
                 price: item.price,
                 quantity: item.quantity,
-                image: menuItem?.image_url || '',
-                inStock: true
+                image: menuItem?.image || menuItem?.image_url || '',
+                imageHint: menuItem?.image_hint || '',
+                inStock: menuItem?.available ?? true
               };
             }) || [],
-            status: order.status,
+            status: order.status as any,
             timestamp: order.created_at,
             totalAmount: order.total_amount,
             total: order.total_amount
@@ -66,10 +67,11 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
         console.error('Error loading completed orders:', error);
       }
     };
-
+    
     loadCompletedOrders();
   }, [mounted, isLoaded, tableId, billingOrders]);
 
+  // Generate unique invoice ID based on table and actual transaction
   const invoiceIdGenerated = useMemo(() => {
     if (!mounted) return `INV-${tableId}-loading`;
     
@@ -178,94 +180,109 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-6 p-6">
-            {/* Invoice Details */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <Label className="font-medium">Invoice #</Label>
-                <div>{invoiceIdGenerated}</div>
-              </div>
-              <div>
-                <Label className="font-medium">Table #</Label>
-                <div>{tableId}</div>
-              </div>
-              <div>
-                <Label className="font-medium">Date & Time</Label>
-                <div>{transactionDate}</div>
-              </div>
-              <div>
-                <Label className="font-medium">Payment Method</Label>
-                <div className="capitalize">{paymentMethod}</div>
-              </div>
-            </div>
+          {shouldShowReceipt && (
+            <>
+              <CardHeader className="text-center border-b">
+                <CardTitle className="text-2xl font-bold">
+                  {settings?.cafeName || 'Restaurant Name'}
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  {settings?.address || 'Restaurant Address'}<br />
+                  Phone: {settings?.phone || '(000) 000-0000'}<br />
+                  Thank you for dining with us!
+                </CardDescription>
+              </CardHeader>
 
-            <Separator />
+              <CardContent className="space-y-6 p-6">
+                {/* Invoice Details */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="font-medium">Invoice #</Label>
+                    <div>{invoiceIdGenerated}</div>
+                  </div>
+                  <div>
+                    <Label className="font-medium">Table #</Label>
+                    <div>{tableId}</div>
+                  </div>
+                  <div>
+                    <Label className="font-medium">Date & Time</Label>
+                    <div>{transactionDate}</div>
+                  </div>
+                  <div>
+                    <Label className="font-medium">Payment Method</Label>
+                    <div className="capitalize">{paymentMethod}</div>
+                  </div>
+                </div>
 
-            {/* Items */}
-            <div className="space-y-4">
-              <Label className="text-lg font-semibold">Order Details</Label>
-              
-              {ordersForTable.map((order) => (
-                <div key={order.id} className="space-y-2">
-                  {order.items?.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center py-1">
-                      <div className="flex-1">
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-sm text-gray-500">
-                          Qty: {item.quantity} × {settings?.currency || 'NPR'} {item.price.toFixed(2)}
+                <Separator />
+
+                {/* Items */}
+                <div className="space-y-4">
+                  <Label className="text-lg font-semibold">Order Details</Label>
+                  
+                  {ordersForTable.map((order) => (
+                    <div key={order.id} className="space-y-2">
+                      {order.items?.map((item: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center py-1">
+                          <div className="flex-1">
+                            <div className="font-medium">{item.name}</div>
+                            <div className="text-sm text-gray-500">
+                              Qty: {item.quantity} × {settings?.currency || 'NPR'} {item.price.toFixed(2)}
+                            </div>
+                          </div>
+                          <div className="font-medium">
+                            {settings?.currency || 'NPR'} {(item.price * item.quantity).toFixed(2)}
+                          </div>
                         </div>
-                      </div>
-                      <div className="font-medium">
-                        {settings?.currency || 'NPR'} {(item.price * item.quantity).toFixed(2)}
-                      </div>
+                      )) || (
+                        <div className="text-gray-500 text-center py-4">
+                          No items found for this order
+                        </div>
+                      )}
                     </div>
-                  )) || (
-                    <div className="text-gray-500 text-center py-4">
-                      No items found for this order
+                  ))}
+                </div>
+
+                <Separator />
+
+                {/* Totals */}
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{settings?.currency || 'NPR'} {totalAmount.toFixed(2)}</span>
+                  </div>
+                  
+                  {applyVat && (
+                    <div className="flex justify-between">
+                      <span>VAT (10%):</span>
+                      <span>{settings?.currency || 'NPR'} {vatAmount.toFixed(2)}</span>
                     </div>
                   )}
+                  
+                  <Separator />
+                  
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total:</span>
+                    <span>{settings?.currency || 'NPR'} {finalAmount.toFixed(2)}</span>
+                  </div>
                 </div>
-              ))}
-            </div>
 
-            <Separator />
-
-            {/* Totals */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>{settings?.currency || 'NPR'} {totalAmount.toFixed(2)}</span>
-              </div>
-              
-              {applyVat && (
-                <div className="flex justify-between">
-                  <span>VAT (10%):</span>
-                  <span>{settings?.currency || 'NPR'} {vatAmount.toFixed(2)}</span>
+                {/* Print Button */}
+                <div className="flex justify-center pt-4 print:hidden">
+                  <Button onClick={handlePrint} className="flex items-center gap-2">
+                    <Printer className="w-4 h-4" />
+                    Print Receipt
+                  </Button>
                 </div>
-              )}
-              
-              <Separator />
-              
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total:</span>
-                <span>{settings?.currency || 'NPR'} {finalAmount.toFixed(2)}</span>
-              </div>
-            </div>
 
-            {/* Print Button */}
-            <div className="flex justify-center pt-4 print:hidden">
-              <Button onClick={handlePrint} className="flex items-center gap-2">
-                <Printer className="w-4 h-4" />
-                Print Receipt
-              </Button>
-            </div>
-
-            {/* Footer */}
-            <div className="text-center text-sm text-gray-500 pt-4 border-t">
-              <div>Thank you for dining with us!</div>
-              <div>Please come again soon.</div>
-            </div>
-          </CardContent>
+                {/* Footer */}
+                <div className="text-center text-sm text-gray-500 pt-4 border-t">
+                  <div>Thank you for dining with us!</div>
+                  <div>Please come again soon.</div>
+                </div>
+              </CardContent>
+            </>
+          )}
         </Card>
       </div>
     </div>

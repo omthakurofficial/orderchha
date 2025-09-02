@@ -111,21 +111,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        console.log('🔄 Starting with clean Appwrite session...');
+        console.log('🔄 Checking existing authentication...');
         
-        // Nuclear option: Clear ALL sessions to ensure clean state
-        await auth.clearAllSessions();
+        // Check if user is already logged in (persist session)
+        const currentSession = await auth.getCurrentUser();
         
-        // Now we should definitely have no user
-        setCurrentUser(null);
-        
-        toast({
-          title: "🔄 Ready to Sign In",
-          description: "App initialized with clean session",
-        });
+        if (currentSession) {
+          console.log('✅ Found existing session for:', currentSession.email);
+          setCurrentUser({
+            uid: currentSession.$id,
+            name: currentSession.name || currentSession.email.split('@')[0],
+            email: currentSession.email,
+            role: 'admin', // Default role, should be from database
+            photoUrl: '',
+          });
+          
+          toast({
+            title: "👋 Welcome Back",
+            description: `Logged in as ${currentSession.name || currentSession.email}`,
+          });
+        } else {
+          console.log('ℹ️ No existing session found');
+          setCurrentUser(null);
+          
+          toast({
+            title: "ℹ️ Please Sign In",
+            description: "Authentication required",
+          });
+        }
         
       } catch (error: any) {
-        console.log('⚠️ Error during initialization:', error);
+        console.log('⚠️ Error checking authentication:', error.message);
         setCurrentUser(null);
         
         toast({
@@ -139,6 +155,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const loadDatabaseData = async () => {
       try {
+        // Load menu data from database first
+        console.log('🍽️ Loading menu data from database...');
+        const menuCategories = await db.getMenuCategories();
+        const menuItems = await db.getMenuItems();
+        
+        if (menuCategories && menuItems) {
+          const formattedMenu = menuCategories.map((category: any) => ({
+            id: category.id,
+            name: category.name,
+            icon: category.icon || 'Utensils',
+            items: menuItems
+              .filter((item: any) => item.category_id === category.id)
+              .map((item: any) => ({
+                id: item.id, // Use the actual database UUID
+                name: item.name,
+                description: item.description || '',
+                price: item.price,
+                image: item.image_url || item.image || '',
+                imageHint: item.image_hint || '',
+                inStock: item.available !== false && item.in_stock !== false
+              }))
+          }));
+          
+          setMenu(formattedMenu);
+          console.log('✅ Menu loaded from database:', formattedMenu.length, 'categories');
+        } else {
+          console.warn('⚠️ Could not load menu from database, using hardcoded menu');
+        }
+
         // Load pending orders from database
         const pendingOrdersData = await db.getPendingOrders();
         if (pendingOrdersData && pendingOrdersData.length > 0) {
@@ -195,6 +240,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         // Load billing orders from database
         const billingOrdersData = await db.getBillingReadyOrders();
+        console.log('🔄 Initial billing orders loaded:', billingOrdersData?.length || 0);
+        console.log('📊 Raw billing data:', billingOrdersData);
         if (billingOrdersData && billingOrdersData.length > 0) {
           const formattedBillingOrders = billingOrdersData.map((order: any) => ({
             id: order.id,
@@ -218,6 +265,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             total: order.total_amount
           }));
           setBillingOrders(formattedBillingOrders);
+          console.log('✅ Billing orders set:', formattedBillingOrders.length);
+        } else {
+          setBillingOrders([]);
+          console.log('⚠️ No billing orders found');
         }
 
         // Load transactions from database
@@ -231,6 +282,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
             timestamp: transaction.created_at
           }));
           setTransactions(formattedTransactions);
+        }
+
+        // Load settings from database
+        try {
+          const settingsData = await db.getSettings();
+          if (settingsData) {
+            const formattedSettings: Settings = {
+              cafeName: settingsData.cafe_name || 'Sips & Slices Corner',
+              address: settingsData.address || '123 Gourmet Street, Foodie City, 98765',
+              phone: settingsData.phone || '(555) 123-4567',
+              logo: settingsData.logo || 'https://i.ibb.co/6r11CNc/logo.png',
+              currency: settingsData.currency || 'NPR',
+              taxRate: (settingsData.tax_rate * 100) || 13, // Convert to percentage
+              serviceCharge: (settingsData.service_charge * 100) || 0,
+              receiptNote: settingsData.receipt_note || 'Thank you for dining with us!',
+              aiSuggestionsEnabled: settingsData.ai_suggestions_enabled ?? true,
+              onlineOrderingEnabled: settingsData.online_ordering_enabled ?? true,
+              paymentQrUrl: settingsData.payment_qr_url || ''
+            };
+            setSettings(formattedSettings);
+            console.log('✅ Settings loaded from database');
+          }
+        } catch (error) {
+          console.warn('⚠️ Could not load settings, using defaults:', error);
         }
 
         console.log('✅ Database data loaded successfully');
@@ -358,6 +433,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🔄 Refreshing data from database...');
       
+      // Load menu data from database
+      console.log('🍽️ Refreshing menu data from database...');
+      const menuCategories = await db.getMenuCategories();
+      const menuItems = await db.getMenuItems();
+      
+      if (menuCategories && menuItems) {
+        const formattedMenu = menuCategories.map((category: any) => ({
+          id: category.id,
+          name: category.name,
+          icon: category.icon || 'Utensils',
+          items: menuItems
+            .filter((item: any) => item.category_id === category.id)
+            .map((item: any) => ({
+              id: item.id, // Use the actual database UUID
+              name: item.name,
+              description: item.description || '',
+              price: item.price,
+              image: item.image_url || item.image || '',
+              imageHint: item.image_hint || '',
+              inStock: item.available !== false && item.in_stock !== false
+            }))
+        }));
+        
+        setMenu(formattedMenu);
+        console.log('✅ Menu refreshed from database:', formattedMenu.length, 'categories');
+      }
+      
       // Load pending orders from database
       const pendingOrdersData = await db.getPendingOrders();
       if (pendingOrdersData && pendingOrdersData.length > 0) {
@@ -412,6 +514,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       // Load billing orders from database
       const billingOrdersData = await db.getBillingReadyOrders();
+      console.log('🔄 Refresh billing orders loaded:', billingOrdersData?.length || 0);
+      console.log('📊 Refresh raw billing data:', billingOrdersData);
       if (billingOrdersData && billingOrdersData.length > 0) {
         const formattedBillingOrders = billingOrdersData.map((order: any) => ({
           id: order.id,
@@ -449,6 +553,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTransactions(formattedTransactions);
       } else {
         setTransactions([]);
+      }
+
+      // Load settings from database
+      try {
+        const settingsData = await db.getSettings();
+        if (settingsData) {
+          const formattedSettings: Settings = {
+            cafeName: settingsData.cafe_name || 'Sips & Slices Corner',
+            address: settingsData.address || '123 Gourmet Street, Foodie City, 98765',
+            phone: settingsData.phone || '(555) 123-4567',
+            logo: settingsData.logo || 'https://i.ibb.co/6r11CNc/logo.png',
+            currency: settingsData.currency || 'NPR',
+            taxRate: (settingsData.tax_rate * 100) || 13,
+            serviceCharge: (settingsData.service_charge * 100) || 0,
+            receiptNote: settingsData.receipt_note || 'Thank you for dining with us!',
+            aiSuggestionsEnabled: settingsData.ai_suggestions_enabled ?? true,
+            onlineOrderingEnabled: settingsData.online_ordering_enabled ?? true,
+            paymentQrUrl: settingsData.payment_qr_url || ''
+          };
+          setSettings(formattedSettings);
+          console.log('✅ Settings refreshed from database');
+        }
+      } catch (error) {
+        console.warn('⚠️ Could not refresh settings:', error);
       }
 
       // Load tables from database
@@ -646,6 +774,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         quantity: item.quantity,
         price: item.price
       }));
+
+      console.log('🔍 About to place order:', {
+        orderData,
+        orderItems,
+        tableOrder,
+        itemsStructure: tableOrder.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          type: typeof item.id
+        }))
+      });
 
       // Save to database
       const result = await db.createOrderWithItems(orderData, orderItems);

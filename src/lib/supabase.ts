@@ -96,6 +96,24 @@ export const db = {
     return data;
   },
 
+  async getMenuCategories() {
+    const { data, error } = await supabase
+      .from('menu_categories')
+      .select('*')
+      .order('name');
+    if (error) throw error;
+    return data;
+  },
+
+  async getMenuItems() {
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select('*')
+      .order('name');
+    if (error) throw error;
+    return data;
+  },
+
   async addMenuItem(categoryId: string, item: any) {
     const { data, error } = await supabase
       .from('menu_items')
@@ -139,6 +157,9 @@ export const db = {
 
   async createOrderWithItems(orderData: any, orderItems: any[]) {
     try {
+      console.log('🔍 Creating order with data:', orderData);
+      console.log('🔍 Creating order items:', orderItems);
+      
       // First create the order
       const { data: orderResponse, error: orderError } = await supabase
         .from('orders')
@@ -146,7 +167,12 @@ export const db = {
         .select()
         .single();
       
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('❌ Order creation error:', orderError);
+        throw new Error(`Order creation failed: ${orderError.message || JSON.stringify(orderError)}`);
+      }
+      
+      console.log('✅ Order created:', orderResponse);
       
       // Then create order items
       const itemsWithOrderId = orderItems.map(item => ({
@@ -154,16 +180,31 @@ export const db = {
         order_id: orderResponse.id
       }));
       
+      console.log('🔍 Order items with order ID:', itemsWithOrderId);
+      
       const { data: itemsResponse, error: itemsError } = await supabase
         .from('order_items')
         .insert(itemsWithOrderId)
         .select();
       
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('❌ Order items creation error:', itemsError);
+        console.error('❌ Full error details:', JSON.stringify(itemsError, null, 2));
+        if ('code' in itemsError) {
+          console.error('❌ Error code:', itemsError.code);
+          console.error('❌ Error message:', itemsError.message);
+          console.error('❌ Error details:', itemsError.details);
+        }
+        throw new Error(`Order items creation failed: ${itemsError.message || JSON.stringify(itemsError)}`);
+      }
+      
+      console.log('✅ Order items created:', itemsResponse);
       
       return { order: orderResponse, items: itemsResponse };
     } catch (err) {
-      console.error('Error creating order with items:', err);
+      console.error('❌ Critical error in createOrderWithItems:', err);
+      console.error('❌ Error type:', typeof err);
+      console.error('❌ Error constructor:', err?.constructor?.name);
       throw err;
     }
   },
@@ -209,7 +250,7 @@ export const db = {
           id, table_id, status, created_at, total_amount, customer_name, phone, notes,
           order_items (
             id, menu_item_id, quantity, price,
-            menu_items (name, image, description)
+            menu_items (name, image_url, description)
           )
         `)
         .order('created_at', { ascending: false });
@@ -230,7 +271,7 @@ export const db = {
           id, table_id, status, created_at, total_amount, customer_name, phone, notes,
           order_items (
             id, menu_item_id, quantity, price,
-            menu_items (name, image, description)
+            menu_items (name, image_url, description)
           )
         `)
         .eq('status', 'pending')
@@ -252,7 +293,7 @@ export const db = {
           id, table_id, status, created_at, total_amount, customer_name, phone, notes,
           order_items (
             id, menu_item_id, quantity, price,
-            menu_items (name, image, description)
+            menu_items (name, image_url, description)
           )
         `)
         .in('status', ['preparing', 'ready'])
@@ -274,7 +315,7 @@ export const db = {
           id, table_id, status, created_at, total_amount, customer_name, phone, notes,
           order_items (
             id, menu_item_id, quantity, price,
-            menu_items (name, image, description)
+            menu_items (name, image_url, description)
           )
         `)
         .eq('status', 'completed')
@@ -400,22 +441,31 @@ export const db = {
   // Get orders ready for billing (completed orders without transactions)
   async getBillingReadyOrders() {
     try {
+      console.log('🔍 getBillingReadyOrders called');
+      
       const { data, error } = await supabase
         .from('orders')
         .select(`
           id, table_id, status, created_at, total_amount, customer_name, phone, notes,
           order_items (
             id, menu_item_id, quantity, price,
-            menu_items (name, image, description)
+            menu_items (name, image_url, description)
           )
         `)
         .eq('status', 'ready')
         .order('created_at');
       
+      console.log('📊 getBillingReadyOrders response:', { 
+        data, 
+        error, 
+        dataLength: data?.length,
+        statuses: data?.map(o => o.status) 
+      });
+      
       if (error) throw error;
       return data || [];
     } catch (err) {
-      console.error('Error getting billing ready orders:', err);
+      console.error('❌ Error getting billing ready orders:', err);
       return [];
     }
   },
@@ -472,7 +522,7 @@ export const db = {
           id, table_id, status, created_at, total_amount, customer_name, phone, notes,
           order_items (
             id, menu_item_id, quantity, price,
-            menu_items (name, image, description)
+            menu_items (name, image_url, description)
           )
         `)
         .eq('table_id', tableId)
