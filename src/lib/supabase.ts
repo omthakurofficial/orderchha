@@ -124,12 +124,48 @@ export const db = {
 
   // Orders operations
   async createOrder(orderData: any) {
-    const { data, error } = await supabase
-      .from('orders')
-      .insert(orderData)
-      .select();
-    if (error) throw error;
-    return data[0];
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .insert(orderData)
+        .select();
+      if (error) throw error;
+      return data[0];
+    } catch (err) {
+      console.error('Error creating order:', err);
+      throw err;
+    }
+  },
+
+  async createOrderWithItems(orderData: any, orderItems: any[]) {
+    try {
+      // First create the order
+      const { data: orderResponse, error: orderError } = await supabase
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single();
+      
+      if (orderError) throw orderError;
+      
+      // Then create order items
+      const itemsWithOrderId = orderItems.map(item => ({
+        ...item,
+        order_id: orderResponse.id
+      }));
+      
+      const { data: itemsResponse, error: itemsError } = await supabase
+        .from('order_items')
+        .insert(itemsWithOrderId)
+        .select();
+      
+      if (itemsError) throw itemsError;
+      
+      return { order: orderResponse, items: itemsResponse };
+    } catch (err) {
+      console.error('Error creating order with items:', err);
+      throw err;
+    }
   },
 
   async updateOrder(orderId: string, orderData: any) {
@@ -165,20 +201,91 @@ export const db = {
     }
   },
 
+  async getOrders() {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id, table_id, status, created_at, total_amount, customer_name, phone, notes,
+          order_items (
+            id, menu_item_id, quantity, price,
+            menu_items (name, image, description)
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error getting orders:', err);
+      return [];
+    }
+  },
+
+  async getPendingOrders() {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id, table_id, status, created_at, total_amount, customer_name, phone, notes,
+          order_items (
+            id, menu_item_id, quantity, price,
+            menu_items (name, image, description)
+          )
+        `)
+        .eq('status', 'pending')
+        .order('created_at');
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error getting pending orders:', err);
+      return [];
+    }
+  },
+
   async getKitchenOrders() {
-    const { data, error } = await supabase
-      .from('orders')
-      .select(`
-        id, table_id, status, created_at, total_amount,
-        order_items (
-          id, menu_item_id, quantity, price,
-          menu_items (name, image)
-        )
-      `)
-      .in('status', ['pending', 'preparing', 'in-kitchen'])
-      .order('created_at');
-    if (error) throw error;
-    return data;
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id, table_id, status, created_at, total_amount, customer_name, phone, notes,
+          order_items (
+            id, menu_item_id, quantity, price,
+            menu_items (name, image, description)
+          )
+        `)
+        .in('status', ['preparing', 'ready'])
+        .order('created_at');
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error getting kitchen orders:', err);
+      return [];
+    }
+  },
+
+  async getBillingOrders() {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id, table_id, status, created_at, total_amount, customer_name, phone, notes,
+          order_items (
+            id, menu_item_id, quantity, price,
+            menu_items (name, image, description)
+          )
+        `)
+        .eq('status', 'completed')
+        .order('created_at');
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error getting billing orders:', err);
+      return [];
+    }
   },
 
   // Settings operations
@@ -217,9 +324,19 @@ export const db = {
   // Transactions operations
   async saveTransaction(transaction: any) {
     try {
+      // Generate invoice number if not provided
+      const invoiceNumber = transaction.invoice_number || `INV-${Date.now()}`;
+      
+      const transactionData = {
+        ...transaction,
+        invoice_number: invoiceNumber,
+        total_amount: transaction.amount + (transaction.vat_amount || 0),
+        status: 'completed'
+      };
+      
       const { data, error } = await supabase
         .from('transactions')
-        .insert(transaction)
+        .insert(transactionData)
         .select();
       
       // If there's an error with the database, fall back to localStorage
@@ -235,6 +352,29 @@ export const db = {
       console.warn('Error saving transaction, using localStorage instead:', err);
       this.saveTransactionToLocalStorage(transaction);
       return transaction;
+    }
+  },
+
+  async getTransactions() {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          id, table_id, order_id, amount, vat_amount, total_amount,
+          method, status, customer_name, phone, invoice_number,
+          created_at, updated_at
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.warn('Failed to get transactions from database, using localStorage instead:', error);
+        return this.getTransactionsFromLocalStorage();
+      }
+      
+      return data || [];
+    } catch (err) {
+      console.warn('Error getting transactions, using localStorage instead:', err);
+      return this.getTransactionsFromLocalStorage();
     }
   },
   
@@ -254,6 +394,72 @@ export const db = {
     } catch (err) {
       console.error('Failed to get transactions from localStorage:', err);
       return [];
+    }
+  },
+
+  // Get orders ready for billing (completed orders without transactions)
+  async getBillingReadyOrders() {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id, table_id, status, created_at, total_amount, customer_name, phone, notes,
+          order_items (
+            id, menu_item_id, quantity, price,
+            menu_items (name, image, description)
+          )
+        `)
+        .eq('status', 'ready')
+        .order('created_at');
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error getting billing ready orders:', err);
+      return [];
+    }
+  },
+
+  // Get tables that need billing
+  async getTablesForBilling() {
+    try {
+      const { data, error } = await supabase
+        .from('tables')
+        .select('*')
+        .eq('status', 'billing')
+        .order('id');
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error getting tables for billing:', err);
+      return [];
+    }
+  },
+
+  // Complete order and update table status
+  async completeOrderAndUpdateTable(orderId: string, tableId: number) {
+    try {
+      // Update order status to completed
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({ status: 'completed' })
+        .eq('id', orderId);
+      
+      if (orderError) throw orderError;
+
+      // Update table status to billing
+      const { error: tableError } = await supabase
+        .from('tables')
+        .update({ status: 'billing' })
+        .eq('id', tableId);
+      
+      if (tableError) throw tableError;
+
+      return { success: true };
+    } catch (err) {
+      console.error('Error completing order and updating table:', err);
+      throw err;
     }
   },
 

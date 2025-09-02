@@ -1,8 +1,9 @@
-// HYBRID MIGRATION: Real Appwrite Auth + Simplified Data Management
+// HYBRID MIGRATION: Real Appwrite Auth + Real Supabase Database
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { auth } from '@/lib/appwrite';
+import { db } from '@/lib/supabase';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
@@ -55,6 +56,7 @@ interface AppContextType {
   deleteInventoryItem: (itemId: string) => Promise<void>;
   completedTransactions: Transaction[];
   completeTransaction: (transaction: Transaction) => Promise<void>;
+  refreshDataFromDatabase: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -102,7 +104,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
 
-  // Initialize with real Appwrite auth
+  // Initialize with real Appwrite auth and load database data
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -132,7 +134,83 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    const loadDatabaseData = async () => {
+      try {
+        // Load pending orders from database
+        const pendingOrdersData = await db.getPendingOrders();
+        if (pendingOrdersData && pendingOrdersData.length > 0) {
+          const formattedPendingOrders = pendingOrdersData.map((order: any) => ({
+            id: order.id,
+            tableId: order.table_id,
+            items: order.order_items?.map((item: any) => {
+              const menuItem = Array.isArray(item.menu_items) ? item.menu_items[0] : item.menu_items;
+              return {
+                id: item.menu_item_id,
+                name: menuItem?.name || 'Unknown Item',
+                description: menuItem?.description || '',
+                price: item.price,
+                quantity: item.quantity,
+                image: menuItem?.image || menuItem?.image_url || '',
+                imageHint: menuItem?.image_hint || '',
+                inStock: menuItem?.available ?? true
+              };
+            }) || [],
+            status: order.status as any,
+            timestamp: order.created_at,
+            totalAmount: order.total_amount,
+            total: order.total_amount
+          }));
+          setPendingOrders(formattedPendingOrders);
+        }
+
+        // Load kitchen orders from database
+        const kitchenOrdersData = await db.getKitchenOrders();
+        if (kitchenOrdersData && kitchenOrdersData.length > 0) {
+          const formattedKitchenOrders = kitchenOrdersData.map((order: any) => ({
+            id: order.id,
+            tableId: order.table_id,
+            items: order.order_items?.map((item: any) => {
+              const menuItem = Array.isArray(item.menu_items) ? item.menu_items[0] : item.menu_items;
+              return {
+                id: item.menu_item_id,
+                name: menuItem?.name || 'Unknown Item',
+                description: menuItem?.description || '',
+                price: item.price,
+                quantity: item.quantity,
+                image: menuItem?.image || menuItem?.image_url || '',
+                imageHint: menuItem?.image_hint || '',
+                inStock: menuItem?.available ?? true
+              };
+            }) || [],
+            status: order.status as any,
+            timestamp: order.created_at,
+            totalAmount: order.total_amount,
+            total: order.total_amount
+          }));
+          setKitchenOrders(formattedKitchenOrders);
+        }
+
+        // Load transactions from database
+        const transactionsData = await db.getTransactions();
+        if (transactionsData && transactionsData.length > 0) {
+          const formattedTransactions = transactionsData.map((transaction: any) => ({
+            id: transaction.id,
+            tableId: transaction.table_id,
+            amount: transaction.total_amount,
+            method: transaction.method as 'cash' | 'online',
+            timestamp: transaction.created_at
+          }));
+          setTransactions(formattedTransactions);
+        }
+
+        console.log('✅ Database data loaded successfully');
+      } catch (error) {
+        console.warn('⚠️ Could not load database data, using local state:', error);
+      }
+    };
+
     initializeAuth();
+    loadDatabaseData();
 
     // 🔥 Load table-specific orders from localStorage
     const savedTableOrders = localStorage.getItem('orderchha-table-orders');
@@ -241,6 +319,101 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toast({
         title: "✅ Signed Out",
         description: "You've been signed out successfully",
+      });
+    }
+  };
+
+  // Refresh all data from database
+  const refreshDataFromDatabase = async () => {
+    try {
+      console.log('🔄 Refreshing data from database...');
+      
+      // Load pending orders from database
+      const pendingOrdersData = await db.getPendingOrders();
+      if (pendingOrdersData && pendingOrdersData.length > 0) {
+        const formattedPendingOrders = pendingOrdersData.map((order: any) => ({
+          id: order.id,
+          tableId: order.table_id,
+          items: order.order_items?.map((item: any) => ({
+            id: item.menu_item_id,
+            name: item.menu_items?.[0]?.name || 'Unknown Item',
+            description: item.menu_items?.[0]?.description || '',
+            price: item.price,
+            quantity: item.quantity,
+            image: item.menu_items?.[0]?.image || '',
+            imageHint: item.menu_items?.[0]?.image_hint || '',
+            inStock: true
+          })) || [],
+          status: order.status as any,
+          timestamp: order.created_at,
+          totalAmount: order.total_amount,
+          total: order.total_amount
+        }));
+        setPendingOrders(formattedPendingOrders);
+      } else {
+        setPendingOrders([]);
+      }
+
+      // Load kitchen orders from database
+      const kitchenOrdersData = await db.getKitchenOrders();
+      if (kitchenOrdersData && kitchenOrdersData.length > 0) {
+        const formattedKitchenOrders = kitchenOrdersData.map((order: any) => ({
+          id: order.id,
+          tableId: order.table_id,
+          items: order.order_items?.map((item: any) => ({
+            id: item.menu_item_id,
+            name: item.menu_items?.[0]?.name || 'Unknown Item',
+            description: item.menu_items?.[0]?.description || '',
+            price: item.price,
+            quantity: item.quantity,
+            image: item.menu_items?.[0]?.image || '',
+            imageHint: item.menu_items?.[0]?.image_hint || '',
+            inStock: true
+          })) || [],
+          status: order.status as any,
+          timestamp: order.created_at,
+          totalAmount: order.total_amount,
+          total: order.total_amount
+        }));
+        setKitchenOrders(formattedKitchenOrders);
+      } else {
+        setKitchenOrders([]);
+      }
+
+      // Load transactions from database
+      const transactionsData = await db.getTransactions();
+      if (transactionsData && transactionsData.length > 0) {
+        const formattedTransactions = transactionsData.map((transaction: any) => ({
+          id: transaction.id,
+          tableId: transaction.table_id,
+          amount: transaction.total_amount,
+          method: transaction.method as 'cash' | 'online',
+          timestamp: transaction.created_at
+        }));
+        setTransactions(formattedTransactions);
+      } else {
+        setTransactions([]);
+      }
+
+      // Load tables from database
+      const tablesData = await db.getTables();
+      if (tablesData && tablesData.length > 0) {
+        setTables(tablesData);
+      }
+
+      console.log('✅ Database data refreshed successfully');
+      
+      toast({
+        title: "Data Refreshed",
+        description: "All data has been reloaded from database",
+      });
+      
+    } catch (error) {
+      console.warn('⚠️ Could not refresh database data:', error);
+      toast({
+        title: "Refresh Warning",
+        description: "Some data may be outdated - check database connection",
+        variant: "destructive"
       });
     }
   };
@@ -387,7 +560,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [currentTableId, tableOrders]);
 
-  const placeOrder = (tableId: number) => {
+  const placeOrder = async (tableId: number) => {
     const tableOrder = getTableOrder(tableId);
     if (tableOrder.length === 0) {
       toast({
@@ -401,85 +574,210 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const orderTotal = tableOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const itemCount = tableOrder.reduce((sum, item) => sum + item.quantity, 0);
     
-    const newOrder: KitchenOrder = {
-      id: `${Date.now()}-T${tableId}`, // Include table ID in order ID for better tracking
-      tableId,
-      items: tableOrder, // Use table-specific order items
-      status: 'pending',
-      timestamp: new Date().toISOString(),
-      totalAmount: orderTotal,
-      total: orderTotal
-    };
-    
-    setPendingOrders(prev => [...prev, newOrder]);
-    updateTableStatus(tableId, 'occupied');
-    clearTableOrder(tableId); // Clear only this table's order
-    
-    toast({
-      title: "Order Placed! 🍽️",
-      description: `Table ${tableId}: ${itemCount} items (₹${orderTotal}) sent to kitchen.`,
-    });
+    try {
+      // Create order data for database
+      const orderData = {
+        table_id: tableId,
+        total_amount: orderTotal,
+        status: 'pending',
+        customer_name: `Table ${tableId}`,
+        notes: `${itemCount} items ordered`
+      };
 
-    // Dispatch custom event for notifications
-    window.dispatchEvent(new CustomEvent('orderPlaced', {
-      detail: { tableId, orderTotal, itemCount, orderId: newOrder.id }
-    }));
-  };
+      // Create order items data for database
+      const orderItems = tableOrder.map(item => ({
+        menu_item_id: item.id,
+        quantity: item.quantity,
+        price: item.price
+      }));
 
-  const completeKitchenOrder = (orderId: string) => {
-    const order = kitchenOrders.find(o => o.id === orderId);
-    if (order) {
-      setKitchenOrders(prev => prev.filter(o => o.id !== orderId));
-      updateTableStatus(order.tableId, 'occupied');
-    }
-  };
-
-  const updateOrderStatus = (orderId: string, status: 'preparing' | 'ready' | 'completed') => {
-    setKitchenOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, status } : order
-    ));
-
-    // Dispatch custom event for notifications
-    if (status === 'ready') {
-      const order = kitchenOrders.find(o => o.id === orderId);
-      if (order) {
-        window.dispatchEvent(new CustomEvent('orderReady', {
-          detail: { tableId: order.tableId, orderId: order.id }
-        }));
-      }
-    } else if (status === 'completed') {
-      const order = kitchenOrders.find(o => o.id === orderId);
-      if (order) {
-        updateTableStatus(order.tableId, 'billing');
-        window.dispatchEvent(new CustomEvent('paymentPending', {
-          detail: { tableId: order.tableId, amount: order.totalAmount }
-        }));
-      }
-    }
-  };
-
-  const approvePendingOrder = (orderId: string) => {
-    const order = pendingOrders.find(o => o.id === orderId);
-    if (order) {
-      setPendingOrders(prev => prev.filter(o => o.id !== orderId));
-      setKitchenOrders(prev => [...prev, { ...order, status: 'preparing' }]);
+      // Save to database
+      const result = await db.createOrderWithItems(orderData, orderItems);
+      
+      const newOrder: KitchenOrder = {
+        id: result.order.id,
+        tableId,
+        items: tableOrder,
+        status: 'pending',
+        timestamp: result.order.created_at,
+        totalAmount: orderTotal,
+        total: orderTotal
+      };
+      
+      setPendingOrders(prev => [...prev, newOrder]);
+      updateTableStatus(tableId, 'occupied');
+      clearTableOrder(tableId);
+      
+      toast({
+        title: "Order Placed! 🍽️",
+        description: `Table ${tableId}: ${itemCount} items (₹${orderTotal}) saved to database.`,
+      });
 
       // Dispatch custom event for notifications
-      window.dispatchEvent(new CustomEvent('orderConfirmed', {
-        detail: { tableId: order.tableId, orderId: order.id }
+      window.dispatchEvent(new CustomEvent('orderPlaced', {
+        detail: { tableId, orderTotal, itemCount, orderId: newOrder.id }
+      }));
+      
+    } catch (error) {
+      console.error('Error placing order:', error);
+      
+      // Fallback to local state if database fails
+      const newOrder: KitchenOrder = {
+        id: `${Date.now()}-T${tableId}`,
+        tableId,
+        items: tableOrder,
+        status: 'pending',
+        timestamp: new Date().toISOString(),
+        totalAmount: orderTotal,
+        total: orderTotal
+      };
+      
+      setPendingOrders(prev => [...prev, newOrder]);
+      updateTableStatus(tableId, 'occupied');
+      clearTableOrder(tableId);
+      
+      toast({
+        title: "Order Placed! 🍽️",
+        description: `Table ${tableId}: ${itemCount} items (₹${orderTotal}) - using local storage.`,
+      });
+
+      window.dispatchEvent(new CustomEvent('orderPlaced', {
+        detail: { tableId, orderTotal, itemCount, orderId: newOrder.id }
       }));
     }
   };
 
-  const rejectPendingOrder = (orderId: string) => {
-    const order = pendingOrders.find(o => o.id === orderId);
+  const completeKitchenOrder = async (orderId: string) => {
+    const order = kitchenOrders.find(o => o.id === orderId);
     if (order) {
-      setPendingOrders(prev => prev.filter(o => o.id !== orderId));
-      updateTableStatus(order.tableId, 'available');
+      try {
+        // Update order status to completed and table status to billing in database
+        await db.completeOrderAndUpdateTable(orderId, order.tableId);
+        
+        // Remove from kitchen orders
+        setKitchenOrders(prev => prev.filter(o => o.id !== orderId));
+        
+        // Update table status to billing
+        updateTableStatus(order.tableId, 'billing');
+        
+        toast({
+          title: "Order Completed! 🍽️",
+          description: `Table ${order.tableId} order is ready for billing`,
+        });
+        
+        // Dispatch custom event for billing notification
+        window.dispatchEvent(new CustomEvent('orderReadyForBilling', {
+          detail: { tableId: order.tableId, orderId: order.id, amount: order.totalAmount }
+        }));
+        
+      } catch (error) {
+        console.error('Error completing kitchen order:', error);
+        
+        // Fallback to local state only
+        setKitchenOrders(prev => prev.filter(o => o.id !== orderId));
+        updateTableStatus(order.tableId, 'billing');
+        
+        toast({
+          title: "Order Completed! 🍽️",
+          description: `Table ${order.tableId} order is ready for billing (local only)`,
+        });
+      }
     }
   };
 
-  const processPayment = (tableId: number, method: 'cash' | 'online', applyVat: boolean) => {
+  const updateOrderStatus = async (orderId: string, status: 'preparing' | 'ready' | 'completed') => {
+    try {
+      // Update in database first
+      await db.updateOrder(orderId, { status });
+      
+      // Update local state
+      setKitchenOrders(prev => prev.map(order => 
+        order.id === orderId ? { ...order, status } : order
+      ));
+
+      // Dispatch custom event for notifications
+      if (status === 'ready') {
+        const order = kitchenOrders.find(o => o.id === orderId);
+        if (order) {
+          window.dispatchEvent(new CustomEvent('orderReady', {
+            detail: { tableId: order.tableId, orderId: order.id }
+          }));
+        }
+      } else if (status === 'completed') {
+        const order = kitchenOrders.find(o => o.id === orderId);
+        if (order) {
+          updateTableStatus(order.tableId, 'billing');
+          window.dispatchEvent(new CustomEvent('paymentPending', {
+            detail: { tableId: order.tableId, amount: order.totalAmount }
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      
+      // Fallback to local state update
+      setKitchenOrders(prev => prev.map(order => 
+        order.id === orderId ? { ...order, status } : order
+      ));
+      
+      toast({
+        title: "Status Updated",
+        description: `Order status updated to ${status} (local storage)`,
+      });
+    }
+  };
+
+  const approvePendingOrder = async (orderId: string) => {
+    const order = pendingOrders.find(o => o.id === orderId);
+    if (order) {
+      try {
+        // Update status in database
+        await db.updateOrder(orderId, { status: 'preparing' });
+        
+        // Update local state
+        setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+        setKitchenOrders(prev => [...prev, { ...order, status: 'preparing' }]);
+
+        // Dispatch custom event for notifications
+        window.dispatchEvent(new CustomEvent('orderConfirmed', {
+          detail: { tableId: order.tableId, orderId: order.id }
+        }));
+      } catch (error) {
+        console.error('Error approving order:', error);
+        
+        // Fallback to local state
+        setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+        setKitchenOrders(prev => [...prev, { ...order, status: 'preparing' }]);
+        
+        toast({
+          title: "Order Approved",
+          description: `Order ${orderId} approved (local storage)`,
+        });
+      }
+    }
+  };
+
+  const rejectPendingOrder = async (orderId: string) => {
+    const order = pendingOrders.find(o => o.id === orderId);
+    if (order) {
+      try {
+        // Update status in database
+        await db.updateOrder(orderId, { status: 'cancelled' });
+        
+        // Update local state
+        setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+        updateTableStatus(order.tableId, 'available');
+      } catch (error) {
+        console.error('Error rejecting order:', error);
+        
+        // Fallback to local state
+        setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+        updateTableStatus(order.tableId, 'available');
+      }
+    }
+  };
+
+  const processPayment = async (tableId: number, method: 'cash' | 'online', applyVat: boolean) => {
     // Look for completed orders for this table
     const tableOrders = kitchenOrders.filter(order => 
       order.tableId === tableId && (order.status === 'completed' || order.status === 'ready')
@@ -498,30 +796,86 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const vatAmount = applyVat ? totalAmount * 0.1 : 0;
     const finalAmount = totalAmount + vatAmount;
 
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      tableId,
-      amount: finalAmount,
+    // Get the first order for order_id reference
+    const mainOrder = tableOrders[0];
+
+    const newTransaction = {
+      table_id: tableId,
+      order_id: mainOrder.id,
+      amount: totalAmount,
+      vat_amount: vatAmount,
+      total_amount: finalAmount,
       method,
-      timestamp: new Date().toISOString()
+      customer_name: `Table ${tableId}`,
+      status: 'completed',
+      invoice_number: `INV-${Date.now()}`
     };
 
-    setTransactions(prev => [...prev, newTransaction]);
-    // Remove only the paid orders, not all orders for the table
-    setKitchenOrders(prev => prev.filter(order => 
-      !(order.tableId === tableId && (order.status === 'completed' || order.status === 'ready'))
-    ));
-    updateTableStatus(tableId, 'available');
+    try {
+      // Save transaction to database
+      const savedTransaction = await db.saveTransaction(newTransaction);
+      
+      // Update local state
+      setTransactions(prev => [...prev, {
+        id: savedTransaction.id || Date.now().toString(),
+        tableId,
+        amount: finalAmount,
+        method,
+        timestamp: savedTransaction.created_at || new Date().toISOString()
+      }]);
 
-    toast({
-      title: "Payment Processed!",
-      description: `₹${finalAmount.toFixed(2)} payment completed for table ${tableId}.`,
-    });
+      // Update order status to completed in database
+      for (const order of tableOrders) {
+        try {
+          await db.updateOrder(order.id, { status: 'completed' });
+        } catch (err) {
+          console.warn('Failed to update order status in database:', err);
+        }
+      }
 
-    // Dispatch custom event for notifications
-    window.dispatchEvent(new CustomEvent('orderCompleted', {
-      detail: { tableId, amount: finalAmount }
-    }));
+      // Remove only the paid orders, not all orders for the table
+      setKitchenOrders(prev => prev.filter(order => 
+        !(order.tableId === tableId && (order.status === 'completed' || order.status === 'ready'))
+      ));
+      updateTableStatus(tableId, 'available');
+
+      toast({
+        title: "Payment Processed!",
+        description: `₹${finalAmount.toFixed(2)} payment completed for table ${tableId} and saved to database.`,
+      });
+
+      // Dispatch custom event for notifications
+      window.dispatchEvent(new CustomEvent('orderCompleted', {
+        detail: { tableId, amount: finalAmount, transactionId: savedTransaction.id }
+      }));
+
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      
+      // Fallback to local state
+      const fallbackTransaction: Transaction = {
+        id: Date.now().toString(),
+        tableId,
+        amount: finalAmount,
+        method,
+        timestamp: new Date().toISOString()
+      };
+
+      setTransactions(prev => [...prev, fallbackTransaction]);
+      setKitchenOrders(prev => prev.filter(order => 
+        !(order.tableId === tableId && (order.status === 'completed' || order.status === 'ready'))
+      ));
+      updateTableStatus(tableId, 'available');
+
+      toast({
+        title: "Payment Processed!",
+        description: `₹${finalAmount.toFixed(2)} payment completed for table ${tableId} (local storage).`,
+      });
+
+      window.dispatchEvent(new CustomEvent('orderCompleted', {
+        detail: { tableId, amount: finalAmount }
+      }));
+    }
   };
 
   const clearAllBillingHistory = () => {
@@ -683,6 +1037,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deleteInventoryItem,
     completedTransactions,
     completeTransaction,
+    refreshDataFromDatabase,
   };
 
   return (

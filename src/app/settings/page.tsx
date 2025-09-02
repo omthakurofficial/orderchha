@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
     const { toast } = useToast();
-    const { settings, updateSettings, currentUser, isLoaded, clearAllBillingHistory } = useApp();
+    const { settings, updateSettings, currentUser, isLoaded, clearAllBillingHistory, refreshDataFromDatabase } = useApp();
     const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
     const [isUploading, setIsUploading] = useState(false);
     const router = useRouter();
@@ -217,6 +217,21 @@ export default function SettingsPage() {
                                 <CardDescription>Manage application data and history.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                                <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                                    <h4 className="font-medium text-blue-800 mb-2">🔄 Refresh Database Data</h4>
+                                    <p className="text-sm text-blue-600 mb-4">
+                                        Reload all orders, transactions, and table data from the database to sync with latest changes.
+                                    </p>
+                                    <Button 
+                                        onClick={() => {
+                                            refreshDataFromDatabase();
+                                        }}
+                                        className="w-full"
+                                        variant="outline"
+                                    >
+                                        🔄 Refresh Data from Database
+                                    </Button>
+                                </div>
                                 <div className="p-4 border border-red-200 rounded-lg bg-red-50">
                                     <h4 className="font-medium text-red-800 mb-2">Clear Billing History</h4>
                                     <p className="text-sm text-red-600 mb-4">
