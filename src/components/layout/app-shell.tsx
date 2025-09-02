@@ -9,6 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuBadge,
   SidebarInset,
   SidebarTrigger,
   SidebarFooter,
@@ -45,7 +46,14 @@ const allNavItems = [
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { currentUser, settings, signOut } = useApp();
+  const { 
+    currentUser, 
+    settings, 
+    signOut, 
+    pendingOrders, 
+    kitchenOrders, 
+    tables 
+  } = useApp();
   const pathname = usePathname();
   const [isMounted, setIsMounted] = React.useState(false);
 
@@ -63,6 +71,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navItems = allNavItems.filter(item => {
     return currentUser?.role && item.roles.includes(currentUser.role);
   });
+
+  // Calculate notification counts for different sections
+  const getNotificationCount = (section: string): number => {
+    switch (section) {
+      case 'confirm-orders':
+        // Count of pending orders waiting for confirmation
+        return pendingOrders?.length || 0;
+      
+      case 'kitchen':
+        // Count of orders that are being prepared or ready in kitchen
+        return kitchenOrders?.filter(order => 
+          order.status === 'preparing' || order.status === 'ready'
+        ).length || 0;
+      
+      case 'billing':
+        // Count of tables that have completed orders waiting for payment
+        return tables?.filter(table => table.status === 'billing').length || 0;
+      
+      default:
+        return 0;
+    }
+  };
 
   const Logo = () => (
     settings.logo ? (
@@ -107,20 +137,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {navItems.map(item => (
-                 <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={pathname === item.href}
-                        tooltip={item.label}
-                    >
-                        <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.label}</span>
-                        </Link>
-                    </SidebarMenuButton>
+            {navItems.map(item => {
+              // Determine if this menu item should show a notification badge
+              let notificationCount = 0;
+              if (item.href === '/confirm-order') {
+                notificationCount = getNotificationCount('confirm-orders');
+              } else if (item.href === '/kitchen') {
+                notificationCount = getNotificationCount('kitchen');
+              } else if (item.href === '/billing') {
+                notificationCount = getNotificationCount('billing');
+              }
+
+              return (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.href}
+                    tooltip={item.label}
+                  >
+                    <Link href={item.href}>
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  {notificationCount > 0 && (
+                    <SidebarMenuBadge className="bg-red-500 text-white">
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </SidebarMenuBadge>
+                  )}
                 </SidebarMenuItem>
-            ))}
+              );
+            })}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="p-2">
