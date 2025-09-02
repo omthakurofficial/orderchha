@@ -52,6 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     signOut, 
     pendingOrders, 
     kitchenOrders, 
+    billingOrders,
     tables 
   } = useApp();
   const pathname = usePathname();
@@ -86,8 +87,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ).length || 0;
       
       case 'billing':
-        // Count of tables that have completed orders waiting for payment
-        return tables?.filter(table => table.status === 'billing').length || 0;
+        // Count of actual billing orders, not table status
+        return billingOrders?.length || 0;
       
       default:
         return 0;

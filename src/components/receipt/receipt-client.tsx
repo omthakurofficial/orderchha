@@ -22,6 +22,7 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
   const [invoiceId, setInvoiceId] = useState('');
   const [mounted, setMounted] = useState(false);
   const [completedOrders, setCompletedOrders] = useState<any[]>([]);
+  const [showConsolidated, setShowConsolidated] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -119,6 +120,31 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
     return [];
   }, [billingOrders, completedOrders, tableId, isLoaded]);
 
+  // Consolidate items from multiple orders for cleaner display
+  const consolidatedItems = useMemo(() => {
+    const itemMap = new Map();
+    
+    ordersForTable.forEach(order => {
+      order.items?.forEach((item: any) => {
+        const key = `${item.name}-${item.price}`;
+        if (itemMap.has(key)) {
+          const existingItem = itemMap.get(key);
+          existingItem.quantity += item.quantity;
+          existingItem.totalPrice = existingItem.quantity * existingItem.price;
+        } else {
+          itemMap.set(key, {
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            totalPrice: item.price * item.quantity
+          });
+        }
+      });
+    });
+    
+    return Array.from(itemMap.values());
+  }, [ordersForTable]);
+
   const totalAmount = ordersForTable.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const vatAmount = applyVat ? totalAmount * 0.1 : 0;
   const finalAmount = totalAmount + vatAmount;
@@ -203,11 +229,30 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
 
             {/* Items */}
             <div className="space-y-4">
-              <Label className="text-lg font-semibold">Order Details</Label>
+              <div className="flex justify-between items-center">
+                <Label className="text-lg font-semibold">Order Details</Label>
+                {ordersForTable.length > 1 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShowConsolidated(!showConsolidated)}
+                    className="print:hidden text-xs"
+                  >
+                    {showConsolidated ? 'Show Details' : 'Consolidate'}
+                  </Button>
+                )}
+              </div>
               
-              {ordersForTable.map((order) => (
-                <div key={order.id} className="space-y-2">
-                  {order.items?.map((item: any, index: number) => (
+              {ordersForTable.length > 1 && !showConsolidated && (
+                <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
+                  ℹ️ This receipt shows {ordersForTable.length} separate orders for this table
+                </div>
+              )}
+              
+              {showConsolidated ? (
+                /* Consolidated View */
+                <div className="space-y-2">
+                  {consolidatedItems.map((item, index) => (
                     <div key={index} className="flex justify-between items-center py-1">
                       <div className="flex-1">
                         <div className="font-medium">{item.name}</div>
@@ -216,16 +261,47 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
                         </div>
                       </div>
                       <div className="font-medium">
-                        {settings?.currency || 'NPR'} {(item.price * item.quantity).toFixed(2)}
+                        {settings?.currency || 'NPR'} {item.totalPrice.toFixed(2)}
                       </div>
                     </div>
-                  )) || (
-                    <div className="text-gray-500 text-center py-4">
-                      No items found for this order
+                  ))}
+                  {ordersForTable.length > 1 && (
+                    <div className="text-xs text-gray-500 pt-2 border-t">
+                      Combined from {ordersForTable.length} orders
                     </div>
                   )}
                 </div>
-              ))}
+              ) : (
+                /* Detailed View */
+                <div className="space-y-4">
+                  {ordersForTable.map((order, orderIndex) => (
+                    <div key={order.id} className="space-y-2">
+                      {ordersForTable.length > 1 && (
+                        <div className="text-sm font-medium text-gray-700 border-b pb-1">
+                          Order #{orderIndex + 1} (ID: {order.id.substring(0, 8)})
+                        </div>
+                      )}
+                      {order.items?.map((item: any, index: number) => (
+                        <div key={`${order.id}-${index}`} className="flex justify-between items-center py-1">
+                          <div className="flex-1">
+                            <div className="font-medium">{item.name}</div>
+                            <div className="text-sm text-gray-500">
+                              Qty: {item.quantity} × {settings?.currency || 'NPR'} {item.price.toFixed(2)}
+                            </div>
+                          </div>
+                          <div className="font-medium">
+                            {settings?.currency || 'NPR'} {(item.price * item.quantity).toFixed(2)}
+                          </div>
+                        </div>
+                      )) || (
+                        <div className="text-gray-500 text-center py-4">
+                          No items found for this order
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Separator />
