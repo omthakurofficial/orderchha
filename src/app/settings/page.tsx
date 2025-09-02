@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
     const { toast } = useToast();
-    const { settings, updateSettings, currentUser, isLoaded } = useApp();
+    const { settings, updateSettings, currentUser, isLoaded, clearAllBillingHistory } = useApp();
     const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
     const [isUploading, setIsUploading] = useState(false);
     const router = useRouter();
@@ -211,6 +211,31 @@ export default function SettingsPage() {
                         </Card>
                     </div>
                     <div className="space-y-8">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Data Management</CardTitle>
+                                <CardDescription>Manage application data and history.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+                                    <h4 className="font-medium text-red-800 mb-2">Clear Billing History</h4>
+                                    <p className="text-sm text-red-600 mb-4">
+                                        This will permanently delete all transactions, orders, and billing data. This action cannot be undone.
+                                    </p>
+                                    <Button 
+                                        variant="destructive" 
+                                        onClick={() => {
+                                            if (window.confirm('Are you sure you want to clear all billing history? This cannot be undone.')) {
+                                                clearAllBillingHistory();
+                                            }
+                                        }}
+                                        className="w-full"
+                                    >
+                                        Clear All Billing History
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
                         <Card>
                             <CardHeader>
                                 <CardTitle>QR Code Payment</CardTitle>

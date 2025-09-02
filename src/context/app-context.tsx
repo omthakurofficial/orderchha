@@ -26,11 +26,13 @@ interface AppContextType {
   placeOrder: (tableId: number) => void;
   kitchenOrders: KitchenOrder[];
   completeKitchenOrder: (orderId: string) => void;
+  updateOrderStatus: (orderId: string, status: 'preparing' | 'ready' | 'completed') => void;
   pendingOrders: KitchenOrder[];
   approvePendingOrder: (orderId: string) => void;
   rejectPendingOrder: (orderId: string) => void;
   transactions: Transaction[];
   processPayment: (tableId: number, method: 'cash' | 'online', applyVat: boolean) => void;
+  clearAllBillingHistory: () => void;
   currentUser: User | null;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -313,6 +315,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateOrderStatus = (orderId: string, status: 'preparing' | 'ready' | 'completed') => {
+    setKitchenOrders(prev => prev.map(order => 
+      order.id === orderId ? { ...order, status } : order
+    ));
+  };
+
   const approvePendingOrder = (orderId: string) => {
     const order = pendingOrders.find(o => o.id === orderId);
     if (order) {
@@ -330,8 +338,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const processPayment = (tableId: number, method: 'cash' | 'online', applyVat: boolean) => {
-    const tableOrders = kitchenOrders.filter(order => order.tableId === tableId);
-    const totalAmount = tableOrders.reduce((sum, order) => sum + order.total, 0);
+    // Look for completed orders for this table
+    const tableOrders = kitchenOrders.filter(order => 
+      order.tableId === tableId && (order.status === 'completed' || order.status === 'ready')
+    );
+    
+    if (tableOrders.length === 0) {
+      toast({
+        title: "No orders to pay",
+        description: `No completed orders found for table ${tableId}.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const totalAmount = tableOrders.reduce((sum, order) => sum + (order.total || order.totalAmount || 0), 0);
     const vatAmount = applyVat ? totalAmount * 0.1 : 0;
     const finalAmount = totalAmount + vatAmount;
 
@@ -344,12 +365,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     setTransactions(prev => [...prev, newTransaction]);
-    setKitchenOrders(prev => prev.filter(order => order.tableId !== tableId));
+    // Remove only the paid orders, not all orders for the table
+    setKitchenOrders(prev => prev.filter(order => 
+      !(order.tableId === tableId && (order.status === 'completed' || order.status === 'ready'))
+    ));
     updateTableStatus(tableId, 'available');
 
     toast({
       title: "Payment Processed!",
       description: `₹${finalAmount.toFixed(2)} payment completed for table ${tableId}.`,
+    });
+  };
+
+  const clearAllBillingHistory = () => {
+    setTransactions([]);
+    setKitchenOrders([]);
+    setPendingOrders([]);
+    
+    // Also reset all tables to available status
+    setTables(prev => prev.map(table => ({ ...table, status: 'available' as const })));
+    
+    // Clear any localStorage data that might be cached
+    localStorage.removeItem('orderchha-order');
+    localStorage.removeItem('orderchha-transactions');
+    localStorage.removeItem('orderchha-billing');
+    
+    toast({
+      title: "✅ Billing History Cleared",
+      description: "All transactions, orders, and billing data have been cleared.",
     });
   };
 
@@ -439,11 +482,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     placeOrder,
     kitchenOrders,
     completeKitchenOrder,
+    updateOrderStatus,
     pendingOrders,
     approvePendingOrder,
     rejectPendingOrder,
     transactions,
     processPayment,
+    clearAllBillingHistory,
     currentUser,
     signIn,
     signOut,

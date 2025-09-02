@@ -10,11 +10,12 @@ export async function generateStaticParams() {
 export const dynamicParams = false;
 
 interface ReceiptPageProps {
-  params: {
+  params: Promise<{
     tableId: string;
-  };
+  }>;
 }
 
-export default function ReceiptPage({ params }: ReceiptPageProps) {
-  return <ReceiptClient tableId={params.tableId} />;
+export default async function ReceiptPage({ params }: ReceiptPageProps) {
+  const { tableId } = await params;
+  return <ReceiptClient tableId={tableId} />;
 }

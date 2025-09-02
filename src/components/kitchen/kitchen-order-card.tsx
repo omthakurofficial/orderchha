@@ -13,16 +13,24 @@ interface KitchenOrderCardProps {
 }
 
 export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
-    const { completeKitchenOrder, settings } = useApp();
+    const { updateOrderStatus, settings } = useApp();
     const { toast } = useToast();
 
-    const handleCompleteOrder = () => {
-        completeKitchenOrder(order.id);
+    const handleMarkReady = () => {
+        updateOrderStatus(order.id, 'ready');
+        toast({
+            title: "Order Ready",
+            description: `Order for Table ${order.tableId} is ready for pickup.`,
+        });
+    };
+
+    const handleMarkCompleted = () => {
+        updateOrderStatus(order.id, 'completed');
         toast({
             title: "Order Completed",
-            description: `Order for Table ${order.tableId} has been marked as complete.`,
+            description: `Order for Table ${order.tableId} has been delivered.`,
         });
-    }
+    };
 
     const timeAgo = formatDistanceToNow(new Date(order.timestamp), { addSuffix: true });
 
@@ -52,11 +60,24 @@ export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
                 </div>
 
             </CardContent>
-            <CardFooter>
-                <Button className="w-full" size="lg" onClick={handleCompleteOrder}>
-                    <CheckCircle />
-                    Mark as Completed
-                </Button>
+            <CardFooter className="flex gap-2">
+                {order.status === 'preparing' && (
+                    <Button className="flex-1" size="lg" onClick={handleMarkReady}>
+                        <CheckCircle />
+                        Mark as Ready
+                    </Button>
+                )}
+                {order.status === 'ready' && (
+                    <Button className="flex-1" size="lg" onClick={handleMarkCompleted}>
+                        <CheckCircle />
+                        Mark as Delivered
+                    </Button>
+                )}
+                {order.status === 'completed' && (
+                    <div className="w-full text-center text-green-600 font-semibold">
+                        ✅ Order Completed
+                    </div>
+                )}
             </CardFooter>
         </Card>
     );

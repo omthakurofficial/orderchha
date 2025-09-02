@@ -17,41 +17,64 @@ interface ReceiptClientProps {
 export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientProps) {
   const tableId = Number(tableIdProp);
   const searchParams = useSearchParams();
-  const { settings, kitchenOrders, isLoaded } = useApp();
+  const { settings, kitchenOrders, pendingOrders, isLoaded } = useApp();
   const [invoiceId, setInvoiceId] = useState('');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Generate a random 6-digit invoice ID
-    setInvoiceId(`INV-${Math.floor(100000 + Math.random() * 900000)}`);
+    setMounted(true);
   }, []);
+
+  // Generate invoice ID only after mounting to avoid hydration issues
+  const invoiceIdGenerated = useMemo(() => {
+    if (!mounted) return '';
+    return `INV-${tableId}${Date.now().toString().slice(-6)}`;
+  }, [mounted, tableId]);
 
   const paymentMethod = searchParams.get('method') || 'N/A';
   const applyVat = searchParams.get('vat') === 'true';
-  const transactionDate = new Date().toLocaleString();
+  
+  // Use deterministic date to avoid hydration mismatch
+  const transactionDate = useMemo(() => {
+    if (!mounted) return '';
+    return new Date().toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'numeric', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }, [mounted]);
 
   const ordersForTable = useMemo(() => {
     if (!isLoaded) return [];
     
-    const orders = kitchenOrders.filter(order => order.tableId === tableId);
+    // Look for orders in both kitchen orders and pending orders for this table
+    const allOrders = [...kitchenOrders, ...pendingOrders];
+    const orders = allOrders.filter(order => order.tableId === tableId);
     
     if (orders.length === 0) {
-      // Generate sample data if no orders exist
+      // Generate sample data if no orders exist - fix the total calculation
+      const sampleItems = [
+        { name: 'Margherita Pizza', price: 225.00, quantity: 2, id: 'sample-1' }, // 450
+        { name: 'Caesar Salad', price: 150.00, quantity: 1, id: 'sample-2' },    // 150
+        { name: 'Coca Cola', price: 100.00, quantity: 2, id: 'sample-3' }       // 200
+      ];
+      const calculatedTotal = sampleItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
       return [{
         id: `sample-${tableId}`,
         tableId,
-        items: [
-          { name: 'Margherita Pizza', price: 450.00, quantity: 2, id: 'sample-1' },
-          { name: 'Caesar Salad', price: 500.00, quantity: 1, id: 'sample-2' },
-          { name: 'Coca Cola', price: 200.00, quantity: 2, id: 'sample-3' }
-        ],
+        items: sampleItems,
         status: 'completed' as const,
         timestamp: new Date().toISOString(),
-        totalAmount: 1800.00
+        totalAmount: calculatedTotal,
+        total: calculatedTotal
       }];
     }
     
     return orders;
-  }, [kitchenOrders, tableId, isLoaded]);
+  }, [kitchenOrders, pendingOrders, tableId, isLoaded]);
 
   const totalAmount = ordersForTable.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const vatAmount = applyVat ? totalAmount * 0.1 : 0;
@@ -61,10 +84,16 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
     window.print();
   };
 
-  if (!isLoaded) {
+  if (!mounted || !isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading receipt...</div>
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-2xl mx-auto">
+          <Card className="print:shadow-none">
+            <CardContent className="p-6">
+              <div className="text-center text-lg">Loading receipt...</div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -89,7 +118,7 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <Label className="font-medium">Invoice #</Label>
-                <div>{invoiceId}</div>
+                <div>{invoiceIdGenerated}</div>
               </div>
               <div>
                 <Label className="font-medium">Table #</Label>
