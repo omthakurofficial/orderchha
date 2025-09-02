@@ -70,7 +70,7 @@ export type UserRole = 'admin' | 'staff' | 'cashier' | 'accountant' | 'waiter' |
 
 export interface User {
   uid: string;
-  email: string | null;
+  email?: string; // Make email optional instead of nullable
   name: string;
   role: UserRole;
   photoUrl?: string;
@@ -80,6 +80,36 @@ export interface User {
   joiningDate?: string;
   creditBalance?: number;
   isCustomer?: boolean;
+  
+  // Extended fields for comprehensive user management
+  emergencyContact?: string;
+  employeeId?: string;
+  department?: string;
+  salary?: number;
+  dateOfBirth?: string;
+  bloodGroup?: string;
+  country?: string;
+  nationality?: string;
+  nationalId?: string;
+  taxId?: string;
+  passportNumber?: string;
+  drivingLicense?: string;
+  bankName?: string;
+  accountNumber?: string;
+  routingNumber?: string;
+  accountType?: 'savings' | 'checking' | 'current';
+  bankBranch?: string;
+  highestEducation?: 'primary' | 'secondary' | 'higher_secondary' | 'bachelor' | 'master' | 'doctorate' | 'diploma' | 'certificate';
+  instituteName?: string;
+  graduationYear?: string;
+  specialization?: string;
+  additionalCertifications?: string;
+  previousExperience?: string;
+  skills?: string;
+  languagesSpoken?: string;
+  maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
+  religion?: string;
+  notes?: string;
 }
 
 export interface UserFormData {
@@ -93,6 +123,46 @@ export interface UserFormData {
     joiningDate?: string;
     creditBalance?: number;
     isCustomer?: boolean;
+    emergencyContact?: string;
+    employeeId?: string;
+    department?: string;
+    salary?: number;
+    dateOfBirth?: string;
+    bloodGroup?: string;
+    
+    // International & Location
+    country?: string;
+    nationality?: string;
+    
+    // Document Information (flexible for different countries)
+    nationalId?: string; // Aadhar for India, Citizenship for Nepal, etc.
+    taxId?: string; // PAN for India, VAT for Nepal, etc.
+    passportNumber?: string;
+    drivingLicense?: string;
+    
+    // Bank Information
+    bankName?: string;
+    accountNumber?: string;
+    routingNumber?: string; // IFSC for India, Bank Code for Nepal
+    accountType?: 'savings' | 'checking' | 'current';
+    bankBranch?: string;
+    
+    // Education Details
+    highestEducation?: 'primary' | 'secondary' | 'higher_secondary' | 'bachelor' | 'master' | 'doctorate' | 'diploma' | 'certificate';
+    instituteName?: string;
+    graduationYear?: string;
+    specialization?: string;
+    additionalCertifications?: string;
+    
+    // Experience & Skills
+    previousExperience?: string;
+    skills?: string;
+    languagesSpoken?: string;
+    
+    // Additional Information
+    maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
+    religion?: string;
+    notes?: string;
 }
 
 export interface Supplier {

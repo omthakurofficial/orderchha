@@ -2,6 +2,7 @@
 'use client';
 
 import { useApp } from '@/context/app-context';
+import { useNotifications } from '@/context/notification-context';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -13,11 +14,13 @@ import { Suspense } from 'react';
 
 function OrderSummaryContent() {
   const { order, updateOrderItemQuantity, removeItemFromOrder, placeOrder, settings } = useApp();
+  const { addNotification } = useNotifications();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const tableId = searchParams.get('table');
 
   const total = order.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const itemCount = order.reduce((acc, item) => acc + item.quantity, 0);
 
   const handlePlaceOrder = () => {
     if (!tableId) {
@@ -28,7 +31,18 @@ function OrderSummaryContent() {
       });
       return;
     }
+    
     placeOrder(parseInt(tableId, 10));
+    
+    // Add notification for order placed
+    addNotification({
+      title: 'New Order Placed',
+      message: `Table ${tableId} placed an order with ${itemCount} items (₹${total.toFixed(2)})`,
+      type: 'order_placed',
+      priority: 'medium',
+      tableId: parseInt(tableId, 10),
+    });
+    
     toast({
       title: 'Order Submitted!',
       description: `Your order for Table ${tableId} has been submitted for confirmation.`,

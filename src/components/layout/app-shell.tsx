@@ -14,7 +14,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, Users, LogOut, Package, Receipt } from "lucide-react";
+import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, ClipboardCheck, LayoutDashboard, Users, LogOut, Package, Receipt, User, Bell } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
@@ -23,27 +23,34 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Sheet, SheetContent, SheetTitle } from "../ui/sheet";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useOrderEventNotifications } from "@/hooks/use-order-event-notifications";
 import type { UserRole } from "@/types";
 
 const allNavItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", roles: ["admin"] },
-    { href: "/", icon: LayoutGrid, label: "Tables", roles: ["admin", "waiter"] },
-    { href: "/menu", icon: UtensilsCrossed, label: "Menu", roles: ["admin", "cashier", "accountant", "waiter"] },
-    { href: "/upload-menu", icon: Upload, label: "Manage Menu", roles: ["admin", "cashier"] },
-    { href: "/inventory", icon: Package, label: "Inventory", roles: ["admin"] },
+    { href: "/", icon: LayoutGrid, label: "Tables", roles: ["admin", "waiter", "cashier"] },
+    { href: "/menu", icon: UtensilsCrossed, label: "Menu", roles: ["admin", "waiter", "cashier"] },
+    { href: "/upload-menu", icon: Upload, label: "Manage Menu", roles: ["admin"] },
+    { href: "/inventory", icon: Package, label: "Inventory", roles: ["admin", "accountant"] },
     { href: "/billing", icon: Receipt, label: "Billing", roles: ["admin", "cashier", "accountant"] },
-    { href: "/customers", icon: Users, label: "Customers", roles: ["admin", "cashier", "accountant"] },
-    { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders", roles: ["admin", "cashier", "waiter"] },
+    { href: "/customers", icon: Users, label: "Customers", roles: ["admin", "waiter", "cashier"] },
+    { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders", roles: ["admin", "waiter"] },
     { href: "/kitchen", icon: ChefHat, label: "Kitchen", roles: ["admin", "waiter", "kitchen"] },
     { href: "/users", icon: Users, label: "Users", roles: ["admin"] },
+    { href: "/profile", icon: User, label: "Profile", roles: ["admin", "staff", "cashier", "accountant", "waiter", "kitchen"] },
+    { href: "/test-notifications", icon: Bell, label: "Test Notifications", roles: ["admin"] },
     { href: "/settings", icon: Settings, label: "Settings", roles: ["admin"] },
 ];
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { currentUser, settings, signOut } = useApp();
   const pathname = usePathname();
   const [isMounted, setIsMounted] = React.useState(false);
-  const { settings, currentUser, signOut } = useApp();
+
+  // Initialize order event notifications
+  useOrderEventNotifications();
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -85,14 +92,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarHeader className="p-4">
             <Card className="bg-sidebar-accent">
                 <CardContent className="p-3 flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                        <AvatarImage src={currentUser?.photoUrl} alt={currentUser?.name} />
-                        <AvatarFallback>{currentUser?.name?.charAt(0) ?? 'U'}</AvatarFallback>
-                    </Avatar>
-                     <div>
-                        <h3 className="font-bold font-headline text-md">{currentUser?.name}</h3>
-                        <p className="text-xs text-sidebar-accent-foreground capitalize">{currentUser?.role} Role</p>
-                    </div>
+                    <Link href="/profile" className="flex items-center gap-3 w-full hover:opacity-80 transition-opacity">
+                        <Avatar className="h-12 w-12">
+                            <AvatarImage src={currentUser?.photoUrl} alt={currentUser?.name} />
+                            <AvatarFallback>{currentUser?.name?.charAt(0) ?? 'U'}</AvatarFallback>
+                        </Avatar>
+                         <div>
+                            <h3 className="font-bold font-headline text-md">{currentUser?.name}</h3>
+                            <p className="text-xs text-sidebar-accent-foreground capitalize">{currentUser?.role} Role</p>
+                        </div>
+                    </Link>
                 </CardContent>
             </Card>
         </SidebarHeader>
@@ -127,8 +136,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Logo />
                 <h2 className="text-md font-bold font-headline">{settings.cafeName}</h2>
             </div>
-            <SidebarTrigger />
+            <div className="flex items-center gap-2">
+                <NotificationBell />
+                <SidebarTrigger />
+            </div>
         </header>
+        {/* Desktop Notification Bell */}
+        <div className="hidden md:flex justify-end p-2 border-b">
+            <NotificationBell />
+        </div>
         {children}
       </SidebarInset>
     </SidebarProvider>

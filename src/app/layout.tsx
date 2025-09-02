@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppProvider } from '@/context/app-context';
+import { NotificationProvider } from '@/context/notification-context';
 import { AuthLayout } from '@/components/layout/auth-layout';
 import { ErrorBoundary } from '@/components/layout/error-boundary';
 
@@ -26,10 +27,12 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ErrorBoundary>
           <AppProvider>
-            <AuthLayout>
-                {children}
-            </AuthLayout>
-            <Toaster />
+            <NotificationProvider>
+              <AuthLayout>
+                  {children}
+              </AuthLayout>
+              <Toaster />
+            </NotificationProvider>
           </AppProvider>
         </ErrorBoundary>
       </body>

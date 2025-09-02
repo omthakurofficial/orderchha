@@ -47,11 +47,11 @@ export default function UsersPage() {
                             Add New Staff
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl">
+                    <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Add New Staff Member</DialogTitle>
                             <DialogDescription>
-                                Fill in the details below to create a new staff account. They will be able to log in with the email and password you provide.
+                                Fill in the comprehensive details below to create a new staff account. All required fields must be completed.
                             </DialogDescription>
                         </DialogHeader>
                         <AddStaffForm 

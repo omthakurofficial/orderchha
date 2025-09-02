@@ -6,6 +6,7 @@ import { useApp } from "@/context/app-context";
 import { DollarSign, LayoutDashboard, Package, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { NotificationPanel } from "@/components/notifications/notification-panel";
 
 export default function DashboardPage() {
     const { completedTransactions, currentUser, inventory, isLoaded } = useApp();
@@ -62,55 +63,79 @@ export default function DashboardPage() {
                 </div>
             </header>
             <main className="flex-1 p-4 md:p-6 overflow-auto bg-muted/20">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">NPR {totalRevenue.toFixed(2)}</div>
-                            <p className="text-xs text-muted-foreground">from {totalOrders} orders</p>
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Cash Payments</CardTitle>
-                            <Wallet className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">NPR {cashRevenue.toFixed(2)}</div>
-                             <p className="text-xs text-muted-foreground">
-                                {totalRevenue > 0 ? ((cashRevenue / totalRevenue) * 100).toFixed(1) : "0.0"}% of total
-                            </p>
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Online Payments</CardTitle>
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">NPR {onlineRevenue.toFixed(2)}</div>
-                             <p className="text-xs text-muted-foreground">
-                                {totalRevenue > 0 ? ((onlineRevenue / totalRevenue) * 100).toFixed(1) : "0.0"}% of total
-                            </p>
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Inventory Value</CardTitle>
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">NPR {totalInventoryValue.toFixed(2)}</div>
-                            <p className="text-xs text-muted-foreground">Total value of all stock items</p>
-                        </CardContent>
-                    </Card>
+                <div className="max-w-6xl mx-auto space-y-6">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">NPR {totalRevenue.toFixed(2)}</div>
+                                <p className="text-xs text-muted-foreground">from {totalOrders} orders</p>
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Cash Payments</CardTitle>
+                                <Wallet className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">NPR {cashRevenue.toFixed(2)}</div>
+                                 <p className="text-xs text-muted-foreground">
+                                    {totalRevenue > 0 ? ((cashRevenue / totalRevenue) * 100).toFixed(1) : "0.0"}% of total
+                                </p>
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Online Payments</CardTitle>
+                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">NPR {onlineRevenue.toFixed(2)}</div>
+                                 <p className="text-xs text-muted-foreground">
+                                    {totalRevenue > 0 ? ((onlineRevenue / totalRevenue) * 100).toFixed(1) : "0.0"}% of total
+                                </p>
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Inventory Value</CardTitle>
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">NPR {totalInventoryValue.toFixed(2)}</div>
+                                <p className="text-xs text-muted-foreground">Total value of all stock items</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2">
+                            {/* We can add charts and recent transactions here later */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Recent Activity</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-center text-muted-foreground py-8">
+                                        Charts and recent activity will be added here
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                        
+                        <div>
+                            <NotificationPanel 
+                                maxNotifications={8} 
+                                className="sticky top-4"
+                            />
+                        </div>
+                    </div>
                 </div>
-                {/* We can add charts and recent transactions here later */}
             </main>
         </div>
     );

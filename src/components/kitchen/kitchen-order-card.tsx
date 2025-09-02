@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useApp } from "@/context/app-context";
+import { useNotifications } from "@/context/notification-context";
 import { useToast } from "@/hooks/use-toast";
 import type { KitchenOrder } from "@/types";
 import { formatDistanceToNow } from 'date-fns';
@@ -14,6 +15,7 @@ interface KitchenOrderCardProps {
 
 export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
     const { updateOrderStatus, settings } = useApp();
+    const { addNotification } = useNotifications();
     const { toast } = useToast();
 
     const handleMarkReady = () => {
@@ -22,6 +24,16 @@ export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
             title: "Order Ready",
             description: `Order for Table ${order.tableId} is ready for pickup.`,
         });
+        
+        // Add notification
+        addNotification({
+            title: 'Order Ready!',
+            message: `Table ${order.tableId} order is ready for serving`,
+            type: 'order_ready',
+            priority: 'high',
+            tableId: order.tableId,
+            orderId: order.id,
+        });
     };
 
     const handleMarkCompleted = () => {
@@ -29,6 +41,15 @@ export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
         toast({
             title: "Order Completed",
             description: `Order for Table ${order.tableId} has been delivered.`,
+        });
+        
+        // Add notification for payment pending
+        addNotification({
+            title: 'Payment Pending',
+            message: `Table ${order.tableId} bill ready for payment (₹${(order.total || order.totalAmount || 0).toFixed(2)})`,
+            type: 'payment_pending',
+            priority: 'medium',
+            tableId: order.tableId,
         });
     };
 

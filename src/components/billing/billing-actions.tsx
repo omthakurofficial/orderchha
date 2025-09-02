@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/app-context";
+import { useNotifications } from "@/context/notification-context";
 import { Wallet, Receipt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";

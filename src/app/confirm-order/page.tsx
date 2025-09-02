@@ -2,6 +2,7 @@
 'use client';
 
 import { useApp } from '@/context/app-context';
+import { useNotifications } from '@/context/notification-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -9,6 +10,37 @@ import { ClipboardCheck, ThumbsDown, ThumbsUp } from 'lucide-react';
 
 export default function ConfirmOrderPage() {
   const { pendingOrders, approvePendingOrder, rejectPendingOrder, isLoaded } = useApp();
+  const { addNotification } = useNotifications();
+
+  const handleApproveOrder = (orderId: string) => {
+    const order = pendingOrders.find(o => o.id === orderId);
+    if (order) {
+      approvePendingOrder(orderId);
+      addNotification({
+        title: 'Order Confirmed',
+        message: `Order for Table ${order.tableId} has been confirmed and sent to kitchen`,
+        type: 'order_confirmed',
+        priority: 'medium',
+        tableId: order.tableId,
+        orderId: order.id,
+      });
+    }
+  };
+
+  const handleRejectOrder = (orderId: string) => {
+    const order = pendingOrders.find(o => o.id === orderId);
+    if (order) {
+      rejectPendingOrder(orderId);
+      addNotification({
+        title: 'Order Rejected',
+        message: `Order for Table ${order.tableId} has been rejected`,
+        type: 'order_placed',
+        priority: 'low',
+        tableId: order.tableId,
+        orderId: order.id,
+      });
+    }
+  };
 
   if (!isLoaded) {
     return (
@@ -63,10 +95,10 @@ export default function ConfirmOrderPage() {
 
                     </CardContent>
                     <CardFooter className="grid grid-cols-2 gap-2">
-                        <Button variant="destructive" onClick={() => rejectPendingOrder(order.id)}>
+                        <Button variant="destructive" onClick={() => handleRejectOrder(order.id)}>
                             <ThumbsDown /> Reject
                         </Button>
-                        <Button onClick={() => approvePendingOrder(order.id)}>
+                        <Button onClick={() => handleApproveOrder(order.id)}>
                             <ThumbsUp /> Approve
                         </Button>
                     </CardFooter>

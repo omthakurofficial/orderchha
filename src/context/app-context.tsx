@@ -40,6 +40,7 @@ interface AppContextType {
   addUser: (userData: UserFormData, photoFile: File | null) => Promise<void>;
   addCustomer: (userData: UserFormData, photoFile: File | null) => Promise<void>;
   updateUserRole: (uid: string, role: User['role']) => Promise<void>;
+  updateUserProfile: (userData: Partial<UserFormData>, photoFile: File | null) => Promise<void>;
   updateCustomerCredit: (uid: string, amount: number) => Promise<void>;
   deleteUser: (uid: string) => Promise<void>;
   inventory: InventoryItem[];
@@ -286,6 +287,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const placeOrder = (tableId: number) => {
     const orderTotal = order.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const itemCount = order.reduce((sum, item) => sum + item.quantity, 0);
     
     const newOrder: KitchenOrder = {
       id: Date.now().toString(),
@@ -305,6 +307,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       title: "Order Placed!",
       description: `Order for table ${tableId} has been sent to kitchen.`,
     });
+
+    // Dispatch custom event for notifications
+    window.dispatchEvent(new CustomEvent('orderPlaced', {
+      detail: { tableId, orderTotal, itemCount, orderId: newOrder.id }
+    }));
   };
 
   const completeKitchenOrder = (orderId: string) => {
@@ -319,6 +326,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setKitchenOrders(prev => prev.map(order => 
       order.id === orderId ? { ...order, status } : order
     ));
+
+    // Dispatch custom event for notifications
+    if (status === 'ready') {
+      const order = kitchenOrders.find(o => o.id === orderId);
+      if (order) {
+        window.dispatchEvent(new CustomEvent('orderReady', {
+          detail: { tableId: order.tableId, orderId: order.id }
+        }));
+      }
+    } else if (status === 'completed') {
+      const order = kitchenOrders.find(o => o.id === orderId);
+      if (order) {
+        updateTableStatus(order.tableId, 'billing');
+        window.dispatchEvent(new CustomEvent('paymentPending', {
+          detail: { tableId: order.tableId, amount: order.totalAmount }
+        }));
+      }
+    }
   };
 
   const approvePendingOrder = (orderId: string) => {
@@ -326,6 +351,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (order) {
       setPendingOrders(prev => prev.filter(o => o.id !== orderId));
       setKitchenOrders(prev => [...prev, { ...order, status: 'preparing' }]);
+
+      // Dispatch custom event for notifications
+      window.dispatchEvent(new CustomEvent('orderConfirmed', {
+        detail: { tableId: order.tableId, orderId: order.id }
+      }));
     }
   };
 
@@ -375,6 +405,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       title: "Payment Processed!",
       description: `₹${finalAmount.toFixed(2)} payment completed for table ${tableId}.`,
     });
+
+    // Dispatch custom event for notifications
+    window.dispatchEvent(new CustomEvent('orderCompleted', {
+      detail: { tableId, amount: finalAmount }
+    }));
   };
 
   const clearAllBillingHistory = () => {
@@ -405,6 +440,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateUserRole = async (uid: string, role: User['role']) => {
     // TODO: Implement with real Appwrite user update
     console.log('TODO: Implement real user role update');
+  };
+
+  const updateUserProfile = async (userData: Partial<UserFormData>, photoFile: File | null) => {
+    try {
+      if (currentUser) {
+        // Update local user data
+        const updatedUser: User = {
+          ...currentUser,
+          ...userData,
+          // Handle photo update - for now just store locally
+          ...(photoFile && { photoUrl: URL.createObjectURL(photoFile) })
+        };
+        setCurrentUser(updatedUser);
+        
+        // TODO: Implement with real Appwrite user update and photo upload to cloud storage
+        console.log('TODO: Implement real user profile update with Appwrite', { userData, photoFile });
+        
+        // For now, just update locally
+        localStorage.setItem('orderchha-current-user', JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
   };
 
   const deleteUser = async (uid: string) => {
@@ -496,6 +555,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addUser,
     addCustomer,
     updateUserRole,
+    updateUserProfile,
     updateCustomerCredit,
     deleteUser,
     inventory,

@@ -1,5 +1,8 @@
 'use client';
 
+import { useApp } from "@/context/app-context";
+import { useNotifications } from "@/context/notification-context";
+import { useToast } from "@/hooks/use-toast";
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,8 +13,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useApp } from '@/context/app-context';
-import { useToast } from '@/hooks/use-toast';
 import { Search } from 'lucide-react';
 
 const creditFormSchema = z.object({
@@ -32,6 +33,7 @@ export function PaymentDialog({ tableId, amount, onPaymentComplete }: PaymentDia
   const [open, setOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online' | 'credit' | 'card' | 'qr'>('cash');
   const { users, completeTransaction } = useApp();
+  const { addNotification } = useNotifications();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -63,6 +65,15 @@ export function PaymentDialog({ tableId, amount, onPaymentComplete }: PaymentDia
       toast({
         title: '✅ Payment Processed',
         description: `Payment for Table ${tableId} completed successfully.`,
+      });
+      
+      // Add completion notification
+      addNotification({
+        title: 'Order Completed',
+        message: `Table ${tableId} payment completed (₹${amount.toFixed(2)})`,
+        type: 'order_completed',
+        priority: 'low',
+        tableId,
       });
       
       onPaymentComplete();
