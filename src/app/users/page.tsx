@@ -5,7 +5,7 @@ import { AddStaffForm } from "@/components/users/add-staff-form";
 import { UserList } from "@/components/users/user-list";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { PlusCircle, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

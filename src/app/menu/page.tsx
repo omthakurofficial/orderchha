@@ -7,7 +7,7 @@ import { ComboSuggester } from "@/components/suggestions/combo-suggester";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { Suspense } from "react";
 
 function MenuPageContent() {

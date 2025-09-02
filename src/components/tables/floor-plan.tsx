@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { TableCard } from "./table-card";
 
 export function FloorPlan() {

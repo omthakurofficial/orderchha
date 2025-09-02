@@ -2,7 +2,7 @@
 'use client';
 
 import { MenuUploadForm } from "@/components/menu/menu-upload-form";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { MENU } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

@@ -15,6 +15,7 @@ interface AppContextType {
   addTable: (tableData: Omit<Table, 'id' | 'status'>) => void;
   updateTable: (tableId: number, tableData: Partial<Omit<Table, 'id'>>) => void;
   updateTableStatus: (tableId: number, status: Table['status']) => void;
+  setTables: React.Dispatch<React.SetStateAction<Table[]>>;
   settings: Settings;
   updateSettings: (newSettings: Partial<Settings>) => void;
   order: OrderItem[];
@@ -35,12 +36,16 @@ interface AppContextType {
   signOut: () => Promise<void>;
   users: User[];
   addUser: (userData: UserFormData, photoFile: File | null) => Promise<void>;
+  addCustomer: (userData: UserFormData, photoFile: File | null) => Promise<void>;
   updateUserRole: (uid: string, role: User['role']) => Promise<void>;
+  updateCustomerCredit: (uid: string, amount: number) => Promise<void>;
   deleteUser: (uid: string) => Promise<void>;
   inventory: InventoryItem[];
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => Promise<void>;
   updateInventoryItemStock: (itemId: string, amount: number) => Promise<void>;
   deleteInventoryItem: (itemId: string) => Promise<void>;
+  completedTransactions: Transaction[];
+  completeTransaction: (transaction: Transaction) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -50,6 +55,10 @@ const initialSettings: Settings = {
   address: '123 Gourmet Street, Foodie City, 98765',
   phone: '(555) 123-4567',
   logo: 'https://i.ibb.co/6r11CNc/logo.png',
+  currency: 'INR',
+  taxRate: 18,
+  serviceCharge: 10,
+  receiptNote: 'Thank you for dining with us!',
   aiSuggestionsEnabled: true,
   onlineOrderingEnabled: true,
   paymentQrUrl: 'https://www.example.com/pay',
@@ -194,7 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // Rest of the functions remain the same for now (using local state)
-  // We'll migrate these to MongoDB later
+  // Clean in-memory state management - no external database needed for now
 
   const addMenuItem = (item: MenuItem, categoryName: string) => {
     const newItem = { ...item, id: Date.now().toString() };
@@ -282,6 +291,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       items: order,
       status: 'pending',
       timestamp: new Date().toISOString(),
+      totalAmount: orderTotal,
       total: orderTotal
     };
     
@@ -307,7 +317,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const order = pendingOrders.find(o => o.id === orderId);
     if (order) {
       setPendingOrders(prev => prev.filter(o => o.id !== orderId));
-      setKitchenOrders(prev => [...prev, { ...order, status: 'in-kitchen' }]);
+      setKitchenOrders(prev => [...prev, { ...order, status: 'preparing' }]);
     }
   };
 
@@ -381,6 +391,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setInventory(prev => prev.filter(item => item.id !== itemId));
   };
 
+  // Customer management (alias for addUser)
+  const addCustomer = async (userData: UserFormData, photoFile: File | null) => {
+    const customerData = { ...userData, isCustomer: true };
+    await addUser(customerData, photoFile);
+  };
+
+  const updateCustomerCredit = async (uid: string, amount: number) => {
+    setUsers(prev => prev.map(user => 
+      user.uid === uid 
+        ? { ...user, creditBalance: (user.creditBalance || 0) + amount }
+        : user
+    ));
+    toast({
+      title: "Credit Updated",
+      description: `Customer credit balance updated.`,
+    });
+  };
+
+  // Transaction management
+  const completedTransactions = transactions.filter(t => t.id);
+  
+  const completeTransaction = async (transaction: Transaction) => {
+    setTransactions(prev => [...prev, transaction]);
+    toast({
+      title: "Transaction Completed",
+      description: `Payment of ₹${transaction.amount} processed.`,
+    });
+  };
+
   const value = {
     isLoaded,
     menu,
@@ -389,6 +428,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addTable,
     updateTable,
     updateTableStatus,
+    setTables,
     settings,
     updateSettings,
     order,
@@ -409,12 +449,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     signOut,
     users,
     addUser,
+    addCustomer,
     updateUserRole,
+    updateCustomerCredit,
     deleteUser,
     inventory,
     addInventoryItem,
     updateInventoryItemStock,
     deleteInventoryItem,
+    completedTransactions,
+    completeTransaction,
   };
 
   return (

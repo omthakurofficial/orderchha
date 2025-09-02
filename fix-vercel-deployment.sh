@@ -29,12 +29,6 @@ echo "https://cloud.appwrite.io/v1" | vercel env add NEXT_PUBLIC_APPWRITE_URL pr
 echo "Setting NEXT_PUBLIC_APPWRITE_PROJECT_ID..."
 echo "orderchha-app" | vercel env add NEXT_PUBLIC_APPWRITE_PROJECT_ID production
 
-echo "Setting MongoDB URI..."
-if [ -f ".env.local" ]; then
-    MONGODB_URI=$(grep MONGODB_URI .env.local | cut -d '=' -f2)
-    echo "$MONGODB_URI" | vercel env add MONGODB_URI production
-fi
-
 echo "📋 Step 4: Deploying to production..."
 vercel --prod
 

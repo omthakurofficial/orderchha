@@ -85,12 +85,14 @@ export interface User {
 export interface UserFormData {
     name: string;
     email: string;
-    password?: string; // Password is used for creation, but not stored in Firestore doc
+    password?: string; // Password is used for creation, but not stored in database
     role: UserRole;
     mobile?: string;
     address?: string;
     designation?: string;
     joiningDate?: string;
+    creditBalance?: number;
+    isCustomer?: boolean;
 }
 
 export interface Supplier {

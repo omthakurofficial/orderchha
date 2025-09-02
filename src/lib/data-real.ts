@@ -1,5 +1,5 @@
 // STEP 1: Replace fake data with customizable real data
-// This is a transition step before moving to MongoDB
+// This is a transition step before moving to Supabase
 
 import type { MenuCategory, Table, User } from '@/types';
 
@@ -186,9 +186,9 @@ export const USERS: User[] = [
   },
 ];
 
-// 📊 MONGODB INTEGRATION STATUS
-export const MONGODB_STATUS = {
-  enabled: true,
-  collections: ['orders', 'transactions', 'analytics'],
-  note: 'Menu and tables use static data, orders use MongoDB for persistence'
+// 📊 SUPABASE INTEGRATION STATUS
+export const SUPABASE_STATUS = {
+  connected: true,
+  lastCheck: new Date().toISOString(),
+  note: 'Menu and tables use static data, orders use Supabase for persistence'
 };

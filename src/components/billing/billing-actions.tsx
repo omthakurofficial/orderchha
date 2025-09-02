@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { Wallet, Receipt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";

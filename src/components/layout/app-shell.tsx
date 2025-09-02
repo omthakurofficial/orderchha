@@ -18,7 +18,7 @@ import { LayoutGrid, UtensilsCrossed, Settings, Upload, MapPin, ChefHat, Clipboa
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 import React from "react";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";

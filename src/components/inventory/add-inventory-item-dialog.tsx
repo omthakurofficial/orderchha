@@ -19,7 +19,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { PlusCircle } from 'lucide-react';
-import { useApp } from '@/context/app-context-supabase';
+import { useApp } from '@/context/app-context';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { InventoryItem } from '@/types';

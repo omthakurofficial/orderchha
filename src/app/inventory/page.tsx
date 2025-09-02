@@ -6,7 +6,7 @@ import { InventoryList } from "@/components/inventory/inventory-list";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { Package, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";

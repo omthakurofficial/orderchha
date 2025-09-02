@@ -23,8 +23,5 @@
         }
       ]
     }
-  ],
-  "env": {
-    "NEXT_PUBLIC_FIREBASE_CONFIG": "Required: Add your Firebase config as a stringified JSON in Vercel project settings"
-  }
+  ]
 }

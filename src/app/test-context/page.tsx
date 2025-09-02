@@ -1,6 +1,6 @@
 'use client';
 
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 
 export default function TestContextPage() {
   try {

@@ -2,7 +2,7 @@
 'use client';
 
 import { KitchenOrderCard } from '@/components/kitchen/kitchen-order-card';
-import { useApp } from '@/context/app-context-supabase';
+import { useApp } from '@/context/app-context';
 import { ChefHat } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';

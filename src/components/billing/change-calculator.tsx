@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { useApp } from '@/context/app-context-supabase';
+import { useApp } from '@/context/app-context';
 
 const calculatorSchema = z.object({
   totalAmount: z.coerce.number().positive("Total amount must be positive."),

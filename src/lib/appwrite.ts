@@ -30,7 +30,7 @@ export const databases = new Databases(client);
 export const storage = new Storage(client);
 export const functions = new Functions(client);
 
-// Auth helpers (compatible with your existing Firebase auth usage)
+// Auth helpers (integrated with Appwrite)
 export const auth = {
   signIn: async (email: string, password: string) => {
     try {
@@ -104,7 +104,7 @@ export const auth = {
   }
 };
 
-// Database helpers (compatible with your existing Firestore usage)
+// Database helpers (integrated with Appwrite databases)
 export const db = {
   // Create document
   create: async (databaseId: string, collectionId: string, data: any, documentId?: string) => {

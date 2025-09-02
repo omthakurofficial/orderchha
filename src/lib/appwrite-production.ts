@@ -137,10 +137,10 @@ export const auth = {
   }
 };
 
-// Database helpers (for future MongoDB migration)
+// Database helpers (using Appwrite databases)
 export const db = {
   // Placeholder for database operations
   collection: (name: string) => ({
-    // Will be implemented when we migrate data to Appwrite/MongoDB
+    // Will be implemented when we use Appwrite databases
   })
 };

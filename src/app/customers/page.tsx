@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { useToast } from "@/hooks/use-toast";
 import { Search, UserPlus, Plus, Minus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -53,13 +53,13 @@ export default function CustomersPage() {
     try {
       await addCustomer({
         name: data.name,
-        email: data.email || null,
+        email: data.email || 'customer@example.com', // Default email for customers
         mobile: data.mobile,
         address: data.address,
         role: 'admin', // Default role, we'll filter by isCustomer instead
         creditBalance: data.creditBalance,
         isCustomer: true,
-      });
+      }, null); // No photo file for customers
       
       form.reset();
       setOpen(false);

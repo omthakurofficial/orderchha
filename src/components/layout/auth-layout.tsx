@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { AppShell } from "./app-shell";
 import LoginPage from "@/app/login/page";
 import { useRouter } from 'next/navigation';

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useApp } from '@/context/app-context-supabase';
+import { useApp } from '@/context/app-context';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';

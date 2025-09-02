@@ -19,7 +19,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Edit } from 'lucide-react';
-import { useApp } from '@/context/app-context-supabase';
+import { useApp } from '@/context/app-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Table } from '@/types';
 

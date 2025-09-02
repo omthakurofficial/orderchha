@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { Separator } from "../ui/separator";
@@ -354,24 +354,15 @@ export function TableCard({ table }: TableCardProps) {
                                         description: `Payment for Table ${table.id} completed successfully.`,
                                     });
                                     
-                                    // Just mark the table as available locally since the API might fail
-                                    updateTableStatus(table.id, 'available' as Table['status'])
-                                        .catch(() => {
-                                            console.error("Table status update failed");
-                                            // Update local state directly as a fallback
-                                            setTables((prevTables: Table[]) => 
-                                                prevTables.map((t: Table) => 
-                                                    t.id === table.id ? {...t, status: 'available' as Table['status']} : t
-                                                )
-                                            );
-                                        });
-                                }).catch((error) => {
-                                    toast({
-                                        title: '❌ Payment Failed',
-                                        description: 'There was an error processing the payment.',
-                                        variant: 'destructive',
-                                    });
-                                    console.error("Payment error:", error);
+                                    // Just mark the table as available locally
+                                    updateTableStatus(table.id, 'available' as Table['status']);
+                                    
+                                    // Update local state directly as a fallback
+                                    setTables((prevTables: Table[]) => 
+                                        prevTables.map((t: Table) => 
+                                            t.id === table.id ? {...t, status: 'available' as Table['status']} : t
+                                        )
+                                    );
                                 });
                             }, 100);
                         }}

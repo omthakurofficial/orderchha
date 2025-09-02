@@ -3,7 +3,7 @@
 
 import { AddTableDialog } from "@/components/tables/add-table-dialog";
 import { FloorPlan } from "@/components/tables/floor-plan";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { Suspense } from "react";
 
 export default function Home() {

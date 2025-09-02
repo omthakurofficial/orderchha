@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useApp } from '@/context/app-context-supabase';
+import { useApp } from '@/context/app-context';
 import type { InventoryItem } from '@/types';
 
 const updateStockSchema = z.object({

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { PlusCircle } from "lucide-react";
-import { useApp } from "@/context/app-context-supabase";
+import { useApp } from "@/context/app-context";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "next/navigation";
 
