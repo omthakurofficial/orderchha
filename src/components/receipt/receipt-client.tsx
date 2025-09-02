@@ -40,13 +40,13 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
         id: `sample-${tableId}`,
         tableId,
         items: [
-          { name: 'Margherita Pizza', price: 12.99, quantity: 2, id: 'sample-1' },
-          { name: 'Caesar Salad', price: 8.50, quantity: 1, id: 'sample-2' },
-          { name: 'Coca Cola', price: 2.50, quantity: 2, id: 'sample-3' }
+          { name: 'Margherita Pizza', price: 450.00, quantity: 2, id: 'sample-1' },
+          { name: 'Caesar Salad', price: 500.00, quantity: 1, id: 'sample-2' },
+          { name: 'Coca Cola', price: 200.00, quantity: 2, id: 'sample-3' }
         ],
         status: 'completed' as const,
         timestamp: new Date().toISOString(),
-        totalAmount: 37.48
+        totalAmount: 1800.00
       }];
     }
     
@@ -118,11 +118,11 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
                       <div className="flex-1">
                         <div className="font-medium">{item.name}</div>
                         <div className="text-sm text-gray-500">
-                          Qty: {item.quantity} × ${item.price.toFixed(2)}
+                          Qty: {item.quantity} × {settings?.currency || 'NPR'} {item.price.toFixed(2)}
                         </div>
                       </div>
                       <div className="font-medium">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {settings?.currency || 'NPR'} {(item.price * item.quantity).toFixed(2)}
                       </div>
                     </div>
                   )) || (
@@ -140,13 +140,13 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${totalAmount.toFixed(2)}</span>
+                <span>{settings?.currency || 'NPR'} {totalAmount.toFixed(2)}</span>
               </div>
               
               {applyVat && (
                 <div className="flex justify-between">
                   <span>VAT (10%):</span>
-                  <span>${vatAmount.toFixed(2)}</span>
+                  <span>{settings?.currency || 'NPR'} {vatAmount.toFixed(2)}</span>
                 </div>
               )}
               
@@ -154,7 +154,7 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
               
               <div className="flex justify-between text-lg font-bold">
                 <span>Total:</span>
-                <span>${finalAmount.toFixed(2)}</span>
+                <span>{settings?.currency || 'NPR'} {finalAmount.toFixed(2)}</span>
               </div>
             </div>
 

@@ -18,6 +18,15 @@ const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = 
 
 export function MenuCategory({ category }: MenuCategoryProps) {
   const Icon = iconMap[category.icon] || Utensils; // Fallback to a default icon
+  // Filter out duplicate items by ID
+  const uniqueItems = category.items.reduce((acc, current) => {
+    const isDuplicate = acc.find(item => item.id === current.id);
+    if (!isDuplicate) {
+      acc.push(current);
+    }
+    return acc;
+  }, [] as typeof category.items);
+
   return (
     <section>
       <div className="flex items-center gap-3 mb-4">
@@ -25,7 +34,7 @@ export function MenuCategory({ category }: MenuCategoryProps) {
         <h2 className="text-2xl font-bold font-headline">{category.name}</h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {category.items.map((item) => (
+        {uniqueItems.map((item) => (
           <MenuItemCard key={item.id} item={item} />
         ))}
       </div>

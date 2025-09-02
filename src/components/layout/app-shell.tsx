@@ -32,6 +32,7 @@ const allNavItems = [
     { href: "/upload-menu", icon: Upload, label: "Manage Menu", roles: ["admin", "cashier"] },
     { href: "/inventory", icon: Package, label: "Inventory", roles: ["admin"] },
     { href: "/billing", icon: Receipt, label: "Billing", roles: ["admin", "cashier", "accountant"] },
+    { href: "/customers", icon: Users, label: "Customers", roles: ["admin", "cashier", "accountant"] },
     { href: "/confirm-order", icon: ClipboardCheck, label: "Confirm Orders", roles: ["admin", "cashier", "waiter"] },
     { href: "/kitchen", icon: ChefHat, label: "Kitchen", roles: ["admin", "waiter", "kitchen"] },
     { href: "/users", icon: Users, label: "Users", roles: ["admin"] },

@@ -2,6 +2,7 @@
 'use client';
 
 import { ActiveBills } from '@/components/billing/active-bills';
+import { BillingActions } from '@/components/billing/billing-actions';
 import { ChangeCalculator } from '@/components/billing/change-calculator';
 import { TransactionList } from '@/components/billing/transaction-list';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,6 +49,7 @@ export default function BillingPage() {
             </header>
             <main className="flex-1 p-4 md:p-6 overflow-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
+                    <BillingActions />
                     <ActiveBills />
                     <TransactionList />
                 </div>

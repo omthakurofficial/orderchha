@@ -13,7 +13,8 @@ export function ActiveBills() {
     const availableTables = tables || [];
     
     const tablesInBilling = useMemo(() => {
-        return availableTables.filter(t => t && t.status === 'cleaning');
+        // Include both billing and cleaning status tables
+        return availableTables.filter(t => t && (t.status === 'billing' || t.status === 'cleaning'));
     }, [availableTables]);
 
     return (

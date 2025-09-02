@@ -13,7 +13,7 @@ interface KitchenOrderCardProps {
 }
 
 export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
-    const { completeKitchenOrder } = useApp();
+    const { completeKitchenOrder, settings } = useApp();
     const { toast } = useToast();
 
     const handleCompleteOrder = () => {
@@ -41,14 +41,14 @@ export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
                                 <span className="font-semibold">{item.name}</span>
                                 <span className="text-muted-foreground font-bold ml-2">x{item.quantity}</span>
                             </div>
-                            <span className="text-primary font-bold">NPR {(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="text-primary font-bold">{settings?.currency || 'NPR'} {(item.price * item.quantity).toFixed(2)}</span>
                         </li>
                     ))}
                 </ul>
                 <Separator />
                  <div className="flex justify-between text-lg font-bold text-primary">
                     <span>Total</span>
-                    <span>NPR {order.totalAmount.toFixed(2)}</span>
+                    <span>{settings?.currency || 'NPR'} {order.totalAmount.toFixed(2)}</span>
                 </div>
 
             </CardContent>

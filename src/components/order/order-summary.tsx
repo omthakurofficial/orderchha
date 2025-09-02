@@ -12,7 +12,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
 function OrderSummaryContent() {
-  const { order, updateOrderItemQuantity, removeItemFromOrder, placeOrder } = useApp();
+  const { order, updateOrderItemQuantity, removeItemFromOrder, placeOrder, settings } = useApp();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const tableId = searchParams.get('table');
@@ -47,14 +47,25 @@ function OrderSummaryContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <ScrollArea className="flex-1">
+      {/* Sticky footer to ensure it's always visible */}
+      <div className="sticky bottom-0 z-10 bg-card p-4 border-t shadow-md">
+        <div className="flex justify-between text-lg font-bold text-primary mb-2">
+          <span>Total</span>
+          <span>{settings?.currency || 'NPR'} {total.toFixed(2)}</span>
+        </div>
+        <Button className="w-full" size="lg" onClick={handlePlaceOrder} disabled={!tableId}>
+          Submit Order for Confirmation
+        </Button>
+      </div>
+      
+      <ScrollArea className="flex-1 max-h-[calc(100vh-220px)]">
         <div className="p-4 space-y-4">
           {order.map(item => (
-            <div key={item.id} className="flex items-center gap-4">
-              <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md object-cover" />
+            <div key={item.id} className="flex items-center gap-4 border-b pb-2 last:border-b-0">
+              <Image src={item.image} alt={item.name} width={50} height={50} className="rounded-md object-cover" />
               <div className="flex-1">
                 <p className="font-semibold">{item.name}</p>
-                <p className="text-sm text-primary font-medium">NPR {item.price.toFixed(2)}</p>
+                <p className="text-sm text-primary font-medium">{settings?.currency || 'NPR'} {item.price.toFixed(2)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateOrderItemQuantity(item.id, item.quantity - 1)}>
@@ -72,15 +83,9 @@ function OrderSummaryContent() {
           ))}
         </div>
       </ScrollArea>
-      <div className="p-4 border-t mt-auto space-y-3">
-        <div className="flex justify-between text-lg font-bold text-primary">
-          <span>Total</span>
-          <span>NPR {total.toFixed(2)}</span>
-        </div>
-        <p className="text-xs text-muted-foreground text-center">Prices are inclusive of VAT where applicable.</p>
-        <Button className="w-full" size="lg" onClick={handlePlaceOrder} disabled={!tableId}>
-          Submit Order for Confirmation
-        </Button>
+      
+      <div className="p-2 text-xs text-muted-foreground text-center">
+        Prices are inclusive of VAT where applicable.
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Button } from "../ui/button";
 
 export function TransactionList() {
-    const { completedTransactions, isLoaded } = useApp();
+    const { completedTransactions, isLoaded, settings } = useApp();
     
     // Use defensive programming with a fallback
     const transactions = completedTransactions || [];
@@ -83,7 +83,7 @@ export function TransactionList() {
                                         <TableCell className="font-mono text-xs">{tx.id}</TableCell>
                                         <TableCell className="font-semibold">Table {tx.tableId || 'Unknown'}</TableCell>
                                         <TableCell className="font-bold text-primary">
-                                            NPR {(tx.amount || 0).toFixed(2)}
+                                            {settings?.currency || 'NPR'} {(tx.amount || 0).toFixed(2)}
                                         </TableCell>
                                         <TableCell>
                                             <Badge 

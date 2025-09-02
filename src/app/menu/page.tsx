@@ -15,8 +15,8 @@ function MenuPageContent() {
 
   return (
     <div className="flex flex-col md:flex-row h-full">
-      <div className="flex-1 p-4 md:p-6 overflow-auto space-y-8">
-        <header className="md:hidden p-4 border-b -m-4 mb-4 bg-background">
+      <div className="flex-1 p-4 md:p-6 overflow-auto space-y-8 pb-20 md:pb-6">
+        <header className="md:hidden sticky top-0 p-4 border-b -m-4 mb-4 bg-background z-10 shadow-sm">
           <div className="flex flex-col">
             <div>
               <h1 className="text-2xl font-bold font-headline">Digital Menu</h1>
@@ -45,14 +45,14 @@ function MenuPageContent() {
             <Separator />
           </>
         )}
-        <div className="space-y-6">
+        <div className="space-y-8">
             {menuCategories.map((category) => (
               <MenuCategory key={category.id} category={category} />
             ))}
         </div>
       </div>
       
-      <aside className="w-full md:w-96 border-l bg-card flex flex-col">
+      <aside className="w-full md:w-96 border-l bg-card flex flex-col fixed md:sticky bottom-0 md:bottom-auto md:right-0 h-auto md:h-full z-20">
         <div className="hidden md:flex p-4 border-b flex-col gap-4">
             <h2 className="text-xl font-bold font-headline">Your Order</h2>
             <RadioGroup defaultValue="dine-in" className="flex items-center gap-4">

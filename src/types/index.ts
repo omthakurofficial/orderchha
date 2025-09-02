@@ -23,6 +23,7 @@ export interface KitchenOrder {
     status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
     timestamp: string;
     totalAmount: number;
+    total: number;  // Adding total property for compatibility
 }
 
 export interface MenuCategory {
@@ -35,7 +36,7 @@ export interface MenuCategory {
 export interface Table {
   id: number;
   name: string;
-  status: 'available' | 'occupied' | 'reserved' | 'cleaning';
+  status: 'available' | 'occupied' | 'reserved' | 'cleaning' | 'billing' | 'disabled';
   capacity: number;
   location: string;
 }
@@ -58,8 +59,11 @@ export interface Transaction {
     id: string;
     tableId: number;
     amount: number;
-    method: 'cash' | 'online';
+    method: 'cash' | 'online' | 'credit' | 'card' | 'qr';
     timestamp: string;
+    customerId?: string;
+    customerName?: string;
+    notes?: string;
 }
 
 export type UserRole = 'admin' | 'staff' | 'cashier' | 'accountant' | 'waiter' | 'kitchen';
@@ -74,6 +78,8 @@ export interface User {
   address?: string;
   designation?: string;
   joiningDate?: string;
+  creditBalance?: number;
+  isCustomer?: boolean;
 }
 
 export interface UserFormData {

@@ -213,6 +213,49 @@ export const db = {
     if (error) throw error;
     return data[0];
   },
+  
+  // Transactions operations
+  async saveTransaction(transaction: any) {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert(transaction)
+        .select();
+      
+      // If there's an error with the database, fall back to localStorage
+      if (error) {
+        console.warn('Failed to save transaction to database, using localStorage instead:', error);
+        this.saveTransactionToLocalStorage(transaction);
+        return transaction;
+      }
+      
+      return data[0];
+    } catch (err) {
+      // If there's any error, use localStorage as a fallback
+      console.warn('Error saving transaction, using localStorage instead:', err);
+      this.saveTransactionToLocalStorage(transaction);
+      return transaction;
+    }
+  },
+  
+  saveTransactionToLocalStorage(transaction: any) {
+    try {
+      const existingTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+      existingTransactions.push(transaction);
+      localStorage.setItem('transactions', JSON.stringify(existingTransactions));
+    } catch (err) {
+      console.error('Failed to save transaction to localStorage:', err);
+    }
+  },
+  
+  getTransactionsFromLocalStorage() {
+    try {
+      return JSON.parse(localStorage.getItem('transactions') || '[]');
+    } catch (err) {
+      console.error('Failed to get transactions from localStorage:', err);
+      return [];
+    }
+  },
 
   // Real-time subscriptions with type safety
   subscribeToTables(callback: (payload: any) => void) {

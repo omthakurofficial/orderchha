@@ -2,7 +2,43 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { auth } from '@/lib/appwrite'; // Keep Appwrite for authentication
+import { auth } from '@/        const trans        const transformedOrders = data?.map(order => ({
+          id: order.id,
+          tableId: order.table_id,
+          status: order.status,
+          timestamp: order.created_at,
+          totalAmount: order.total_amount,
+          total: order.total_amount, // Add total property to match KitchenOrder type
+          items: order.order_items.map(item => ({
+            id: item.menu_item_id,
+            name: item.menu_items[0]?.name || 'Unknown Item',
+            description: '',
+            price: item.price,
+            image: item.menu_items[0]?.image || '',
+            imageHint: '',
+            inStock: true,
+            quantity: item.quantity,
+          }))
+        })) || [];ta?.map(order => ({
+          id: order.id,
+          tableId: order.table_id,
+          status: order.status,
+          timestamp: order.created_at,
+          totalAmount: order.total_amount,
+          total: order.total_amount, // Add total property to match KitchenOrder type
+          items: order.order_items.map(item => ({
+            id: item.menu_item_id,
+            name: item.menu_items[0]?.name || 'Unknown Item',
+            description: '',
+            price: item.price,
+            image: item.menu_items[0]?.image || '',
+            imageHint: '',
+            inStock: true,
+            quantity: item.quantity,
+          }))
+        })) || [];
+        setKitchenOrders(transformedOrders);
+        setPendingOrders(transformedOrders.filter(order => order.status === 'pending'));eep Appwrite for authentication
 import { db, supabase } from '@/lib/supabase'; // Use Supabase for data
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem, UserRole } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -12,9 +48,11 @@ interface AppContextType {
   menu: MenuCategory[];
   addMenuItem: (item: MenuItem, categoryName: string) => void;
   tables: Table[];
+  setTables: React.Dispatch<React.SetStateAction<Table[]>>;
   addTable: (tableData: Omit<Table, 'id' | 'status'>) => void;
   updateTable: (tableId: number, tableData: Partial<Omit<Table, 'id'>>) => void;
-  updateTableStatus: (tableId: number, status: Table['status']) => void;
+  updateTableStatus: (tableId: number, status: Table['status']) => Promise<void>;
+  processPayment: (tableId: number, method: 'cash' | 'online', applyVat: boolean) => void;
   settings: Settings;
   updateSettings: (newSettings: Partial<Settings>) => void;
   order: OrderItem[];
@@ -39,6 +77,9 @@ interface AppContextType {
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => void;
   completedTransactions: Transaction[];
+  completeTransaction: (transaction: Transaction) => Promise<void>;
+  addCustomer: (customer: Omit<User, 'uid'> & { creditBalance: number }) => Promise<void>;
+  updateCustomerCredit: (customerId: string, amount: number) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -203,6 +244,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch (inventoryError) {
         console.warn('⚠️ Inventory loading failed, continuing without inventory:', inventoryError);
         setInventory([]);
+      }
+      
+      // Load Transactions (from localStorage if database isn't available)
+      try {
+        // Try to load from database first
+        const { data, error } = await supabase.from('transactions').select('*');
+        
+        if (error || !data) {
+          // If database load fails, fall back to localStorage
+          console.warn('⚠️ Database transaction loading failed, using localStorage:', error);
+          const localTransactions = db.getTransactionsFromLocalStorage();
+          setCompletedTransactions(localTransactions.map(t => ({
+            id: t.id,
+            tableId: t.table_id,
+            amount: t.amount,
+            method: t.method,
+            timestamp: t.timestamp,
+            customerId: t.customer_id,
+            customerName: t.customer_name,
+            notes: t.notes
+          })));
+          console.log('✅ Transactions loaded from localStorage:', localTransactions?.length || 0, 'transactions');
+        } else {
+          // Transform database transactions to match our format
+          setCompletedTransactions(data.map(t => ({
+            id: t.id,
+            tableId: t.table_id,
+            amount: t.amount,
+            method: t.method,
+            timestamp: t.timestamp,
+            customerId: t.customer_id,
+            customerName: t.customer_name,
+            notes: t.notes
+          })));
+          console.log('✅ Transactions loaded from database:', data?.length || 0, 'transactions');
+        }
+      } catch (transactionError) {
+        console.warn('⚠️ Transaction loading failed completely:', transactionError);
+        setCompletedTransactions([]);
       }
 
       setIsLoaded(true);
@@ -369,6 +449,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         status: 'pending',
         timestamp: new Date().toISOString(),
         totalAmount,
+        total: totalAmount, // Add total property to match KitchenOrder type
       };
 
       setKitchenOrders(prev => [...prev, kitchenOrder]);
@@ -578,6 +659,82 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Implementation needed
   }, []);
 
+  const completeTransaction = useCallback(async (transaction: Transaction) => {
+    try {
+      // First store the transaction (either in DB or localStorage)
+      const savedTransaction = await db.saveTransaction({
+        id: transaction.id,
+        table_id: transaction.tableId,
+        amount: transaction.amount,
+        method: transaction.method,
+        timestamp: transaction.timestamp,
+        customer_id: transaction.customerId || null,
+        customer_name: transaction.customerName || null,
+        notes: transaction.notes || null
+      });
+      
+      // Add to state
+      setCompletedTransactions(prev => [...prev, transaction]);
+      
+      // If it's a credit transaction, update the customer's credit balance
+      if (transaction.method === 'credit' && transaction.customerId) {
+        await updateCustomerCredit(transaction.customerId, transaction.amount);
+      }
+      
+      // Update table status to available after payment
+      try {
+        await updateTableStatus(transaction.tableId, 'available');
+      } catch (tableErr) {
+        console.error('Failed to update table status, but transaction completed:', tableErr);
+      }
+      
+      return transaction;
+    } catch (error) {
+      console.error('Failed to complete transaction:', error);
+      throw error;
+    }
+  }, [updateTableStatus]);
+
+  const addCustomer = useCallback(async (customer: Omit<User, 'uid'> & { creditBalance: number }) => {
+    try {
+      // Create a new customer in the database
+      const uid = `cust-${Date.now()}`;
+      const newCustomer: User = {
+        uid,
+        ...customer,
+        isCustomer: true,
+      };
+      
+      setUsers(prev => [...prev, newCustomer]);
+      
+      toast({
+        title: '✅ Customer Added',
+        description: `${customer.name} has been added as a customer.`,
+      });
+      
+      return newCustomer;
+    } catch (error) {
+      console.error('Failed to add customer:', error);
+      throw error;
+    }
+  }, [toast]);
+
+  const updateCustomerCredit = useCallback(async (customerId: string, amount: number) => {
+    try {
+      // Update customer's credit balance
+      setUsers(prev => prev.map(user => 
+        user.uid === customerId 
+          ? { ...user, creditBalance: (user.creditBalance || 0) + amount } 
+          : user
+      ));
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to update customer credit:', error);
+      throw error;
+    }
+  }, []);
+
   const signIn = useCallback(async (email: string, password: string) => {
     try {
       console.log('🔐 Signing in with Appwrite...');
@@ -619,14 +776,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Define a simple processPayment function
+  const processPayment = useCallback((tableId: number, method: 'cash' | 'online', applyVat: boolean) => {
+    // Find orders for this table that are completed
+    const ordersForTable = kitchenOrders.filter(o => o.tableId === tableId && o.status === 'completed');
+    
+    // Calculate totals
+    const subtotal = ordersForTable.reduce((acc, order) => acc + (order.total || order.totalAmount), 0);
+    const vat = applyVat ? subtotal * 0.13 : 0;
+    const total = subtotal + vat;
+    
+    // Create a transaction
+    const transaction: Transaction = {
+      id: `tr-${Date.now()}`,
+      tableId,
+      amount: total,
+      method,
+      timestamp: new Date().toISOString(),
+    };
+    
+    // Complete the transaction
+    completeTransaction(transaction)
+      .then(() => {
+        // Update table status
+        return updateTableStatus(tableId, 'available');
+      })
+      .catch(error => {
+        console.error('Payment processing error:', error);
+      });
+  }, [kitchenOrders, completeTransaction, updateTableStatus]);
+  
   const contextValue = {
     isLoaded,
     menu,
     addMenuItem,
     tables,
+    setTables,
     addTable,
     updateTable,
     updateTableStatus,
+    processPayment,
     settings,
     updateSettings,
     order,
@@ -651,6 +840,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     signIn,
     logout,
     completedTransactions,
+    completeTransaction,
+    addCustomer,
+    updateCustomerCredit,
   };
 
   return (

@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useApp } from '@/context/app-context-supabase';
 
 const calculatorSchema = z.object({
   totalAmount: z.coerce.number().positive("Total amount must be positive."),
@@ -22,6 +23,7 @@ type CalculatorFormValues = z.infer<typeof calculatorSchema>;
 
 export function ChangeCalculator() {
     const [change, setChange] = useState<number | null>(null);
+    const { settings } = useApp();
 
     const form = useForm<CalculatorFormValues>({
         resolver: zodResolver(calculatorSchema),
@@ -76,7 +78,7 @@ export function ChangeCalculator() {
                         <Separator />
                         <div className="text-center">
                             <p className="text-lg font-semibold">Change to Return:</p>
-                            <p className="text-3xl font-bold text-primary">NPR {change.toFixed(2)}</p>
+                            <p className="text-3xl font-bold text-primary">{settings?.currency || 'NPR'} {change.toFixed(2)}</p>
                         </div>
                         <Button variant="outline" className="w-full" onClick={handleReset}>Reset</Button>
                     </div>
