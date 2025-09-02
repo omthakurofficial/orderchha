@@ -12,8 +12,11 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
     const { currentUser, isLoaded } = useApp();
     const router = useRouter();
     const [loadTimeout, setLoadTimeout] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
+        
         // If loading takes more than 5 seconds, show diagnostic option
         const timer = setTimeout(() => {
             setLoadTimeout(true);
@@ -21,6 +24,17 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
 
         return () => clearTimeout(timer);
     }, []);
+
+    // Prevent hydration mismatch by ensuring consistent initial render
+    if (!mounted) {
+        return (
+            <div className="flex flex-col h-screen items-center justify-center p-4">
+                <div className="text-center">
+                    <p className="mb-4 text-lg">Loading application...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Public routes that don't require auth
     const isPublicRoute = typeof window !== 'undefined' && (

@@ -71,35 +71,6 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
     loadCompletedOrders();
   }, [mounted, isLoaded, tableId, billingOrders]);
 
-  const invoiceIdGenerated = useMemo(() => {
-    if (!mounted) return `INV-${tableId}-loading`;
-    
-    // Check if there's a transaction for this table
-    const transaction = transactions.find(t => t.tableId === tableId);
-    if (transaction) {
-      // Use transaction ID for consistency
-      return `INV-${transaction.id}`;
-    }
-    
-    // Generate deterministic invoice ID to avoid hydration mismatch
-    return `INV-${tableId}-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}`;
-  }, [mounted, tableId, transactions]);
-
-  const paymentMethod = searchParams.get('method') || 'N/A';
-  const applyVat = searchParams.get('vat') === 'true';
-  
-  // Use deterministic date to avoid hydration mismatch
-  const transactionDate = useMemo(() => {
-    if (!mounted) return 'Loading...';
-    return new Date().toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'numeric', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }, [mounted]);
-
   const ordersForTable = useMemo(() => {
     if (!isLoaded) return [];
     
@@ -119,6 +90,72 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
     // No real data found - show empty state instead of mock data
     return [];
   }, [billingOrders, completedOrders, tableId, isLoaded]);
+
+  const invoiceIdGenerated = useMemo(() => {
+    if (!mounted) return `INV-${tableId}-loading`;
+    
+    // Check if there's a transaction for this table
+    const transaction = transactions.find(t => t.tableId === tableId);
+    if (transaction) {
+      // Use transaction ID for consistency - extract just the first 8 chars
+      return `INV-${transaction.id.substring(0, 8).toUpperCase()}`;
+    }
+    
+    // Use the most recent order's created_at date for deterministic invoice ID
+    if (ordersForTable.length > 0) {
+      const mostRecentOrder = ordersForTable[0];
+      if (mostRecentOrder.timestamp) {
+        const orderDate = new Date(mostRecentOrder.timestamp);
+        const year = orderDate.getFullYear();
+        const month = (orderDate.getMonth() + 1).toString().padStart(2, '0');
+        const day = orderDate.getDate().toString().padStart(2, '0');
+        return `INV-${tableId}-${year}${month}${day}`;
+      }
+    }
+    
+    // Fallback deterministic ID
+    return `INV-T${tableId}-${tableId.toString().padStart(3, '0')}`;
+  }, [mounted, tableId, transactions, ordersForTable]);
+
+  const paymentMethod = searchParams.get('method') || 'N/A';
+  const applyVat = searchParams.get('vat') === 'true';
+  
+  // Use order timestamp for deterministic date to avoid hydration mismatch
+  const transactionDate = useMemo(() => {
+    if (!mounted) return 'Loading...';
+    
+    // Use the transaction date if available
+    const transaction = transactions.find(t => t.tableId === tableId);
+    if (transaction && transaction.timestamp) {
+      return new Date(transaction.timestamp).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'numeric', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    
+    // Use the most recent order date
+    if (ordersForTable.length > 0 && ordersForTable[0].timestamp) {
+      return new Date(ordersForTable[0].timestamp).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'numeric', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    
+    // Fallback to current date only if no order data
+    return new Date().toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'numeric', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }, [mounted]);
 
   // Consolidate items from multiple orders for cleaner display
   const consolidatedItems = useMemo(() => {
@@ -150,7 +187,9 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
   const finalAmount = totalAmount + vatAmount;
 
   const handlePrint = () => {
-    window.print();
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
   };
 
   // Prevent hydration mismatch by not rendering dynamic content until mounted
