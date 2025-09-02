@@ -1,5 +1,6 @@
 
 import type { MenuItem } from "@/types";
+import { formatCurrency } from "@/lib/currency";
 import Image from "next/image";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
         <p className="text-sm text-muted-foreground">{item.description}</p>
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
-        <p className="text-lg font-bold text-primary">NPR {item.price.toFixed(2)}</p>
+        <p className="text-lg font-bold text-primary">{formatCurrency(item.price, settings?.currency)}</p>
         <Button 
           disabled={!isOrderable} 
           onClick={handleAddItem}

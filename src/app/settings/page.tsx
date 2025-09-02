@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useApp } from "@/context/app-context";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -163,6 +165,29 @@ export default function SettingsPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone</Label>
                                     <Input id="phone" value={settings?.phone || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="currency">Currency</Label>
+                                    <Select 
+                                        value={settings?.currency || 'NPR'} 
+                                        onValueChange={(value) => updateSettings({ currency: value })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select currency" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {SUPPORTED_CURRENCIES.map((currency) => (
+                                                <SelectItem key={currency.code} value={currency.code}>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium">{currency.symbol}</span>
+                                                        <span>{currency.code}</span>
+                                                        <span className="text-muted-foreground">- {currency.name}</span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">Currency used throughout the application</p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="logo">Cafe Logo</Label>

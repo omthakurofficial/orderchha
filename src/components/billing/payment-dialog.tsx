@@ -2,6 +2,7 @@
 
 import { useApp } from "@/context/app-context";
 import { useNotifications } from "@/context/notification-context";
+import { formatCurrency } from '@/lib/currency';
 import { useToast } from "@/hooks/use-toast";
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -32,7 +33,7 @@ interface PaymentDialogProps {
 export function PaymentDialog({ tableId, amount, onPaymentComplete }: PaymentDialogProps) {
   const [open, setOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online' | 'credit' | 'card' | 'qr'>('cash');
-  const { users, completeTransaction } = useApp();
+  const { users, completeTransaction, settings } = useApp();
   const { addNotification } = useNotifications();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,7 +71,7 @@ export function PaymentDialog({ tableId, amount, onPaymentComplete }: PaymentDia
       // Add completion notification
       addNotification({
         title: 'Order Completed',
-        message: `Table ${tableId} payment completed (₹${amount.toFixed(2)})`,
+        message: `Table ${tableId} payment completed (${formatCurrency(amount, settings.currency)})`,
         type: 'order_completed',
         priority: 'low',
         tableId,

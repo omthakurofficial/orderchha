@@ -4,6 +4,7 @@
 import React from 'react';
 import { useApp } from '@/context/app-context';
 import { useNotifications } from '@/context/notification-context';
+import { formatCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -57,7 +58,7 @@ function OrderSummaryContent() {
     // Add notification for order placed
     addNotification({
       title: 'New Order Placed',
-      message: `Table ${tableNumber} placed an order with ${itemCount} items (₹${total.toFixed(2)})`,
+      message: `Table ${tableNumber} placed an order with ${itemCount} items (${formatCurrency(total, settings.currency)})`,
       type: 'order_placed',
       priority: 'medium',
       tableId: tableNumber,

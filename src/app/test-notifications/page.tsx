@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, ChefHat, CheckCircle, Clock, Receipt } from 'lucide-react';
 import { useNotifications } from '@/context/notification-context';
+import { formatCurrency } from '@/lib/currency';
 import { NotificationPanel } from '@/components/notifications/notification-panel';
 
 export default function TestNotificationsPage() {
@@ -12,7 +13,7 @@ export default function TestNotificationsPage() {
   const testNotifications = [
     {
       title: 'New Order Placed',
-      message: 'Table 5 placed an order with 3 items (₹850.00)',
+      message: `Table 5 placed an order with 3 items (${formatCurrency(850, 'NPR')})`,
       type: 'order_placed' as const,
       priority: 'medium' as const,
       tableId: 5,
@@ -33,14 +34,14 @@ export default function TestNotificationsPage() {
     },
     {
       title: 'Payment Pending',
-      message: 'Table 7 bill ready for payment (₹1,250.00)',
+      message: `Table 7 bill ready for payment (${formatCurrency(1250, 'NPR')})`,
       type: 'payment_pending' as const,
       priority: 'medium' as const,
       tableId: 7,
     },
     {
       title: 'Order Completed',
-      message: 'Table 4 payment completed (₹975.00)',
+      message: `Table 4 payment completed (${formatCurrency(975, 'NPR')})`,
       type: 'order_completed' as const,
       priority: 'low' as const,
       tableId: 4,

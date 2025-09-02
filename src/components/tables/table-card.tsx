@@ -2,6 +2,7 @@
 "use client";
 
 import type { Table } from "@/types";
+import { formatCurrency } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -51,16 +52,19 @@ const statusStyles = {
   disabled: "bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
 };
 
-export function TableCard({ table }: TableCardProps) {
-  const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
+export function TableCard({ table }: { table: Table }) {
+  const [selectedMethod, setSelectedMethod] = useState<'cash' | 'online' | 'credit' | 'qr' | 'card'>('cash');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [applyVat, setApplyVat] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const { updateTableStatus, kitchenOrders, processPayment, currentUser, setTables, settings, completeTransaction } = useApp();
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const { settings, billingOrders, processPayment, updateTableStatus, currentUser, completeTransaction, setTables } = useApp();
   const { toast } = useToast();
   
   const ordersForTable = useMemo(() => {
-    return kitchenOrders.filter(o => o.tableId === table.id && o.status === 'completed');
-  }, [kitchenOrders, table.id]);
+    return billingOrders.filter(o => o.tableId === table.id);
+  }, [billingOrders, table.id]);
 
   const billDetails = useMemo(() => {
     const subtotal = ordersForTable.reduce((acc, order) => acc + order.total, 0);
@@ -283,7 +287,7 @@ export function TableCard({ table }: TableCardProps) {
                                             <span>{item.name}</span>
                                             <span className="text-muted-foreground font-bold ml-2">x{item.quantity}</span>
                                         </div>
-                                        <span>{settings?.currency || 'NPR'} {(item.price * item.quantity).toFixed(2)}</span>
+                                        <span>{formatCurrency(item.price * item.quantity, settings?.currency)}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -294,7 +298,7 @@ export function TableCard({ table }: TableCardProps) {
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                         <span>Subtotal</span>
-                        <span className="font-medium">{settings?.currency || 'NPR'} {billDetails.subtotal.toFixed(2)}</span>
+                        <span className="font-medium">{formatCurrency(billDetails.subtotal, settings?.currency)}</span>
                     </div>
                      <div className="flex items-center justify-between">
                         <Label htmlFor="vat-switch" className="flex items-center gap-2">
@@ -305,13 +309,13 @@ export function TableCard({ table }: TableCardProps) {
                      {applyVat && (
                          <div className="flex justify-between">
                             <span>VAT (13%)</span>
-                            <span className="font-medium">{settings?.currency || 'NPR'} {billDetails.vat.toFixed(2)}</span>
+                            <span className="font-medium">{formatCurrency(billDetails.vat, settings?.currency)}</span>
                         </div>
                     )}
                     <Separator />
                      <div className="flex justify-between text-lg font-bold text-primary">
                         <span>Total Due</span>
-                        <span>{settings?.currency || 'NPR'} {billDetails.total.toFixed(2)}</span>
+                        <span>{formatCurrency(billDetails.total, settings?.currency)}</span>
                     </div>
                 </div>
                 

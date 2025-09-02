@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/currency";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useApp } from "@/context/app-context";
 import { useNotifications } from "@/context/notification-context";
@@ -46,7 +47,7 @@ export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
         // Add notification for payment pending
         addNotification({
             title: 'Payment Pending',
-            message: `Table ${order.tableId} bill ready for payment (₹${(order.total || order.totalAmount || 0).toFixed(2)})`,
+            message: `Table ${order.tableId} bill ready for payment (${formatCurrency(order.total || order.totalAmount || 0, settings?.currency)})`,
             type: 'payment_pending',
             priority: 'medium',
             tableId: order.tableId,
@@ -70,14 +71,14 @@ export function KitchenOrderCard({ order }: KitchenOrderCardProps) {
                                 <span className="font-semibold">{item.name}</span>
                                 <span className="text-muted-foreground font-bold ml-2">x{item.quantity}</span>
                             </div>
-                            <span className="text-primary font-bold">{settings?.currency || 'NPR'} {(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="text-primary font-bold">{formatCurrency(item.price * item.quantity, settings?.currency)}</span>
                         </li>
                     ))}
                 </ul>
                 <Separator />
                  <div className="flex justify-between text-lg font-bold text-primary">
                     <span>Total</span>
-                    <span>{settings?.currency || 'NPR'} {order.totalAmount.toFixed(2)}</span>
+                    <span>{formatCurrency(order.totalAmount, settings?.currency)}</span>
                 </div>
 
             </CardContent>

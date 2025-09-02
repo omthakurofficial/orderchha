@@ -17,7 +17,7 @@ interface ReceiptClientProps {
 export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientProps) {
   const tableId = Number(tableIdProp);
   const searchParams = useSearchParams();
-  const { settings, kitchenOrders, pendingOrders, isLoaded } = useApp();
+  const { settings, billingOrders, transactions, isLoaded } = useApp();
   const [invoiceId, setInvoiceId] = useState('');
   const [mounted, setMounted] = useState(false);
 
@@ -25,11 +25,20 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
     setMounted(true);
   }, []);
 
-  // Generate invoice ID only after mounting to avoid hydration issues
+  // Generate unique invoice ID based on table and actual transaction
   const invoiceIdGenerated = useMemo(() => {
     if (!mounted) return '';
+    
+    // Check if there's a transaction for this table
+    const transaction = transactions.find(t => t.tableId === tableId);
+    if (transaction) {
+      // Use transaction ID for consistency
+      return `INV-${transaction.id}`;
+    }
+    
+    // Generate temporary invoice ID for preview
     return `INV-${tableId}${Date.now().toString().slice(-6)}`;
-  }, [mounted, tableId]);
+  }, [mounted, tableId, transactions]);
 
   const paymentMethod = searchParams.get('method') || 'N/A';
   const applyVat = searchParams.get('vat') === 'true';
@@ -49,32 +58,38 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
   const ordersForTable = useMemo(() => {
     if (!isLoaded) return [];
     
-    // Look for orders in both kitchen orders and pending orders for this table
-    const allOrders = [...kitchenOrders, ...pendingOrders];
-    const orders = allOrders.filter(order => order.tableId === tableId);
+    // Look for orders in billing orders for this table
+    const orders = billingOrders.filter(order => order.tableId === tableId);
     
-    if (orders.length === 0) {
-      // Generate sample data if no orders exist - fix the total calculation
+    // If we have real orders, use them
+    if (orders.length > 0) {
+      return orders;
+    }
+    
+    // Check if there's a completed transaction for this table (already paid)
+    const completedTransaction = transactions.find(t => t.tableId === tableId);
+    if (completedTransaction) {
+      // Generate receipt data from transaction
       const sampleItems = [
-        { name: 'Margherita Pizza', price: 225.00, quantity: 2, id: 'sample-1' }, // 450
-        { name: 'Caesar Salad', price: 150.00, quantity: 1, id: 'sample-2' },    // 150
-        { name: 'Coca Cola', price: 100.00, quantity: 2, id: 'sample-3' }       // 200
+        { name: 'Margherita Pizza', price: 225.00, quantity: 2, id: 'sample-1' },
+        { name: 'Caesar Salad', price: 150.00, quantity: 1, id: 'sample-2' },
+        { name: 'Coca Cola', price: 100.00, quantity: 2, id: 'sample-3' }
       ];
-      const calculatedTotal = sampleItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
       return [{
-        id: `sample-${tableId}`,
+        id: `receipt-${tableId}`,
         tableId,
         items: sampleItems,
         status: 'completed' as const,
-        timestamp: new Date().toISOString(),
-        totalAmount: calculatedTotal,
-        total: calculatedTotal
+        timestamp: completedTransaction.timestamp,
+        totalAmount: completedTransaction.amount,
+        total: completedTransaction.amount
       }];
     }
     
-    return orders;
-  }, [kitchenOrders, pendingOrders, tableId, isLoaded]);
+    // No orders and no transaction - show empty state
+    return [];
+  }, [billingOrders, transactions, tableId, isLoaded]);
 
   const totalAmount = ordersForTable.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const vatAmount = applyVat ? totalAmount * 0.1 : 0;

@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { auth } from '@/lib/appwrite';
 import { db } from '@/lib/supabase';
+import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,7 @@ interface AppContextType {
   completeKitchenOrder: (orderId: string) => void;
   updateOrderStatus: (orderId: string, status: 'preparing' | 'ready' | 'completed') => void;
   pendingOrders: KitchenOrder[];
+  billingOrders: KitchenOrder[];
   approvePendingOrder: (orderId: string) => void;
   rejectPendingOrder: (orderId: string) => void;
   transactions: Transaction[];
@@ -66,7 +68,7 @@ const initialSettings: Settings = {
   address: '123 Gourmet Street, Foodie City, 98765',
   phone: '(555) 123-4567',
   logo: 'https://i.ibb.co/6r11CNc/logo.png',
-  currency: 'INR',
+  currency: 'NPR',
   taxRate: 18,
   serviceCharge: 10,
   receiptNote: 'Thank you for dining with us!',
@@ -98,6 +100,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
+  const [billingOrders, setBillingOrders] = useState<KitchenOrder[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [users, setUsers] = useState<User[]>([initialAdminUser]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -188,6 +191,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
             total: order.total_amount
           }));
           setKitchenOrders(formattedKitchenOrders);
+        }
+
+        // Load billing orders from database
+        const billingOrdersData = await db.getBillingReadyOrders();
+        if (billingOrdersData && billingOrdersData.length > 0) {
+          const formattedBillingOrders = billingOrdersData.map((order: any) => ({
+            id: order.id,
+            tableId: order.table_id,
+            items: order.order_items?.map((item: any) => {
+              const menuItem = Array.isArray(item.menu_items) ? item.menu_items[0] : item.menu_items;
+              return {
+                id: item.menu_item_id,
+                name: menuItem?.name || 'Unknown Item',
+                description: menuItem?.description || '',
+                price: item.price,
+                quantity: item.quantity,
+                image: menuItem?.image || menuItem?.image_url || '',
+                imageHint: menuItem?.image_hint || '',
+                inStock: menuItem?.available ?? true
+              };
+            }) || [],
+            status: order.status as any,
+            timestamp: order.created_at,
+            totalAmount: order.total_amount,
+            total: order.total_amount
+          }));
+          setBillingOrders(formattedBillingOrders);
         }
 
         // Load transactions from database
@@ -378,6 +408,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setKitchenOrders(formattedKitchenOrders);
       } else {
         setKitchenOrders([]);
+      }
+
+      // Load billing orders from database
+      const billingOrdersData = await db.getBillingReadyOrders();
+      if (billingOrdersData && billingOrdersData.length > 0) {
+        const formattedBillingOrders = billingOrdersData.map((order: any) => ({
+          id: order.id,
+          tableId: order.table_id,
+          items: order.order_items?.map((item: any) => ({
+            id: item.menu_item_id,
+            name: item.menu_items?.[0]?.name || 'Unknown Item',
+            description: item.menu_items?.[0]?.description || '',
+            price: item.price,
+            quantity: item.quantity,
+            image: item.menu_items?.[0]?.image || '',
+            imageHint: item.menu_items?.[0]?.image_hint || '',
+            inStock: true
+          })) || [],
+          status: order.status as any,
+          timestamp: order.created_at,
+          totalAmount: order.total_amount,
+          total: order.total_amount
+        }));
+        setBillingOrders(formattedBillingOrders);
+      } else {
+        setBillingOrders([]);
       }
 
       // Load transactions from database
@@ -610,7 +666,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       toast({
         title: "Order Placed! 🍽️",
-        description: `Table ${tableId}: ${itemCount} items (₹${orderTotal}) saved to database.`,
+        description: `Table ${tableId}: ${itemCount} items (${formatCurrency(orderTotal, settings.currency)}) saved to database.`,
       });
 
       // Dispatch custom event for notifications
@@ -638,7 +694,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       toast({
         title: "Order Placed! 🍽️",
-        description: `Table ${tableId}: ${itemCount} items (₹${orderTotal}) - using local storage.`,
+        description: `Table ${tableId}: ${itemCount} items (${formatCurrency(orderTotal, settings.currency)}) - using local storage.`,
       });
 
       window.dispatchEvent(new CustomEvent('orderPlaced', {
@@ -651,11 +707,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const order = kitchenOrders.find(o => o.id === orderId);
     if (order) {
       try {
-        // Update order status to completed and table status to billing in database
+        // Update order status to ready (billing-ready) in database
         await db.completeOrderAndUpdateTable(orderId, order.tableId);
         
-        // Remove from kitchen orders
+        // Remove from kitchen orders and add to billing orders
         setKitchenOrders(prev => prev.filter(o => o.id !== orderId));
+        const billingOrder = { ...order, status: 'ready' as const };
+        setBillingOrders(prev => [...prev, billingOrder]);
         
         // Update table status to billing
         updateTableStatus(order.tableId, 'billing');
@@ -675,6 +733,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         // Fallback to local state only
         setKitchenOrders(prev => prev.filter(o => o.id !== orderId));
+        const billingOrder = { ...order, status: 'ready' as const };
+        setBillingOrders(prev => [...prev, billingOrder]);
         updateTableStatus(order.tableId, 'billing');
         
         toast({
@@ -778,15 +838,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const processPayment = async (tableId: number, method: 'cash' | 'online', applyVat: boolean) => {
-    // Look for completed orders for this table
-    const tableOrders = kitchenOrders.filter(order => 
-      order.tableId === tableId && (order.status === 'completed' || order.status === 'ready')
-    );
+    // Look for billing-ready orders for this table
+    const tableOrders = billingOrders.filter(order => order.tableId === tableId);
     
     if (tableOrders.length === 0) {
       toast({
         title: "No orders to pay",
-        description: `No completed orders found for table ${tableId}.`,
+        description: `No orders ready for billing found for table ${tableId}.`,
         variant: "destructive"
       });
       return;
@@ -833,15 +891,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Remove only the paid orders, not all orders for the table
-      setKitchenOrders(prev => prev.filter(order => 
-        !(order.tableId === tableId && (order.status === 'completed' || order.status === 'ready'))
-      ));
+      // Remove paid orders from billing orders
+      setBillingOrders(prev => prev.filter(order => order.tableId !== tableId));
       updateTableStatus(tableId, 'available');
 
       toast({
         title: "Payment Processed!",
-        description: `₹${finalAmount.toFixed(2)} payment completed for table ${tableId} and saved to database.`,
+        description: `${formatCurrency(finalAmount, settings.currency)} payment completed for table ${tableId} and saved to database.`,
       });
 
       // Dispatch custom event for notifications
@@ -862,14 +918,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
 
       setTransactions(prev => [...prev, fallbackTransaction]);
-      setKitchenOrders(prev => prev.filter(order => 
-        !(order.tableId === tableId && (order.status === 'completed' || order.status === 'ready'))
-      ));
+      // Remove paid orders from billing orders (fallback)
+      setBillingOrders(prev => prev.filter(order => order.tableId !== tableId));
       updateTableStatus(tableId, 'available');
 
       toast({
         title: "Payment Processed!",
-        description: `₹${finalAmount.toFixed(2)} payment completed for table ${tableId} (local storage).`,
+        description: `${formatCurrency(finalAmount, settings.currency)} payment completed for table ${tableId} (local storage).`,
       });
 
       window.dispatchEvent(new CustomEvent('orderCompleted', {
@@ -882,6 +937,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTransactions([]);
     setKitchenOrders([]);
     setPendingOrders([]);
+    setBillingOrders([]);
     
     // Also reset all tables to available status
     setTables(prev => prev.map(table => ({ ...table, status: 'available' as const })));
@@ -984,7 +1040,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTransactions(prev => [...prev, transaction]);
     toast({
       title: "Transaction Completed",
-      description: `Payment of ₹${transaction.amount} processed.`,
+      description: `Payment of ${formatCurrency(transaction.amount, settings.currency)} processed.`,
     });
   };
 
@@ -1016,6 +1072,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     completeKitchenOrder,
     updateOrderStatus,
     pendingOrders,
+    billingOrders,
     approvePendingOrder,
     rejectPendingOrder,
     transactions,

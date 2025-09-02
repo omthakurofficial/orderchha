@@ -1,14 +1,17 @@
 'use client';
 
 import { useNotifications } from '@/context/notification-context';
+import { useApp } from '@/context/app-context';
+import { formatCurrency } from '@/lib/currency';
 
 export function useOrderNotifications() {
   const { addNotification } = useNotifications();
+  const { settings } = useApp();
 
   const notifyOrderPlaced = (tableId: number, orderTotal: number, itemCount: number) => {
     addNotification({
       title: 'New Order Placed',
-      message: `Table ${tableId} placed an order with ${itemCount} items (₹${orderTotal.toFixed(2)})`,
+      message: `Table ${tableId} placed an order with ${itemCount} items (${formatCurrency(orderTotal, settings.currency)})`,
       type: 'order_placed',
       priority: 'medium',
       tableId,
@@ -40,7 +43,7 @@ export function useOrderNotifications() {
   const notifyPaymentPending = (tableId: number, amount: number) => {
     addNotification({
       title: 'Payment Pending',
-      message: `Table ${tableId} bill ready for payment (₹${amount.toFixed(2)})`,
+      message: `Table ${tableId} bill ready for payment (${formatCurrency(amount, settings.currency)})`,
       type: 'payment_pending',
       priority: 'medium',
       tableId,
@@ -50,7 +53,7 @@ export function useOrderNotifications() {
   const notifyOrderCompleted = (tableId: number, amount: number) => {
     addNotification({
       title: 'Order Completed',
-      message: `Table ${tableId} payment completed (₹${amount.toFixed(2)})`,
+      message: `Table ${tableId} payment completed (${formatCurrency(amount, settings.currency)})`,
       type: 'order_completed',
       priority: 'low',
       tableId,

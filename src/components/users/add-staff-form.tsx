@@ -4,6 +4,8 @@
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { getCurrencySymbol } from '@/lib/currency';
+import { useApp } from '@/context/app-context';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -78,6 +80,7 @@ export function AddStaffForm({ onFormSubmit, onSuccess }: AddStaffFormProps) {
     const [preview, setPreview] = useState<string | null>(null);
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const { toast } = useToast();
+    const { settings } = useApp();
 
     const form = useForm<StaffFormValues>({
         resolver: zodResolver(staffFormSchema),
@@ -358,7 +361,7 @@ export function AddStaffForm({ onFormSubmit, onSuccess }: AddStaffFormProps) {
                         />
                         <FormField control={form.control} name="salary" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Monthly Salary (₹)</FormLabel>
+                                <FormLabel>Monthly Salary ({getCurrencySymbol(settings.currency)})</FormLabel>
                                 <FormControl>
                                     <Input 
                                         placeholder="25000" 
