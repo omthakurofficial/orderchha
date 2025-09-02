@@ -23,12 +23,22 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
   const isOrderable = item.inStock && settings.onlineOrderingEnabled && !!tableId;
 
   const handleAddItem = () => {
-    addItemToOrder(item);
+    if (!tableId) {
+      toast({
+        title: "No Table Selected",
+        description: "Please select a table to start an order.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const tableNumber = parseInt(tableId);
+    addItemToOrder(item, tableNumber);
     toast({
-      title: "Added to Order",
-      description: `${item.name} has been added to your order.`,
-    })
-  }
+      title: `Added to Table ${tableNumber}`,
+      description: `${item.name} added to Table ${tableNumber} order.`,
+    });
+  };
   
   const getDisabledTooltip = () => {
     if (!tableId) return "Please select a table to start an order.";

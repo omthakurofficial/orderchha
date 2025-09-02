@@ -1,6 +1,7 @@
 
 'use client';
 
+import React from 'react';
 import { useApp } from '@/context/app-context';
 import { useNotifications } from '@/context/notification-context';
 import { Button } from '@/components/ui/button';
@@ -13,17 +14,27 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
 function OrderSummaryContent() {
-  const { order, updateOrderItemQuantity, removeItemFromOrder, placeOrder, settings } = useApp();
+  const { order, updateOrderItemQuantity, removeItemFromOrder, placeOrder, settings, getTableOrder, currentTableId, setCurrentTableId } = useApp();
   const { addNotification } = useNotifications();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const tableId = searchParams.get('table');
+  const tableNumber = tableId ? parseInt(tableId, 10) : null;
 
-  const total = order.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const itemCount = order.reduce((acc, item) => acc + item.quantity, 0);
+  // 🔥 Set current table and get table-specific order
+  const actualOrder = tableNumber ? getTableOrder(tableNumber) : [];
+  const total = actualOrder.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const itemCount = actualOrder.reduce((acc, item) => acc + item.quantity, 0);
+
+  // Update current table when table changes
+  React.useEffect(() => {
+    if (tableNumber && currentTableId !== tableNumber) {
+      setCurrentTableId(tableNumber);
+    }
+  }, [tableNumber, currentTableId, setCurrentTableId]);
 
   const handlePlaceOrder = () => {
-    if (!tableId) {
+    if (!tableNumber) {
       toast({
         variant: 'destructive',
         title: 'Table Number Missing',
@@ -32,20 +43,29 @@ function OrderSummaryContent() {
       return;
     }
     
-    placeOrder(parseInt(tableId, 10));
+    if (actualOrder.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Empty Cart',
+        description: `No items in cart for Table ${tableNumber}`,
+      });
+      return;
+    }
+    
+    placeOrder(tableNumber);
     
     // Add notification for order placed
     addNotification({
       title: 'New Order Placed',
-      message: `Table ${tableId} placed an order with ${itemCount} items (₹${total.toFixed(2)})`,
+      message: `Table ${tableNumber} placed an order with ${itemCount} items (₹${total.toFixed(2)})`,
       type: 'order_placed',
       priority: 'medium',
-      tableId: parseInt(tableId, 10),
+      tableId: tableNumber,
     });
     
     toast({
-      title: 'Order Submitted!',
-      description: `Your order for Table ${tableId} has been submitted for confirmation.`,
+      title: 'Order Submitted! 🍽️',
+      description: `Table ${tableNumber} order with ${itemCount} items submitted for confirmation.`,
     });
   };
 
@@ -67,34 +87,57 @@ function OrderSummaryContent() {
           <span>Total</span>
           <span>{settings?.currency || 'NPR'} {total.toFixed(2)}</span>
         </div>
-        <Button className="w-full" size="lg" onClick={handlePlaceOrder} disabled={!tableId}>
+        <Button className="w-full mt-2" size="lg" onClick={handlePlaceOrder} disabled={!tableNumber || actualOrder.length === 0}>
           Submit Order for Confirmation
         </Button>
       </div>
       
       <ScrollArea className="flex-1 max-h-[calc(100vh-220px)]">
         <div className="p-4 space-y-4">
-          {order.map(item => (
-            <div key={item.id} className="flex items-center gap-4 border-b pb-2 last:border-b-0">
-              <Image src={item.image} alt={item.name} width={50} height={50} className="rounded-md object-cover" />
-              <div className="flex-1">
-                <p className="font-semibold">{item.name}</p>
-                <p className="text-sm text-primary font-medium">{settings?.currency || 'NPR'} {item.price.toFixed(2)}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateOrderItemQuantity(item.id, item.quantity - 1)}>
-                  <MinusCircle className="w-4 h-4" />
-                </Button>
-                <span className="font-bold w-4 text-center">{item.quantity}</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateOrderItemQuantity(item.id, item.quantity + 1)}>
-                  <PlusCircle className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeItemFromOrder(item.id)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
+          {actualOrder.length === 0 ? (
+            <div className="text-center text-gray-500 py-8">
+              <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <p>No items in cart</p>
+              {tableNumber && <p className="text-sm">Start adding items for Table {tableNumber}</p>}
             </div>
-          ))}
+          ) : (
+            actualOrder.map(item => (
+              <div key={item.id} className="flex items-center gap-4 border-b pb-2 last:border-b-0">
+                <Image src={item.image} alt={item.name} width={50} height={50} className="rounded-md object-cover" />
+                <div className="flex-1">
+                  <p className="font-semibold">{item.name}</p>
+                  <p className="text-sm text-primary font-medium">{settings?.currency || 'NPR'} {item.price.toFixed(2)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7" 
+                    onClick={() => tableNumber && updateOrderItemQuantity(item.id, item.quantity - 1, tableNumber)}
+                  >
+                    <MinusCircle className="w-4 h-4" />
+                  </Button>
+                  <span className="font-bold w-4 text-center">{item.quantity}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7" 
+                    onClick={() => tableNumber && updateOrderItemQuantity(item.id, item.quantity + 1, tableNumber)}
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-destructive" 
+                    onClick={() => tableNumber && removeItemFromOrder(item.id, tableNumber)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </ScrollArea>
       

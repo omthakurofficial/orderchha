@@ -18,11 +18,17 @@ interface AppContextType {
   setTables: React.Dispatch<React.SetStateAction<Table[]>>;
   settings: Settings;
   updateSettings: (newSettings: Partial<Settings>) => void;
+  
+  // 🔥 TABLE-SPECIFIC CART MANAGEMENT
+  currentTableId: number | null;
+  setCurrentTableId: (tableId: number | null) => void;
   order: OrderItem[];
-  addItemToOrder: (item: MenuItem) => void;
-  removeItemFromOrder: (itemId: string) => void;
-  updateOrderItemQuantity: (itemId: string, quantity: number) => void;
-  clearOrder: () => void;
+  getTableOrder: (tableId: number) => OrderItem[];
+  addItemToOrder: (item: MenuItem, tableId: number) => void;
+  removeItemFromOrder: (itemId: string, tableId: number) => void;
+  updateOrderItemQuantity: (itemId: string, quantity: number, tableId: number) => void;
+  clearOrder: (tableId?: number) => void;
+  clearTableOrder: (tableId: number) => void;
   placeOrder: (tableId: number) => void;
   kitchenOrders: KitchenOrder[];
   completeKitchenOrder: (orderId: string) => void;
@@ -82,7 +88,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [menu, setMenu] = useState<MenuCategory[]>(initialMenu);
   const [tables, setTables] = useState<Table[]>(initialTables);
   const [settings, setSettings] = useState<Settings>(initialSettings);
-  const [order, setOrder] = useState<OrderItem[]>([]);
+  
+  // 🔥 TABLE-SPECIFIC ORDER MANAGEMENT - Prevents cart mixing between customers
+  const [currentTableId, setCurrentTableId] = useState<number | null>(null);
+  const [tableOrders, setTableOrders] = useState<Record<number, OrderItem[]>>({});
+  const [order, setOrder] = useState<OrderItem[]>([]); // Current table's order
+  
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -123,10 +134,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     initializeAuth();
 
-    // Load order from localStorage
+    // 🔥 Load table-specific orders from localStorage
+    const savedTableOrders = localStorage.getItem('orderchha-table-orders');
+    if (savedTableOrders) {
+      try {
+        const parsedTableOrders = JSON.parse(savedTableOrders);
+        setTableOrders(parsedTableOrders);
+      } catch (error) {
+        console.log('⚠️ Error loading table orders from localStorage:', error);
+        localStorage.removeItem('orderchha-table-orders');
+      }
+    }
+
+    // Load legacy single order (migrate to table-specific if exists)
     const savedOrder = localStorage.getItem('orderchha-order');
     if (savedOrder) {
-      setOrder(JSON.parse(savedOrder));
+      try {
+        const parsedOrder = JSON.parse(savedOrder);
+        if (parsedOrder.length > 0) {
+          // Migrate to table 1 if no table specified
+          const migratedOrders = { 1: parsedOrder };
+          setTableOrders(migratedOrders);
+          localStorage.setItem('orderchha-table-orders', JSON.stringify(migratedOrders));
+          localStorage.removeItem('orderchha-order'); // Remove legacy
+          
+          toast({
+            title: "Cart Migrated",
+            description: "Previous order moved to Table 1",
+          });
+        }
+      } catch (error) {
+        console.log('⚠️ Error migrating legacy order:', error);
+        localStorage.removeItem('orderchha-order');
+      }
     }
   }, [toast]);
 
@@ -244,55 +284,127 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettings(prev => ({ ...prev, ...newSettings }));
   };
 
-  const addItemToOrder = (item: MenuItem) => {
-    const existingItem = order.find(orderItem => orderItem.id === item.id);
+  // 🔥 TABLE-SPECIFIC ORDER MANAGEMENT - Prevents Multiple Customer Cart Mixing
+  const getTableOrder = (tableId: number): OrderItem[] => {
+    return tableOrders[tableId] || [];
+  };
+
+  const updateTableOrderInStorage = (tableId: number, orderItems: OrderItem[]) => {
+    const newTableOrders = { ...tableOrders, [tableId]: orderItems };
+    setTableOrders(newTableOrders);
+    localStorage.setItem('orderchha-table-orders', JSON.stringify(newTableOrders));
+    
+    // Update current order if this is the current table
+    if (currentTableId === tableId) {
+      setOrder(orderItems);
+    }
+  };
+
+  const addItemToOrder = (item: MenuItem, tableId: number) => {
+    const currentTableOrder = getTableOrder(tableId);
+    const existingItem = currentTableOrder.find(orderItem => orderItem.id === item.id);
+    
+    let newOrder: OrderItem[];
     if (existingItem) {
-      updateOrderItemQuantity(item.id, existingItem.quantity + 1);
+      newOrder = currentTableOrder.map(orderItem => 
+        orderItem.id === item.id 
+          ? { ...orderItem, quantity: orderItem.quantity + 1 }
+          : orderItem
+      );
     } else {
       const newOrderItem: OrderItem = {
         ...item,
         quantity: 1
       };
-      const newOrder = [...order, newOrderItem];
-      setOrder(newOrder);
-      localStorage.setItem('orderchha-order', JSON.stringify(newOrder));
+      newOrder = [...currentTableOrder, newOrderItem];
     }
+    
+    updateTableOrderInStorage(tableId, newOrder);
+    
+    toast({
+      title: "Item Added",
+      description: `${item.name} added to Table ${tableId}`,
+    });
   };
 
-  const removeItemFromOrder = (itemId: string) => {
-    const newOrder = order.filter(item => item.id !== itemId);
-    setOrder(newOrder);
-    localStorage.setItem('orderchha-order', JSON.stringify(newOrder));
+  const removeItemFromOrder = (itemId: string, tableId: number) => {
+    const currentTableOrder = getTableOrder(tableId);
+    const newOrder = currentTableOrder.filter(item => item.id !== itemId);
+    updateTableOrderInStorage(tableId, newOrder);
   };
 
-  const updateOrderItemQuantity = (itemId: string, quantity: number) => {
+  const updateOrderItemQuantity = (itemId: string, quantity: number, tableId: number) => {
     if (quantity <= 0) {
-      removeItemFromOrder(itemId);
+      removeItemFromOrder(itemId, tableId);
       return;
     }
     
-    const newOrder = order.map(item => 
+    const currentTableOrder = getTableOrder(tableId);
+    const newOrder = currentTableOrder.map(item => 
       item.id === itemId 
         ? { ...item, quantity }
         : item
     );
-    setOrder(newOrder);
-    localStorage.setItem('orderchha-order', JSON.stringify(newOrder));
+    updateTableOrderInStorage(tableId, newOrder);
   };
 
-  const clearOrder = () => {
-    setOrder([]);
-    localStorage.removeItem('orderchha-order');
+  const clearOrder = (tableId?: number) => {
+    if (tableId) {
+      // Clear specific table's order
+      clearTableOrder(tableId);
+    } else {
+      // Clear current table's order
+      if (currentTableId) {
+        clearTableOrder(currentTableId);
+      }
+    }
   };
+
+  const clearTableOrder = (tableId: number) => {
+    const newTableOrders = { ...tableOrders };
+    delete newTableOrders[tableId];
+    setTableOrders(newTableOrders);
+    localStorage.setItem('orderchha-table-orders', JSON.stringify(newTableOrders));
+    
+    // Update current order if this is the current table
+    if (currentTableId === tableId) {
+      setOrder([]);
+    }
+
+    toast({
+      title: "Cart Cleared",
+      description: `Table ${tableId} cart has been cleared`,
+    });
+  };
+
+  // Update current order when table changes
+  useEffect(() => {
+    if (currentTableId) {
+      const tableOrder = getTableOrder(currentTableId);
+      setOrder(tableOrder);
+    } else {
+      setOrder([]);
+    }
+  }, [currentTableId, tableOrders]);
 
   const placeOrder = (tableId: number) => {
-    const orderTotal = order.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const itemCount = order.reduce((sum, item) => sum + item.quantity, 0);
+    const tableOrder = getTableOrder(tableId);
+    if (tableOrder.length === 0) {
+      toast({
+        title: "Empty Cart",
+        description: `No items in cart for Table ${tableId}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const orderTotal = tableOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const itemCount = tableOrder.reduce((sum, item) => sum + item.quantity, 0);
     
     const newOrder: KitchenOrder = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-T${tableId}`, // Include table ID in order ID for better tracking
       tableId,
-      items: order,
+      items: tableOrder, // Use table-specific order items
       status: 'pending',
       timestamp: new Date().toISOString(),
       totalAmount: orderTotal,
@@ -301,11 +413,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     setPendingOrders(prev => [...prev, newOrder]);
     updateTableStatus(tableId, 'occupied');
-    clearOrder();
+    clearTableOrder(tableId); // Clear only this table's order
     
     toast({
-      title: "Order Placed!",
-      description: `Order for table ${tableId} has been sent to kitchen.`,
+      title: "Order Placed! 🍽️",
+      description: `Table ${tableId}: ${itemCount} items (₹${orderTotal}) sent to kitchen.`,
     });
 
     // Dispatch custom event for notifications
@@ -533,12 +645,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTables,
     settings,
     updateSettings,
-    order,
+    
+    // 🔥 TABLE-SPECIFIC ORDER MANAGEMENT
+    currentTableId,
+    setCurrentTableId,
+    order, // Current table's order
+    getTableOrder,
     addItemToOrder,
     removeItemFromOrder,
     updateOrderItemQuantity,
     clearOrder,
+    clearTableOrder,
     placeOrder,
+    
     kitchenOrders,
     completeKitchenOrder,
     updateOrderStatus,
