@@ -440,10 +440,10 @@ export const db = {
   // Complete order and update table status
   async completeOrderAndUpdateTable(orderId: string, tableId: number) {
     try {
-      // Update order status to completed
+      // Update order status to ready (ready for billing)
       const { error: orderError } = await supabase
         .from('orders')
-        .update({ status: 'completed' })
+        .update({ status: 'ready' })
         .eq('id', orderId);
       
       if (orderError) throw orderError;
@@ -460,6 +460,30 @@ export const db = {
     } catch (err) {
       console.error('Error completing order and updating table:', err);
       throw err;
+    }
+  },
+
+  // Get completed orders for a specific table (for receipts)
+  async getCompletedOrdersByTable(tableId: number) {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id, table_id, status, created_at, total_amount, customer_name, phone, notes,
+          order_items (
+            id, menu_item_id, quantity, price,
+            menu_items (name, image, description)
+          )
+        `)
+        .eq('table_id', tableId)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error getting completed orders by table:', err);
+      return [];
     }
   },
 

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useApp } from '@/context/app-context';
+import { db } from '@/lib/supabase';
 import { Printer } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useMemo, useState, useEffect } from 'react';
@@ -20,10 +21,55 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
   const { settings, billingOrders, transactions, isLoaded } = useApp();
   const [invoiceId, setInvoiceId] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [completedOrders, setCompletedOrders] = useState<any[]>([]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Load completed orders if no billing orders exist
+  useEffect(() => {
+    const loadCompletedOrders = async () => {
+      if (!mounted || !isLoaded) return;
+      
+      // If there are billing orders, don't load completed ones
+      const hasBillingOrders = billingOrders.some(order => order.tableId === tableId);
+      if (hasBillingOrders) return;
+      
+      // Load completed orders from database
+      try {
+        const completedOrdersData = await db.getCompletedOrdersByTable(tableId);
+        if (completedOrdersData && completedOrdersData.length > 0) {
+          const formattedOrders = completedOrdersData.map((order: any) => ({
+            id: order.id,
+            tableId: order.table_id,
+            items: order.order_items?.map((item: any) => {
+              const menuItem = Array.isArray(item.menu_items) ? item.menu_items[0] : item.menu_items;
+              return {
+                id: item.menu_item_id,
+                name: menuItem?.name || 'Unknown Item',
+                description: menuItem?.description || '',
+                price: item.price,
+                quantity: item.quantity,
+                image: menuItem?.image || menuItem?.image_url || '',
+                imageHint: menuItem?.image_hint || '',
+                inStock: menuItem?.available ?? true
+              };
+            }) || [],
+            status: order.status as any,
+            timestamp: order.created_at,
+            totalAmount: order.total_amount,
+            total: order.total_amount
+          }));
+          setCompletedOrders(formattedOrders);
+        }
+      } catch (error) {
+        console.error('Error loading completed orders:', error);
+      }
+    };
+    
+    loadCompletedOrders();
+  }, [mounted, isLoaded, tableId, billingOrders]);
 
   // Generate unique invoice ID based on table and actual transaction
   const invoiceIdGenerated = useMemo(() => {
@@ -58,38 +104,22 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
   const ordersForTable = useMemo(() => {
     if (!isLoaded) return [];
     
-    // Look for orders in billing orders for this table
-    const orders = billingOrders.filter(order => order.tableId === tableId);
+    // Look for orders in billing orders for this table (not yet paid)
+    const billingOrdersForTable = billingOrders.filter(order => order.tableId === tableId);
     
-    // If we have real orders, use them
-    if (orders.length > 0) {
-      return orders;
+    // If we have real billing orders, use them
+    if (billingOrdersForTable.length > 0) {
+      return billingOrdersForTable;
     }
     
-    // Check if there's a completed transaction for this table (already paid)
-    const completedTransaction = transactions.find(t => t.tableId === tableId);
-    if (completedTransaction) {
-      // Generate receipt data from transaction
-      const sampleItems = [
-        { name: 'Margherita Pizza', price: 225.00, quantity: 2, id: 'sample-1' },
-        { name: 'Caesar Salad', price: 150.00, quantity: 1, id: 'sample-2' },
-        { name: 'Coca Cola', price: 100.00, quantity: 2, id: 'sample-3' }
-      ];
-      
-      return [{
-        id: `receipt-${tableId}`,
-        tableId,
-        items: sampleItems,
-        status: 'completed' as const,
-        timestamp: completedTransaction.timestamp,
-        totalAmount: completedTransaction.amount,
-        total: completedTransaction.amount
-      }];
+    // If no billing orders, check completed orders (already paid)
+    if (completedOrders.length > 0) {
+      return completedOrders;
     }
     
-    // No orders and no transaction - show empty state
+    // No real data found - show empty state instead of mock data
     return [];
-  }, [billingOrders, transactions, tableId, isLoaded]);
+  }, [billingOrders, completedOrders, tableId, isLoaded]);
 
   const totalAmount = ordersForTable.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const vatAmount = applyVat ? totalAmount * 0.1 : 0;
@@ -106,6 +136,27 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
           <Card className="print:shadow-none">
             <CardContent className="p-6">
               <div className="text-center text-lg">Loading receipt...</div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message when no order data is found
+  if (ordersForTable.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-2xl mx-auto">
+          <Card className="print:shadow-none">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <h2 className="text-xl font-semibold mb-2">No Orders Found</h2>
+                <p className="text-muted-foreground">No orders found for Table {tableId}.</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Orders may not have been placed yet or have already been processed.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -157,7 +208,7 @@ export default function ReceiptClient({ tableId: tableIdProp }: ReceiptClientPro
               
               {ordersForTable.map((order) => (
                 <div key={order.id} className="space-y-2">
-                  {order.items?.map((item, index) => (
+                  {order.items?.map((item: any, index: number) => (
                     <div key={index} className="flex justify-between items-center py-1">
                       <div className="flex-1">
                         <div className="font-medium">{item.name}</div>
