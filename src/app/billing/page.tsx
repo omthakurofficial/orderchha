@@ -5,6 +5,7 @@ import { ActiveBills } from '@/components/billing/active-bills';
 import { BillingActions } from '@/components/billing/billing-actions';
 import { ChangeCalculator } from '@/components/billing/change-calculator';
 import { TransactionList } from '@/components/billing/transaction-list';
+import { TransactionTable } from '@/components/billing/transaction-table';
 import { IndividualOrdersBilling } from '@/components/billing/individual-orders-billing';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,26 +73,31 @@ export default function BillingPage() {
                     </Button>
                 </div>
             </header>
-            <main className="flex-1 p-3 md:p-4 overflow-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2 space-y-4">
-                    <BillingActions />
-                    {viewMode === 'individual' ? (
-                        <IndividualOrdersBilling />
-                    ) : (
-                        <ActiveBills />
-                    )}
-                    <TransactionList />
-                </div>
-                <div>
-                     <Card className="h-fit">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-base">Change Calculator</CardTitle>
-                            <CardDescription className="text-xs">Calculate change to return.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                            <ChangeCalculator />
-                        </CardContent>
-                    </Card>
+            <main className="flex-1 p-3 md:p-4 overflow-auto pb-24 md:pb-6 space-y-4">
+                {/* Quick Actions always visible */}
+                <BillingActions />
+                
+                {/* Mobile Layout - Stack vertically */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 space-y-4">
+                        {viewMode === 'individual' ? (
+                            <IndividualOrdersBilling />
+                        ) : (
+                            <ActiveBills />
+                        )}
+                        <TransactionTable />
+                    </div>
+                    <div className="order-first lg:order-last">
+                         <Card className="h-fit">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base">Change Calculator</CardTitle>
+                                <CardDescription className="text-xs">Calculate change to return.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                                <ChangeCalculator />
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             </main>
         </div>

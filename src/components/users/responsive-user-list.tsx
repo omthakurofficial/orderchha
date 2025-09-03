@@ -5,10 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreHorizontal, Users, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { MoreHorizontal, Users, Mail, Phone, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/context/app-context";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +29,8 @@ interface ResponsiveUserListProps {
 export function ResponsiveUserList({ users }: ResponsiveUserListProps) {
     const { currentUser, deleteUser, updateUserRole } = useApp();
     const { toast } = useToast();
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 6; // Show 6 users per page for better mobile viewing
 
     const handleDeleteUser = (userId: string) => {
         deleteUser(userId);
@@ -55,101 +58,158 @@ export function ResponsiveUserList({ users }: ResponsiveUserListProps) {
         )
     }
 
+    // Pagination calculations
+    const totalItems = users.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedUsers = users.slice(startIndex, endIndex);
+
     return (
-        <div className="space-y-4">
-            {users.map(user => (
-                <Card key={user.uid} className="overflow-hidden">
-                    <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3 flex-1">
-                                <Avatar className="h-12 w-12">
-                                    <AvatarImage src={user.photoUrl} alt={user.name} />
-                                    <AvatarFallback className="text-lg font-semibold">
-                                        {user.name.charAt(0).toUpperCase()}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-base truncate">{user.name}</h3>
-                                    <p className="text-sm text-muted-foreground truncate">{user.designation}</p>
-                                    <Badge 
-                                        variant={user.role === 'admin' ? 'default' : 'secondary'} 
-                                        className="text-xs mt-1 capitalize"
-                                    >
-                                        {user.role}
-                                    </Badge>
+        <>
+            <div className="space-y-4">
+                {paginatedUsers.map(user => (
+                    <Card key={user.uid} className="overflow-hidden">
+                        <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center gap-3 flex-1">
+                                    <Avatar className="h-12 w-12">
+                                        <AvatarImage src={user.photoUrl} alt={user.name} />
+                                        <AvatarFallback className="text-lg font-semibold">
+                                            {user.name.charAt(0).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-base truncate">{user.name}</h3>
+                                        <p className="text-sm text-muted-foreground truncate">{user.designation}</p>
+                                        <Badge 
+                                            variant={user.role === 'admin' ? 'default' : 'secondary'} 
+                                            className="text-xs mt-1 capitalize"
+                                        >
+                                            {user.role}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button 
+                                            variant="ghost" 
+                                            className="h-8 w-8 p-0" 
+                                            disabled={user.uid === currentUser?.uid}
+                                        >
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => handleRoleChange(user.uid, user.role === 'admin' ? 'staff' : 'admin')}>
+                                            Change to {user.role === 'admin' ? 'Staff' : 'Admin'}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                                    Delete User
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="mx-4">
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will permanently delete {user.name}'s account.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction 
+                                                        onClick={() => handleDeleteUser(user.uid)}
+                                                        className="bg-red-600 hover:bg-red-700"
+                                                    >
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            
+                            <div className="space-y-2 text-sm">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Mail className="h-4 w-4 flex-shrink-0" />
+                                    <span className="truncate">{user.email}</span>
+                                </div>
+                                {user.mobile && (
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Phone className="h-4 w-4 flex-shrink-0" />
+                                        <span>{user.mobile}</span>
+                                    </div>
+                                )}
+                                {user.address && (
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <MapPin className="h-4 w-4 flex-shrink-0" />
+                                        <span className="text-xs leading-relaxed">{user.address}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Calendar className="h-4 w-4 flex-shrink-0" />
+                                    <span className="text-xs">
+                                        Joined {user.joiningDate ? new Date(user.joiningDate).toLocaleDateString() : 'Unknown'}
+                                    </span>
                                 </div>
                             </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button 
-                                        variant="ghost" 
-                                        className="h-8 w-8 p-0" 
-                                        disabled={user.uid === currentUser?.uid}
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>
+                            {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} users
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                            className="h-8 px-2 text-xs"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                const startPage = Math.max(1, currentPage - 2);
+                                const page = startPage + i;
+                                return page <= totalPages ? (
+                                    <Button
+                                        key={page}
+                                        variant={currentPage === page ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setCurrentPage(page)}
+                                        className="w-8 h-8 p-0 text-xs"
                                     >
-                                        <MoreHorizontal className="h-4 w-4" />
+                                        {page}
                                     </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => handleRoleChange(user.uid, user.role === 'admin' ? 'staff' : 'admin')}>
-                                        Change to {user.role === 'admin' ? 'Staff' : 'Admin'}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
-                                                Delete User
-                                            </DropdownMenuItem>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent className="mx-4">
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete {user.name}'s account.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction 
-                                                    onClick={() => handleDeleteUser(user.uid)}
-                                                    className="bg-red-600 hover:bg-red-700"
-                                                >
-                                                    Delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                ) : null;
+                            })}
                         </div>
-                        
-                        <div className="space-y-2 text-sm">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Mail className="h-4 w-4 flex-shrink-0" />
-                                <span className="truncate">{user.email}</span>
-                            </div>
-                            {user.mobile && (
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Phone className="h-4 w-4 flex-shrink-0" />
-                                    <span>{user.mobile}</span>
-                                </div>
-                            )}
-                            {user.address && (
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <MapPin className="h-4 w-4 flex-shrink-0" />
-                                    <span className="text-xs leading-relaxed">{user.address}</span>
-                                </div>
-                            )}
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Calendar className="h-4 w-4 flex-shrink-0" />
-                                <span className="text-xs">
-                                    Joined {user.joiningDate ? new Date(user.joiningDate).toLocaleDateString() : 'Unknown'}
-                                </span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                            className="h-8 px-2 text-xs"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
