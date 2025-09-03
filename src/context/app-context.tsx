@@ -41,6 +41,7 @@ interface AppContextType {
   rejectPendingOrder: (orderId: string) => void;
   transactions: Transaction[];
   processPayment: (tableId: number, method: 'cash' | 'online', applyVat: boolean) => void;
+  processIndividualOrderPayment: (orderId: string, method: 'cash' | 'online' | 'card' | 'qr', applyVat?: boolean) => Promise<{ success: boolean; transaction: any } | undefined>;
   clearAllBillingHistory: () => void;
   currentUser: User | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -277,6 +278,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const formattedTransactions = transactionsData.map((transaction: any) => ({
             id: transaction.id,
             tableId: transaction.table_id,
+            orderId: transaction.order_id, // Include order_id for individual receipts
             amount: transaction.total_amount,
             method: transaction.method as 'cash' | 'online',
             timestamp: transaction.created_at
@@ -546,6 +548,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const formattedTransactions = transactionsData.map((transaction: any) => ({
           id: transaction.id,
           tableId: transaction.table_id,
+          orderId: transaction.order_id, // Include order_id for individual receipts
           amount: transaction.total_amount,
           method: transaction.method as 'cash' | 'online',
           timestamp: transaction.created_at
@@ -1074,6 +1077,117 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const processIndividualOrderPayment = async (orderId: string, method: 'cash' | 'online' | 'card' | 'qr', applyVat: boolean = false) => {
+    // Find the specific order to pay
+    const order = billingOrders.find(order => order.id === orderId);
+    
+    if (!order) {
+      toast({
+        title: "Order not found",
+        description: `Order ${orderId} not found or already processed.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const totalAmount = order.total || order.totalAmount || 0;
+    const vatAmount = applyVat ? totalAmount * 0.1 : 0;
+    const finalAmount = totalAmount + vatAmount;
+
+    const newTransaction = {
+      table_id: order.tableId,
+      order_id: order.id,
+      amount: totalAmount,
+      vat_amount: vatAmount,
+      total_amount: finalAmount,
+      method,
+      customer_name: `Table ${order.tableId}`,
+      status: 'completed',
+      invoice_number: `INV-${order.id.substring(0, 8)}-${Date.now()}`
+    };
+
+    try {
+      // Save transaction to database
+      const savedTransaction = await db.saveTransaction(newTransaction);
+      
+      // Update local state
+      setTransactions(prev => [...prev, {
+        id: savedTransaction.id || Date.now().toString(),
+        tableId: order.tableId,
+        orderId: order.id,
+        amount: finalAmount,
+        method,
+        timestamp: savedTransaction.created_at || new Date().toISOString()
+      }]);
+
+      // Update order status to completed in database
+      await db.updateOrder(order.id, { status: 'completed' });
+
+      // Remove only this specific order from billing orders
+      setBillingOrders(prev => prev.filter(billingOrder => billingOrder.id !== orderId));
+
+      // Check if there are any more orders for this table
+      const remainingOrdersForTable = billingOrders.filter(
+        billingOrder => billingOrder.tableId === order.tableId && billingOrder.id !== orderId
+      );
+
+      // If no more orders for this table, set table to available
+      if (remainingOrdersForTable.length === 0) {
+        updateTableStatus(order.tableId, 'available');
+      }
+
+      toast({
+        title: "Payment Processed!",
+        description: `Individual order payment of ${formatCurrency(finalAmount, settings.currency)} completed successfully.`,
+      });
+
+      // Dispatch custom event for notifications
+      window.dispatchEvent(new CustomEvent('individualOrderCompleted', {
+        detail: { orderId, tableId: order.tableId, amount: finalAmount, transactionId: savedTransaction.id }
+      }));
+
+      return { success: true, transaction: savedTransaction };
+
+    } catch (error) {
+      console.error('Error processing individual payment:', error);
+      
+      // Fallback to local state
+      const fallbackTransaction: Transaction = {
+        id: Date.now().toString(),
+        tableId: order.tableId,
+        orderId: order.id,
+        amount: finalAmount,
+        method,
+        timestamp: new Date().toISOString()
+      };
+
+      setTransactions(prev => [...prev, fallbackTransaction]);
+      
+      // Remove this specific order from billing orders (fallback)
+      setBillingOrders(prev => prev.filter(billingOrder => billingOrder.id !== orderId));
+      
+      // Check remaining orders and update table status if needed
+      const remainingOrdersForTable = billingOrders.filter(
+        billingOrder => billingOrder.tableId === order.tableId && billingOrder.id !== orderId
+      );
+
+      if (remainingOrdersForTable.length === 0) {
+        updateTableStatus(order.tableId, 'available');
+      }
+
+      toast({
+        title: "Payment Processed!",
+        description: `Individual order payment of ${formatCurrency(finalAmount, settings.currency)} completed (local storage).`,
+      });
+
+      window.dispatchEvent(new CustomEvent('individualOrderCompleted', {
+        detail: { orderId, tableId: order.tableId, amount: finalAmount }
+      }));
+
+      return { success: true, transaction: fallbackTransaction };
+    }
+  };
+
   const clearAllBillingHistory = () => {
     setTransactions([]);
     setKitchenOrders([]);
@@ -1218,6 +1332,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     rejectPendingOrder,
     transactions,
     processPayment,
+    processIndividualOrderPayment,
     clearAllBillingHistory,
     currentUser,
     signIn,

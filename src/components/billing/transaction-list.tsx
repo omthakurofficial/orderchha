@@ -1,118 +1,288 @@
+"use client";
 
-'use client';
-
-import { useApp } from "@/context/app-context";
+import React, { useState, useMemo } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Receipt } from "lucide-react";
+import { Receipt, Filter, Users, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatCurrency } from '@/lib/currency';
 import Link from "next/link";
-import { Button } from "../ui/button";
+import { useApp } from "@/context/app-context";
 
 export function TransactionList() {
-    const { completedTransactions, isLoaded, settings } = useApp();
-    
-    // Use defensive programming with a fallback
-    const transactions = completedTransactions || [];
-    
-    // If the data is still loading, show a loading state
-    if (!isLoaded) {
-        return (
-            <Card className="h-full">
-                <CardHeader>
-                    <CardTitle>Recent Transactions</CardTitle>
-                    <CardDescription>Loading transaction data...</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-center p-8 rounded-lg bg-muted/40 h-64">
-                        <div className="animate-pulse">Loading transactions...</div>
-                    </div>
-                </CardContent>
-            </Card>
-        );
-    }
+  const { completedTransactions, isLoaded, settings } = useApp();
+  const [viewMode, setViewMode] = useState<'individual' | 'table'>('individual');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  const transactions = completedTransactions || [];
 
-    if (transactions.length === 0) {
-        return (
-            <Card className="h-full">
-                 <CardHeader>
-                    <CardTitle>Recent Transactions</CardTitle>
-                    <CardDescription>A list of all payments processed today.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col items-center justify-center text-center p-8 rounded-lg bg-muted/40 h-64">
-                        <Receipt className="w-16 h-16 text-muted-foreground mb-4" />
-                        <h2 className="text-xl font-bold text-muted-foreground">No Transactions Yet</h2>
-                        <p className="text-muted-foreground">Completed payments will appear here.</p>
-                    </div>
-                </CardContent>
-            </Card>
-        )
+  const processedTransactions = useMemo(() => {
+    if (viewMode === 'individual') {
+      return transactions
+        .filter(t => t.orderId) // Only show transactions with order IDs
+        .sort((a, b) => new Date(b.timestamp || '').getTime() - new Date(a.timestamp || '').getTime());
+    } else {
+      // Table consolidated view - group by tableId
+      const tableGroups = new Map();
+      
+      transactions.forEach(tx => {
+        const tableId = tx.tableId;
+        if (!tableGroups.has(tableId)) {
+          tableGroups.set(tableId, {
+            id: `table-${tableId}-${Date.now()}`,
+            tableId: tableId,
+            amount: 0,
+            method: 'mixed',
+            timestamp: tx.timestamp,
+            orderIds: [],
+            transactionCount: 0
+          });
+        }
+        
+        const group = tableGroups.get(tableId);
+        group.amount += tx.amount || 0;
+        group.transactionCount += 1;
+        if (tx.orderId) {
+          group.orderIds.push(tx.orderId);
+        }
+        
+        if (new Date(tx.timestamp) > new Date(group.timestamp)) {
+          group.timestamp = tx.timestamp;
+        }
+      });
+      
+      return Array.from(tableGroups.values());
     }
+  }, [transactions, viewMode]);
 
-    return (
-         <Card>
-            <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
-                <CardDescription>A list of all payments processed today.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="border rounded-lg max-h-[60vh] overflow-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Invoice #</TableHead>
-                                <TableHead>Table</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Method</TableHead>
-                                <TableHead>Date & Time</TableHead>
-                                <TableHead className="text-right">Receipt</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {transactions
-                                .filter(tx => tx && tx.id) // Make sure we only process valid transactions
-                                .sort((a, b) => {
-                                    // Safely handle dates
-                                    const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-                                    const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-                                    return dateB - dateA;
-                                })
-                                .map(tx => (
-                                    <TableRow key={tx.id}>
-                                        <TableCell className="font-mono text-xs">{tx.id}</TableCell>
-                                        <TableCell className="font-semibold">Table {tx.tableId || 'Unknown'}</TableCell>
-                                        <TableCell className="font-bold text-primary">
-                                            {settings?.currency || 'NPR'} {(tx.amount || 0).toFixed(2)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge 
-                                                variant={tx.method === 'cash' ? 'secondary' : 'default'} 
-                                                className="capitalize"
-                                            >
-                                                {tx.method || 'Unknown'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            {tx.timestamp ? new Date(tx.timestamp).toLocaleString() : 'Unknown date'}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="outline" size="sm" asChild>
-                                                <Link 
-                                                    href={`/receipt/${tx.tableId || 0}?method=${tx.method || 'unknown'}`} 
-                                                    target="_blank"
-                                                >
-                                                    View
-                                                </Link>
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            }
-                        </TableBody>
-                    </Table>
+  // Pagination calculations
+  const totalItems = processedTransactions.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTransactions = processedTransactions.slice(startIndex, endIndex);
+
+  // Reset to first page when view mode changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [viewMode]);
+
+  const formatAmount = (amount: number) => {
+    return formatCurrency(amount, settings?.currency);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Transaction History</h2>
+        <div className="flex items-center gap-2">
+          <label htmlFor="view-mode" className="text-sm font-medium">View Mode:</label>
+          <Select value={viewMode} onValueChange={(value: 'individual' | 'table') => setViewMode(value)}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="individual">Individual Orders</SelectItem>
+              <SelectItem value="table">Table Consolidated</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {viewMode === 'individual' ? (
+        <div className="space-y-4">
+          {paginatedTransactions.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-gray-500">
+                No individual order transactions found
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {paginatedTransactions.map((transaction: any) => (
+                <Card key={transaction.id || `${transaction.orderId}-${transaction.timestamp}`} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">Order #{transaction.orderId}</CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Table {transaction.tableId} • {formatDate(transaction.timestamp || '')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-green-600">
+                          {formatAmount(transaction.amount)}
+                        </div>
+                        <Badge variant="outline" className="mt-1">
+                          {transaction.method}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {transaction.orderId && (
+                      <div className="text-sm">
+                        <a
+                          href={`/receipt/order/${transaction.orderId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          View Receipt →
+                        </a>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {/* Pagination Controls for Individual View */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>
+                      Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} transactions
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-            </CardContent>
-        </Card>
-    );
+              )}
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {paginatedTransactions.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-gray-500">
+                No consolidated transactions found
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {paginatedTransactions.map((group: any, index: number) => (
+                <Card key={`table-${group.tableId}-${index}`} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">Table {group.tableId}</CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {group.transactionCount} orders • Last: {formatDate(group.timestamp)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-green-600">
+                          {formatAmount(group.amount)}
+                        </div>
+                        <Badge variant="outline" className="mt-1">
+                          Consolidated
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-sm text-gray-600">
+                      <div className="flex justify-between">
+                        <span>Total Orders:</span>
+                        <span>{group.transactionCount}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {/* Pagination Controls for Table View */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>
+                      Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} table groups
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }

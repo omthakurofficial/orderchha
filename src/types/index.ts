@@ -58,6 +58,7 @@ export interface Settings {
 export interface Transaction {
     id: string;
     tableId: number;
+    orderId?: string;
     amount: number;
     method: 'cash' | 'online' | 'credit' | 'card' | 'qr';
     timestamp: string;

@@ -263,6 +263,28 @@ export const db = {
     }
   },
 
+  async getOrderById(orderId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id, table_id, status, created_at, total_amount, customer_name, phone, notes,
+          order_items (
+            id, menu_item_id, quantity, price,
+            menu_items (name, image_url, description)
+          )
+        `)
+        .eq('id', orderId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.error('Error getting order by ID:', err);
+      return null;
+    }
+  },
+
   async getPendingOrders() {
     try {
       const { data, error } = await supabase
