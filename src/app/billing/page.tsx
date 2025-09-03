@@ -43,35 +43,37 @@ export default function BillingPage() {
 
     return (
         <div className="flex flex-col h-full">
-            <header className="p-4 border-b">
-                <h1 className="text-2xl font-bold font-headline flex items-center gap-2">
-                    <Receipt />
+            <header className="p-3 border-b">
+                <h1 className="text-lg sm:text-xl font-bold font-headline flex items-center gap-2">
+                    <Receipt className="h-5 w-5" />
                     Billing & Transactions
                 </h1>
-                <p className="text-muted-foreground">Process payments and view transaction history.</p>
+                <p className="text-xs text-muted-foreground mt-1">Process payments and view transaction history.</p>
                 
                 {/* View Mode Toggle */}
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-1 mt-3">
                     <Button
                         onClick={() => setViewMode('individual')}
                         variant={viewMode === 'individual' ? 'default' : 'outline'}
-                        className="flex items-center gap-2"
+                        size="sm"
+                        className="flex items-center gap-1 text-xs h-8"
                     >
-                        <FileText className="h-4 w-4" />
+                        <FileText className="h-3 w-3" />
                         Individual Orders
                     </Button>
                     <Button
                         onClick={() => setViewMode('consolidated')}
                         variant={viewMode === 'consolidated' ? 'default' : 'outline'}
-                        className="flex items-center gap-2"
+                        size="sm"
+                        className="flex items-center gap-1 text-xs h-8"
                     >
-                        <Users className="h-4 w-4" />
+                        <Users className="h-3 w-3" />
                         Consolidated Tables
                     </Button>
                 </div>
             </header>
-            <main className="flex-1 p-4 md:p-6 overflow-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
+            <main className="flex-1 p-3 md:p-4 overflow-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-2 space-y-4">
                     <BillingActions />
                     {viewMode === 'individual' ? (
                         <IndividualOrdersBilling />
@@ -81,12 +83,12 @@ export default function BillingPage() {
                     <TransactionList />
                 </div>
                 <div>
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Change Calculator</CardTitle>
-                            <CardDescription>Quickly calculate the change to return to a customer.</CardDescription>
+                     <Card className="h-fit">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Change Calculator</CardTitle>
+                            <CardDescription className="text-xs">Calculate change to return.</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-0">
                             <ChangeCalculator />
                         </CardContent>
                     </Card>

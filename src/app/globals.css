@@ -1,3 +1,4 @@
+/* Tailwind CSS Directives - These are valid Tailwind syntax */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -83,7 +84,50 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    font-size: 14px; /* Base font size - smaller than default 16px */
+  }
+  
+  @media (min-width: 768px) {
+    html {
+      font-size: 15px; /* Slightly larger on medium screens */
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    html {
+      font-size: 16px; /* Normal size on large screens */
+    }
+  }
+  
   body {
     @apply bg-background text-foreground;
+    line-height: 1.4; /* Tighter line height for better density */
+  }
+}
+
+/* Responsive utility classes for better control */
+@layer utilities {
+  .text-xs-responsive { @apply text-xs sm:text-sm; }
+  .text-sm-responsive { @apply text-sm sm:text-base; }
+  .text-base-responsive { @apply text-sm sm:text-base lg:text-lg; }
+  .text-lg-responsive { @apply text-base sm:text-lg lg:text-xl; }
+  .text-xl-responsive { @apply text-lg sm:text-xl lg:text-2xl; }
+  .text-2xl-responsive { @apply text-xl sm:text-2xl lg:text-3xl; }
+  
+  /* Compact spacing utilities */
+  .space-compact { @apply space-y-2 sm:space-y-3; }
+  .p-compact { @apply p-2 sm:p-3 lg:p-4; }
+  .px-compact { @apply px-3 sm:px-4 lg:px-6; }
+  .py-compact { @apply py-2 sm:py-3 lg:py-4; }
+  
+  /* Form control utilities */
+  .form-control-sm {
+    @apply h-8 px-2 text-sm;
+  }
+  
+  .form-control-base {
+    @apply h-9 px-3 text-sm;
   }
 }

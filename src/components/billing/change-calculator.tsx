@@ -44,17 +44,22 @@ export function ChangeCalculator() {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                  <FormField
                     control={form.control}
                     name="totalAmount"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Total Bill Amount</FormLabel>
+                            <FormLabel className="text-xs">Total Bill Amount</FormLabel>
                             <FormControl>
-                                <Input type="number" placeholder="e.g., 130.00" {...field} />
+                                <Input 
+                                    type="number" 
+                                    placeholder="130.00" 
+                                    className="h-8 text-sm"
+                                    {...field} 
+                                />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-xs" />
                         </FormItem>
                     )}
                 />
@@ -63,24 +68,29 @@ export function ChangeCalculator() {
                     name="amountReceived"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Amount Received from Customer</FormLabel>
+                            <FormLabel className="text-xs">Amount Received</FormLabel>
                             <FormControl>
-                                <Input type="number" placeholder="e.g., 1000.00" {...field} />
+                                <Input 
+                                    type="number" 
+                                    placeholder="1000.00" 
+                                    className="h-8 text-sm"
+                                    {...field} 
+                                />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-xs" />
                         </FormItem>
                     )}
                 />
-                <Button type="submit" className="w-full">Calculate Change</Button>
+                <Button type="submit" size="sm" className="w-full h-8 text-xs">Calculate Change</Button>
 
                 {change !== null && (
-                    <div className="pt-4 space-y-4">
+                    <div className="pt-2 space-y-2">
                         <Separator />
-                        <div className="text-center">
-                            <p className="text-lg font-semibold">Change to Return:</p>
-                            <p className="text-3xl font-bold text-primary">{settings?.currency || 'NPR'} {change.toFixed(2)}</p>
+                        <div className="text-center py-2 bg-green-50 rounded border">
+                            <p className="text-xs text-gray-600">Change to Return:</p>
+                            <p className="text-lg font-bold text-primary">{settings?.currency || 'NPR'} {change.toFixed(2)}</p>
                         </div>
-                        <Button variant="outline" className="w-full" onClick={handleReset}>Reset</Button>
+                        <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={handleReset}>Reset</Button>
                     </div>
                 )}
             </form>

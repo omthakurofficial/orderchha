@@ -85,56 +85,56 @@ export function TransactionList() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Transaction History</h2>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h2 className="text-lg sm:text-xl font-bold">Transaction History</h2>
         <div className="flex items-center gap-2">
-          <label htmlFor="view-mode" className="text-sm font-medium">View Mode:</label>
+          <label htmlFor="view-mode" className="text-xs font-medium">View:</label>
           <Select value={viewMode} onValueChange={(value: 'individual' | 'table') => setViewMode(value)}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-32 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="individual">Individual Orders</SelectItem>
-              <SelectItem value="table">Table Consolidated</SelectItem>
+              <SelectItem value="individual" className="text-xs">Individual Orders</SelectItem>
+              <SelectItem value="table" className="text-xs">Table Consolidated</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {viewMode === 'individual' ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {paginatedTransactions.length === 0 ? (
             <Card>
-              <CardContent className="p-6 text-center text-gray-500">
-                No individual order transactions found
+              <CardContent className="p-4 text-center text-gray-500">
+                <p className="text-sm">No individual order transactions found</p>
               </CardContent>
             </Card>
           ) : (
             <>
               {paginatedTransactions.map((transaction: any) => (
                 <Card key={transaction.id || `${transaction.orderId}-${transaction.timestamp}`} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">Order #{transaction.orderId}</CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-sm font-semibold truncate">Order #{transaction.orderId}</CardTitle>
+                        <p className="text-xs text-gray-600 mt-1">
                           Table {transaction.tableId} • {formatDate(transaction.timestamp || '')}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-lg font-bold text-green-600">
                           {formatAmount(transaction.amount)}
                         </div>
-                        <Badge variant="outline" className="mt-1">
+                        <Badge variant="outline" className="mt-1 text-xs px-1 py-0">
                           {transaction.method}
                         </Badge>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-0">
+                  <CardContent className="pt-0 pb-3">
                     {transaction.orderId && (
-                      <div className="text-sm">
+                      <div className="text-xs">
                         <a
                           href={`/receipt/order/${transaction.orderId}`}
                           target="_blank"
@@ -151,43 +151,47 @@ export function TransactionList() {
               
               {/* Pagination Controls for Individual View */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
                     <span>
-                      Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} transactions
+                      {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
+                      className="h-7 px-2 text-xs"
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      <ChevronLeft className="h-3 w-3" />
                     </Button>
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(page)}
-                          className="w-8 h-8 p-0"
-                        >
-                          {page}
-                        </Button>
-                      ))}
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        const startPage = Math.max(1, currentPage - 2);
+                        const page = startPage + i;
+                        return page <= totalPages ? (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className="w-6 h-7 p-0 text-xs"
+                          >
+                            {page}
+                          </Button>
+                        ) : null;
+                      })}
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
+                      className="h-7 px-2 text-xs"
                     >
-                      Next
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -196,37 +200,37 @@ export function TransactionList() {
           )}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {paginatedTransactions.length === 0 ? (
             <Card>
-              <CardContent className="p-6 text-center text-gray-500">
-                No consolidated transactions found
+              <CardContent className="p-4 text-center text-gray-500">
+                <p className="text-sm">No consolidated transactions found</p>
               </CardContent>
             </Card>
           ) : (
             <>
               {paginatedTransactions.map((group: any, index: number) => (
                 <Card key={`table-${group.tableId}-${index}`} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">Table {group.tableId}</CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {group.transactionCount} orders • Last: {formatDate(group.timestamp)}
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-sm font-semibold">Table {group.tableId}</CardTitle>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {group.transactionCount} orders • {formatDate(group.timestamp)}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-lg font-bold text-green-600">
                           {formatAmount(group.amount)}
                         </div>
-                        <Badge variant="outline" className="mt-1">
+                        <Badge variant="outline" className="mt-1 text-xs px-1 py-0">
                           Consolidated
                         </Badge>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-sm text-gray-600">
+                  <CardContent className="pt-0 pb-3">
+                    <div className="text-xs text-gray-600">
                       <div className="flex justify-between">
                         <span>Total Orders:</span>
                         <span>{group.transactionCount}</span>
@@ -238,43 +242,47 @@ export function TransactionList() {
               
               {/* Pagination Controls for Table View */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
                     <span>
-                      Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} table groups
+                      {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} tables
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
+                      className="h-7 px-2 text-xs"
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      <ChevronLeft className="h-3 w-3" />
                     </Button>
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(page)}
-                          className="w-8 h-8 p-0"
-                        >
-                          {page}
-                        </Button>
-                      ))}
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        const startPage = Math.max(1, currentPage - 2);
+                        const page = startPage + i;
+                        return page <= totalPages ? (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className="w-6 h-7 p-0 text-xs"
+                          >
+                            {page}
+                          </Button>
+                        ) : null;
+                      })}
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
+                      className="h-7 px-2 text-xs"
                     >
-                      Next
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>

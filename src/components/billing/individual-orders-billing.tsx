@@ -145,85 +145,88 @@ export function IndividualOrdersBilling() {
   return (
     <>
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Individual Orders</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base">Individual Orders</CardTitle>
+              <CardDescription className="text-xs">
                 Process payments for individual orders separately.
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={refreshDataFromDatabase}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={refreshDataFromDatabase} className="h-7 text-xs">
+              <RefreshCw className="h-3 w-3 mr-1" />
               Refresh
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {!isLoaded ? (
-            <div className="text-center p-8">
-              <div className="animate-pulse">Loading orders...</div>
+            <div className="text-center p-4">
+              <div className="animate-pulse text-sm">Loading orders...</div>
             </div>
           ) : Object.keys(ordersByTable).length === 0 ? (
-            <div className="text-center text-muted-foreground p-8">
-              <p>No individual orders waiting for payment.</p>
+            <div className="text-center text-muted-foreground p-4">
+              <p className="text-sm">No individual orders waiting for payment.</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {Object.entries(ordersByTable).map(([tableId, orders]) => (
-                <div key={tableId} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-semibold">Table {tableId}</h3>
-                    <Badge variant="secondary">
+                <div key={tableId} className="border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold">Table {tableId}</h3>
+                    <Badge variant="secondary" className="text-xs px-1 py-0">
                       {orders.length} order{orders.length > 1 ? 's' : ''}
                     </Badge>
                   </div>
                   
-                  <div className="grid gap-3">
+                  <div className="grid gap-2">
                     {orders.map((order) => (
                       <div 
                         key={order.id} 
-                        className="flex items-center justify-between p-3 border rounded bg-muted/30"
+                        className="flex items-center justify-between p-2 border rounded bg-muted/30"
                       >
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">
-                              Order #{order.id.substring(0, 8)}
+                            <span className="font-medium text-sm truncate">
+                              #{order.id.substring(0, 8)}
                             </span>
-                            <Badge variant="outline" className="text-xs">
-                              {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}
+                            <Badge variant="outline" className="text-xs px-1 py-0 flex-shrink-0">
+                              {order.items?.length || 0} items
                             </Badge>
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {order.items?.map((item: any, index: number) => (
+                          <div className="text-xs text-muted-foreground truncate">
+                            {order.items?.slice(0, 2).map((item: any, index: number) => (
                               <span key={index}>
                                 {item.name} {item.quantity > 1 && `x${item.quantity}`}
-                                {index < (order.items?.length || 0) - 1 && ', '}
+                                {index < Math.min((order.items?.length || 0), 2) - 1 && ', '}
                               </span>
-                            )) || 'No items'}
+                            ))}
+                            {(order.items?.length || 0) > 2 && '...'}
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-xs text-muted-foreground">
                             {order.timestamp ? new Date(order.timestamp).toLocaleTimeString() : 'Recent'}
                           </div>
-                          <div className="text-lg font-semibold mt-1">
+                          <div className="text-sm font-semibold mt-1">
                             {formatCurrency(order.totalAmount || 0, settings?.currency)}
                           </div>
                         </div>
                         
-                        <div className="flex gap-2">
+                        <div className="flex gap-1 flex-shrink-0">
                           <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => handleViewOrderDetails(order)}
+                            className="h-7 px-2 text-xs"
                           >
-                            <Eye className="h-4 w-4 mr-1" />
+                            <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
                           <Button 
                             size="sm"
                             onClick={() => handleProcessIndividualPayment(order.id)}
+                            className="h-7 px-2 text-xs"
                           >
-                            <CreditCard className="h-4 w-4 mr-1" />
+                            <CreditCard className="h-3 w-3 mr-1" />
                             Pay
                           </Button>
                         </div>
@@ -232,9 +235,9 @@ export function IndividualOrdersBilling() {
                   </div>
                   
                   {orders.length > 1 && (
-                    <div className="mt-3 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                    <div className="mt-2 p-2 bg-blue-50 rounded border-l-2 border-blue-400">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-blue-800">
+                        <span className="text-xs text-blue-800">
                           <strong>Table Total:</strong> {formatCurrency(
                             orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0), 
                             settings?.currency
