@@ -24,6 +24,48 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="format-detection" content="telephone=no" />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // Prevent zoom and ensure mobile footer stability
+            (function() {
+              // Disable pinch-to-zoom
+              document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+              });
+              
+              document.addEventListener('gesturechange', function(e) {
+                e.preventDefault();
+              });
+              
+              document.addEventListener('gestureend', function(e) {
+                e.preventDefault();
+              });
+              
+              // Force footer visibility on any viewport change
+              function ensureFooterVisible() {
+                const footer = document.querySelector('[data-mobile-footer]');
+                if (footer && window.innerWidth <= 768) {
+                  footer.style.position = 'fixed';
+                  footer.style.bottom = '0';
+                  footer.style.left = '0';
+                  footer.style.right = '0';
+                  footer.style.zIndex = '99999';
+                  footer.style.opacity = '1';
+                  footer.style.visibility = 'visible';
+                  footer.style.display = 'flex';
+                }
+              }
+              
+              // Run on load and viewport changes
+              window.addEventListener('load', ensureFooterVisible);
+              window.addEventListener('resize', ensureFooterVisible);
+              window.addEventListener('orientationchange', ensureFooterVisible);
+              
+              // Run periodically to catch any issues
+              setInterval(ensureFooterVisible, 1000);
+            })();
+          `
+        }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
