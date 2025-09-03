@@ -2,7 +2,7 @@
 'use client';
 
 import { AddStaffForm } from "@/components/users/add-staff-form";
-import { UserList } from "@/components/users/user-list";
+import { ResponsiveUserList } from "@/components/users/responsive-user-list";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useApp } from "@/context/app-context";
@@ -61,8 +61,8 @@ export default function UsersPage() {
                     </DialogContent>
                 </Dialog>
             </header>
-            <main className="flex-1 p-4 md:p-6 overflow-auto">
-                <UserList users={users} />
+            <main className="flex-1 p-4 md:p-6 overflow-auto pb-24 md:pb-6">
+                <ResponsiveUserList users={users} />
             </main>
         </div>
     );

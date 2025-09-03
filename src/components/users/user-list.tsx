@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Users } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { MoreHorizontal, Users, Mail, Phone, MapPin, Calendar, User as UserIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/context/app-context";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,10 @@ export function UserList({ users }: UserListProps) {
     const { currentUser, deleteUser, updateUserRole } = useApp();
     const { toast } = useToast();
 
+    // Debug logging to see what users are being passed
+    console.log('UserList received users:', users);
+    console.log('Users count:', users?.length || 0);
+
     const handleDeleteUser = (userId: string) => {
         deleteUser(userId);
         toast({
@@ -47,7 +52,7 @@ export function UserList({ users }: UserListProps) {
         })
     }
 
-    if (users.length === 0) {
+    if (!users || users.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-8 rounded-lg bg-muted/40 h-64">
                 <Users className="w-16 h-16 text-muted-foreground mb-4" />

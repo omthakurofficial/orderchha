@@ -88,6 +88,44 @@ const initialAdminUser: User = {
   photoUrl: 'https://placehold.co/100x100.png',
 };
 
+// Demo users for testing
+const demoUsers: User[] = [
+  initialAdminUser,
+  {
+    uid: 'demo-waiter-001',
+    email: 'waiter@orderchha.cafe',
+    name: 'Sarah Johnson',
+    role: 'waiter',
+    designation: 'Senior Waiter',
+    joiningDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(), // 3 months ago
+    photoUrl: 'https://placehold.co/100x100.png',
+    mobile: '+1-555-0123',
+    address: '123 Main St, City, State 12345'
+  },
+  {
+    uid: 'demo-kitchen-001',
+    email: 'chef@orderchha.cafe',
+    name: 'Marco Rodriguez',
+    role: 'kitchen',
+    designation: 'Head Chef',
+    joiningDate: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(), // 4 months ago
+    photoUrl: 'https://placehold.co/100x100.png',
+    mobile: '+1-555-0456',
+    address: '456 Oak Ave, City, State 12345'
+  },
+  {
+    uid: 'demo-cashier-001',
+    email: 'cashier@orderchha.cafe',
+    name: 'Emily Chen',
+    role: 'cashier',
+    designation: 'Senior Cashier',
+    joiningDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 2 months ago
+    photoUrl: 'https://placehold.co/100x100.png',
+    mobile: '+1-555-0789',
+    address: '789 Pine St, City, State 12345'
+  }
+];
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [menu, setMenu] = useState<MenuCategory[]>(initialMenu);
@@ -103,7 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
   const [billingOrders, setBillingOrders] = useState<KitchenOrder[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [users, setUsers] = useState<User[]>([initialAdminUser]);
+  const [users, setUsers] = useState<User[]>(demoUsers);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
@@ -122,6 +160,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (isDemoMode) {
           console.log('🎭 Demo mode enabled - auto-logging in admin user');
           setCurrentUser(initialAdminUser);
+          
+          // Set demo users for testing
+          setUsers(demoUsers);
+          
           localStorage.setItem('orderchha-demo-mode', 'true');
           
           toast({
