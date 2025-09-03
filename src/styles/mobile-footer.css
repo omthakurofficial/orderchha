@@ -1,0 +1,86 @@
+/* Mobile Footer Navigation Styles */
+@media (max-width: 767.98px) {
+  [data-mobile-footer] {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50 !important;
+    background-color: white !important;
+    display: block !important;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  [data-mobile-footer] > div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 16px !important;
+    min-height: 60px !important;
+    max-width: 28rem !important;
+    margin: 0 auto !important;
+  }
+  
+  [data-mobile-footer] .nav-items-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+    max-width: 24rem !important;
+  }
+  
+  [data-mobile-footer] a {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    transition: background-color 0.2s ease !important;
+    min-height: 48px !important;
+    min-width: 60px !important;
+    flex: 1 !important;
+    max-width: 80px !important;
+    text-decoration: none !important;
+  }
+  
+  [data-mobile-footer] a:hover {
+    background-color: #f9fafb !important;
+  }
+  
+  [data-mobile-footer] a:active {
+    background-color: #f3f4f6 !important;
+  }
+  
+  [data-mobile-footer] svg {
+    height: 20px !important;
+    width: 20px !important;
+    margin-bottom: 4px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  [data-mobile-footer] span {
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* Hide on desktop */
+@media (min-width: 768px) {
+  [data-mobile-footer] {
+    display: none !important;
+  }
+}
+
+/* Ensure body has enough bottom padding on mobile */
+@media (max-width: 767.98px) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+}

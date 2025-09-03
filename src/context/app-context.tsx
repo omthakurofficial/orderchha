@@ -114,6 +114,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         console.log('🔄 Checking existing authentication...');
         
+        // Check if demo mode is enabled (for development/testing)
+        const isDemoMode = process.env.NODE_ENV === 'development' && 
+                          (window.location.search.includes('demo=true') || 
+                           localStorage.getItem('orderchha-demo-mode') === 'true');
+        
+        if (isDemoMode) {
+          console.log('🎭 Demo mode enabled - auto-logging in admin user');
+          setCurrentUser(initialAdminUser);
+          localStorage.setItem('orderchha-demo-mode', 'true');
+          
+          toast({
+            title: "🎭 Demo Mode Active",
+            description: "Logged in as Demo Admin User",
+          });
+          
+          setIsLoaded(true);
+          return;
+        }
+        
         // Check if user is already logged in (persist session)
         const currentSession = await auth.getCurrentUser();
         

@@ -19,6 +19,7 @@ import { useApp } from "@/context/app-context";
 import { cn } from "@/lib/utils";
 import { useMobileNavigation } from "@/hooks/use-mobile-navigation";
 import type { UserRole } from "@/types/index";
+import "../../styles/mobile-footer.css";
 
 interface FooterNavItem {
   href: string;
@@ -94,62 +95,57 @@ export function MobileFooterNavigation() {
   }
 
   return (
-    <div 
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg md:hidden mobile-footer-fix"
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg block md:!hidden"
       data-mobile-footer
+      role="navigation"
+      aria-label="Mobile navigation"
+      style={{ display: 'block' }}
     >
       <div 
-        className="flex justify-around items-center py-1 px-1 min-h-[60px]"
+        className="flex items-center justify-center py-2 px-4 min-h-[60px] max-w-screen-sm mx-auto"
         style={{
           paddingBottom: 'max(8px, env(safe-area-inset-bottom))'
         }}
       >
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href || 
-                          (item.href !== '/' && pathname?.startsWith(item.href));
-          
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center justify-center p-1 rounded-lg transition-all duration-200 min-w-0 flex-1",
-                "min-h-[50px] touch-manipulation select-none",
-                "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50",
-                "active:scale-95 active:duration-75",
-                isActive
-                  ? "text-primary bg-primary/10 shadow-sm"
-                  : "text-gray-600 hover:text-primary hover:bg-gray-50 active:bg-gray-100"
-              )}
-              style={{ 
-                WebkitTapHighlightColor: 'transparent',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                WebkitTouchCallout: 'none'
-              }}
-              onTouchStart={(e) => {
-                // Prevent default behavior that might cause zoom
-                e.currentTarget.style.transform = 'scale(0.95)';
-              }}
-              onTouchEnd={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-            >
-              <Icon className={cn(
-                "h-4 w-4 mb-0.5 flex-shrink-0 transition-colors",
-                isActive ? "text-primary" : "text-gray-600"
-              )} />
-              <span className={cn(
-                "text-[10px] font-medium truncate text-center max-w-full leading-tight transition-colors",
-                isActive ? "text-primary" : "text-gray-600"
-              )}>
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
+        <div className="nav-items-container">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || 
+                            (item.href !== '/' && pathname?.startsWith(item.href));
+            
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex flex-col items-center justify-center p-2 rounded-lg transition-colors",
+                  "min-h-[48px] min-w-[60px] flex-1 max-w-[80px]",
+                  "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50",
+                  isActive
+                    ? "text-primary bg-primary/10"
+                    : "text-gray-600 hover:text-primary hover:bg-gray-50 active:bg-gray-100"
+                )}
+                style={{ 
+                  WebkitTapHighlightColor: 'rgba(0, 0, 0, 0.1)'
+                }}
+                aria-label={item.label}
+              >
+                <Icon className={cn(
+                  "h-5 w-5 mb-1 flex-shrink-0 transition-colors",
+                  isActive ? "text-primary" : "text-gray-600"
+                )} />
+                <span className={cn(
+                  "text-[10px] font-medium text-center leading-tight transition-colors whitespace-nowrap",
+                  isActive ? "text-primary" : "text-gray-600"
+                )}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </nav>
   );
 }
