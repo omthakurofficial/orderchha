@@ -25,8 +25,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Sheet, SheetContent, SheetTitle } from "../ui/sheet";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { MobileFooterNavigation } from "./mobile-footer-navigation";
 import { useOrderEventNotifications } from "@/hooks/use-order-event-notifications";
-import type { UserRole } from "@/types";
+import type { UserRole } from "@/types/index";
 
 const allNavItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", roles: ["admin"] },
@@ -193,7 +194,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="hidden md:flex justify-end p-2 border-b">
             <NotificationBell />
         </div>
-        {children}
+        <div className="flex-1 pb-20 md:pb-0 overflow-auto">
+          {children}
+        </div>
+        <MobileFooterNavigation />
       </SidebarInset>
     </SidebarProvider>
   );
