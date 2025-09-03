@@ -1,6 +1,7 @@
 
 import type { Metadata } from 'next';
 import './globals.css';
+import '../styles/modern-layout.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppProvider } from '@/context/app-context';
 import { NotificationProvider } from '@/context/notification-context';
@@ -26,9 +27,9 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
         <script dangerouslySetInnerHTML={{
           __html: `
-            // Prevent zoom and ensure mobile footer stability
+            // Ensure footer visibility on all devices and zoom levels
             (function() {
-              // Disable pinch-to-zoom
+              // Disable pinch-to-zoom on mobile
               document.addEventListener('gesturestart', function(e) {
                 e.preventDefault();
               });
@@ -42,27 +43,47 @@ export default function RootLayout({
               });
               
               // Force footer visibility on any viewport change
-              function ensureFooterVisible() {
-                const footer = document.querySelector('[data-mobile-footer]');
-                if (footer && window.innerWidth <= 768) {
-                  footer.style.position = 'fixed';
-                  footer.style.bottom = '0';
-                  footer.style.left = '0';
-                  footer.style.right = '0';
-                  footer.style.zIndex = '99999';
-                  footer.style.opacity = '1';
-                  footer.style.visibility = 'visible';
-                  footer.style.display = 'flex';
+              function ensureFootersVisible() {
+                // Mobile footer
+                const mobileFooter = document.querySelector('[data-mobile-footer]');
+                if (mobileFooter && window.innerWidth <= 768) {
+                  mobileFooter.style.position = 'fixed';
+                  mobileFooter.style.bottom = '0';
+                  mobileFooter.style.left = '0';
+                  mobileFooter.style.right = '0';
+                  mobileFooter.style.zIndex = '99999';
+                  mobileFooter.style.opacity = '1';
+                  mobileFooter.style.visibility = 'visible';
+                  mobileFooter.style.display = 'flex';
+                }
+                
+                // Desktop footer - ensure it's visible at all zoom levels
+                const desktopFooter = document.querySelector('.desktop-footer');
+                if (desktopFooter && window.innerWidth > 768) {
+                  desktopFooter.style.position = 'fixed';
+                  desktopFooter.style.bottom = '0';
+                  desktopFooter.style.left = '0';
+                  desktopFooter.style.right = '0';
+                  desktopFooter.style.zIndex = '40';
+                  desktopFooter.style.display = 'block';
+                  desktopFooter.style.visibility = 'visible';
+                  
+                  // Add padding to main content to prevent overlap
+                  const contentArea = document.querySelector('.desktop-content-area');
+                  if (contentArea) {
+                    contentArea.style.paddingBottom = '40px';
+                  }
                 }
               }
               
               // Run on load and viewport changes
-              window.addEventListener('load', ensureFooterVisible);
-              window.addEventListener('resize', ensureFooterVisible);
-              window.addEventListener('orientationchange', ensureFooterVisible);
+              window.addEventListener('load', ensureFootersVisible);
+              window.addEventListener('resize', ensureFootersVisible);
+              window.addEventListener('scroll', ensureFootersVisible);
+              window.addEventListener('orientationchange', ensureFootersVisible);
               
-              // Run periodically to catch any issues
-              setInterval(ensureFooterVisible, 1000);
+              // Run periodically to catch any issues with dynamic content
+              setInterval(ensureFootersVisible, 1000);
             })();
           `
         }} />

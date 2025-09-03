@@ -1,0 +1,88 @@
+/* Enhanced zoom fixes for admin dashboard layout */
+
+/* Force proper sidebar display at all zoom levels */
+@media (min-width: 768px) {
+  /* At 100% zoom */
+  [data-sidebar="sidebar"] {
+    display: flex !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 30px !important; /* Leave space for footer */
+    width: 260px !important;
+    min-width: 260px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    z-index: 30 !important;
+    transition: transform 0.2s ease-in-out !important;
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ensure sidebar inset content (main area) is properly positioned */
+  .sidebar-inset {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+    min-height: calc(100vh - 30px) !important;
+  }
+  
+  /* Hide mobile elements on desktop */
+  [data-mobile-only="true"] {
+    display: none !important;
+  }
+  
+  /* Force proper footer placement at all zoom levels */
+  #fixed-desktop-footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 40 !important;
+  }
+  
+  /* Ensure content doesn't overlap with footer */
+  .layout-has-footer .sidebar-inset {
+    padding-bottom: 30px !important;
+  }
+  
+  /* Style sidebar header for better visibility */
+  .sidebar-header {
+    position: sticky !important;
+    top: 0 !important;
+    background: white !important;
+    z-index: 10 !important;
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5) !important;
+  }
+  
+  /* Style sidebar footer for better visibility */
+  .sidebar-footer {
+    position: sticky !important;
+    bottom: 0 !important;
+    background: white !important;
+    z-index: 10 !important;
+    border-top: 1px solid rgba(229, 231, 235, 0.5) !important;
+    padding: 0.75rem !important;
+  }
+}
+
+/* Fix for different zoom levels */
+@media (min-width: 768px) and (max-resolution: 96dpi) {
+  /* Lower resolution (zoomed out) */
+  [data-sidebar="sidebar"] {
+    min-height: calc(100vh - 30px) !important;
+  }
+}
+
+@media (min-width: 768px) and (min-resolution: 120dpi) {
+  /* Higher resolution (zoomed in) */
+  [data-sidebar="sidebar"] {
+    height: auto !important;
+    min-height: calc(100vh - 30px) !important;
+  }
+  
+  .sidebar-inset {
+    height: auto !important;
+    min-height: calc(100vh - 30px) !important;
+  }
+}

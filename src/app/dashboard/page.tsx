@@ -63,8 +63,8 @@ export default function DashboardPage() {
                 </div>
             </header>
             <main className="flex-1 p-4 md:p-6 overflow-auto bg-muted/20">
-                <div className="max-w-6xl mx-auto space-y-6">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="max-w-6xl mx-auto space-y-6 dashboard-container">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 dashboard-card-grid">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
