@@ -1,0 +1,34 @@
+/* Final emergency fix for Available buttons */
+
+/* Target the specific "Available" buttons seen in the screenshot */
+.Available {
+  background: #597E52 !important;
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Target .badge elements with "Available" text */
+.badge,
+.badge.capitalize,
+div.badge,
+span.badge {
+  background: inherit;
+}
+
+/* Direct targeting for badges */
+.badge.capitalize {
+  background: #597E52 !important;
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Last resort - use attribute and class selectors */
+[class*="Available"],
+[class*="available"] {
+  background: #597E52 !important;
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}

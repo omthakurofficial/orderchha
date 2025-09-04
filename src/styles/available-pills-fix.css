@@ -1,0 +1,38 @@
+/* Status-specific styling for table status pills */
+
+/* Available status styling */
+[data-status="available"] {
+  background-color: #597E52 !important;
+  background: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Occupied status styling */
+[data-status="occupied"] {
+  background-color: #ff9800 !important;
+  background: #ff9800 !important;
+  color: white !important;
+  border-color: #ff9800 !important;
+}
+
+/* Reserved status styling */
+[data-status="reserved"] {
+  background-color: #ffc107 !important;
+  background: #ffc107 !important;
+  color: #333 !important;
+  border-color: #ffc107 !important;
+}
+
+/* Billing status styling */
+[data-status="billing"] {
+  background-color: #2196f3 !important;
+  background: #2196f3 !important;
+  color: white !important;
+  border-color: #2196f3 !important;
+}
+[class*="bg-yellow"] {
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}

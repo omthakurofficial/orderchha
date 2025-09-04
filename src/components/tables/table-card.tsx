@@ -44,8 +44,8 @@ interface TableCardProps {
 }
 
 const statusStyles = {
-  available: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800",
-  occupied: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800",
+  available: "bg-[#597E52] text-white border-[#597E52] dark:bg-[#597E52] dark:text-white dark:border-[#597E52]",
+  occupied: "bg-orange-500 text-white border-orange-500 dark:bg-orange-600 dark:text-white dark:border-orange-700",
   reserved: "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800",
   billing: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800",
   cleaning: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800",
@@ -230,7 +230,11 @@ export function TableCard({ table }: { table: Table }) {
         </CardHeader>
         <CardContent className="flex-1 flex flex-col justify-end">
             <div className="flex items-center justify-between mt-auto">
-                <Badge className={cn(statusStyles[table.status], "capitalize")}>
+                {/* Apply both className and direct inline styles for maximum compatibility */}
+                <Badge 
+                    className={cn(statusStyles[table.status], "capitalize")}
+                    data-status={table.status} // Add data attribute for easier targeting
+                >
                     {table.status === 'disabled' && <XCircle className="w-3 h-3 mr-1" />}
                     {table.status === 'billing' && <Receipt className="w-3 h-3 mr-1" />}
                     {table.status}

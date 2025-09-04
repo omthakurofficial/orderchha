@@ -2,6 +2,17 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import '../styles/modern-layout.css';
+import '../styles/custom-button-fixes.css';
+import '../styles/button-overrides.css';
+import '../styles/direct-overrides.css';
+import '../styles/emergency-fix.css';
+import '../styles/badge-fix.css';
+import '../styles/final-fix.css';
+import '../styles/css-reset.css';
+import '../styles/available-pills-fix.css';
+import '../styles/green-available-hack.css';
+import '../styles/pill-buttons.css';
+import '../styles/final-badge-fix.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppProvider } from '@/context/app-context';
 import { NotificationProvider } from '@/context/notification-context';
@@ -29,6 +40,72 @@ export default function RootLayout({
           __html: `
             // Ensure footer visibility on all devices and zoom levels
             (function() {
+              // Fix "Available" badges to use green color (#597E52)
+              function fixAvailableBadges() {
+                // Target all elements with 'badge' class
+                document.querySelectorAll('.badge').forEach(badge => {
+                  if (badge.textContent && 
+                      (badge.textContent.trim() === 'Available' || 
+                       badge.textContent.trim() === 'available')) {
+                    badge.style.backgroundColor = '#597E52';
+                    badge.style.color = 'white';
+                    badge.style.borderColor = '#597E52';
+                  }
+                });
+                
+                // Target orange pills specifically - THESE ARE THE ONES IN THE SCREENSHOT
+                document.querySelectorAll('[class*="bg-orange"], [class*="bg-amber"], [class*="bg-yellow"]').forEach(el => {
+                  if (el.textContent && 
+                      (el.textContent.trim() === 'Available' || 
+                       el.textContent.trim() === 'available' ||
+                       el.textContent.trim().toLowerCase() === 'available')) {
+                    el.style.backgroundColor = '#597E52';
+                    el.style.color = 'white';
+                    el.style.borderColor = '#597E52';
+                  }
+                });
+                
+                // Also check for standalone Available buttons
+                document.querySelectorAll('[class*="Available"], [class*="available"]').forEach(el => {
+                  el.style.backgroundColor = '#597E52';
+                  el.style.color = 'white';
+                  el.style.borderColor = '#597E52';
+                });
+                
+                // Specific target for the Available pills in table cards
+                document.querySelectorAll('div.badge.capitalize').forEach(badge => {
+                  if (badge.textContent && 
+                      badge.textContent.trim().toLowerCase() === 'available') {
+                    badge.style.backgroundColor = '#597E52';
+                    badge.style.color = 'white';
+                    badge.style.borderColor = '#597E52';
+                  }
+                });
+              }
+              
+              // Run immediately and on DOM changes
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', fixAvailableBadges);
+              } else {
+                fixAvailableBadges();
+              }
+              
+              // Run the function periodically to catch any dynamic changes
+              setInterval(fixAvailableBadges, 500);
+              
+              // Set up observer for dynamically added badges
+              const observer = new MutationObserver(() => {
+                fixAvailableBadges();
+              });
+              
+              if (document.body) {
+                observer.observe(document.body, { childList: true, subtree: true });
+              } else {
+                document.addEventListener('DOMContentLoaded', () => {
+                  observer.observe(document.body, { childList: true, subtree: true });
+                });
+              }
+            
               // Disable pinch-to-zoom on mobile
               document.addEventListener('gesturestart', function(e) {
                 e.preventDefault();

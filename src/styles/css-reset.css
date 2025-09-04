@@ -1,0 +1,41 @@
+/* This is a small reset file to fix any CSS conflicts */
+
+/* Reset the specific yellow/orange Available badges */
+button[class*="Available"],
+div[class*="Available"],
+span[class*="Available"] {
+  background-color: #597E52 !important;
+  background: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Target the specific pill buttons seen in the screenshot */
+.badge {
+  background-color: inherit;
+}
+
+div.badge[class*="capitalize"] {
+  background-color: #597E52 !important;
+  background: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Important! Override any Tailwind classes causing this issue */
+.bg-orange-100,
+.bg-yellow-100,
+.bg-amber-100,
+[class*="bg-amber"],
+[class*="bg-orange"],
+[class*="bg-yellow"] {
+  background-color: #597E52 !important;
+  color: white !important;
+}
+
+/* Ensure the borders are correct */
+div[class*="border-amber"],
+div[class*="border-yellow"],
+div[class*="border-orange"] {
+  border-color: #597E52 !important;
+}

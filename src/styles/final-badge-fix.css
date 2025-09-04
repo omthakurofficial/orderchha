@@ -1,0 +1,36 @@
+/* Final direct targeting for status badges */
+
+/* Target Available badges by data attribute */
+[data-status="available"] {
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Target Occupied badges by data attribute */
+[data-status="occupied"] {
+  background-color: #ff9800 !important; /* Orange */
+  color: white !important;
+  border-color: #ff9800 !important;
+}
+
+/* Target Reserved badges by data attribute */
+[data-status="reserved"] {
+  background-color: #ffc107 !important; /* Yellow */
+  color: #333 !important;
+  border-color: #ffc107 !important;
+}
+
+/* Target Billing badges by data attribute */
+[data-status="billing"] {
+  background-color: #2196f3 !important; /* Blue */
+  color: white !important;
+  border-color: #2196f3 !important;
+}
+
+/* Target Disabled badges by data attribute */
+[data-status="disabled"] {
+  background-color: #9e9e9e !important; /* Gray */
+  color: white !important;
+  border-color: #9e9e9e !important;
+}

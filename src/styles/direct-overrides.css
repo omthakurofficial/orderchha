@@ -1,0 +1,39 @@
+/* Direct overrides for the orange "Available" badges in the table management UI */
+
+/* Target all buttons with availability classes */
+button[class*="available"],
+button[class*="Available"],
+[role="button"][class*="available"],
+[role="button"][class*="Available"],
+div[class*="available"],
+div[class*="Available"] {
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Direct override for the orange buttons in table cards */
+span.Available,
+span.available,
+div.Available,
+div.available,
+button.Available,
+button.available,
+[role="button"].Available,
+[role="button"].available {
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Override the Available badge/button in the table management UI */
+.Available,
+.available,
+span[class*="Available"],
+div[class*="Available"],
+span[class*="available"],
+div[class*="available"] {
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}

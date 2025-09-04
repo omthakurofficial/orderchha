@@ -1,0 +1,27 @@
+/* Direct targeting for the yellow/orange Available badges */
+
+/* Apply this to the badge components in table-card.tsx */
+.badge {
+  color: inherit;
+}
+
+/* Target all Available badges directly */
+div:where(.badge[class*="capitalize"]) {
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Target all orange badges */
+[class*="Available"] {
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Target the standalone Available buttons */
+button + div [class*="Available"] {
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}

@@ -651,9 +651,39 @@ button,
   box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4) !important;
 }
 
+/* Available button styling - high specificity to override other styles */
+[class*="Available"],
+.Available,
+button.Available,
+div[class*="Available"],
+span[class*="Available"],
+div.Available,
+button.available,
+[data-status="available"],
+button[data-status="available"],
+div[data-status="available"],
+span.available,
+span[class*="available"] {
+  background-color: #597E52 !important;
+  background: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+  box-shadow: 0 2px 4px rgba(89, 126, 82, 0.3) !important;
+}
+
 /* ===== UTILITY CLASSES ===== */
 .hidden {
   display: none !important;
+}
+
+/* Direct styling for Available buttons/badges using class selectors */
+[class*="Available"], 
+[class*="available"],
+button[class*="Available"],
+button[class*="available"] {
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
 }
 
 /* Responsive utilities */
