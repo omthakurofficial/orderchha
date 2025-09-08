@@ -74,7 +74,7 @@ export function AddInventoryItemDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button data-testid="add-inventory-dialog-trigger">
           <PlusCircle />
           Add Item
         </Button>

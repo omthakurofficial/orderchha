@@ -5,7 +5,7 @@ import { useApp } from "@/context/app-context";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Package, Plus, Minus, Trash2 } from "lucide-react";
+import { MoreHorizontal, Package, Plus, Minus, Trash2, PlusCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { UpdateStockDialog } from "./update-stock-dialog";
@@ -59,7 +59,14 @@ export function InventoryList({ searchTerm, categoryFilter, dateRange }: Invento
             <div className="flex flex-col items-center justify-center text-center p-8 rounded-lg bg-muted/40 h-64">
                 <Package className="w-16 h-16 text-muted-foreground mb-4" />
                 <h2 className="text-xl font-bold text-muted-foreground">No Inventory Items Found</h2>
-                <p className="text-muted-foreground">Add a new item to start tracking your stock.</p>
+                <p className="text-muted-foreground mb-4">Add a new item to start tracking your stock.</p>
+                <Button onClick={() => {
+                    const addButton = document.querySelector('[data-testid="add-inventory-dialog-trigger"]');
+                    if (addButton) (addButton as HTMLButtonElement).click();
+                }}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Inventory Item
+                </Button>
           </div>
         )
     }

@@ -2,6 +2,7 @@
 'use client';
 
 import { AddInventoryItemDialog } from "@/components/inventory/add-inventory-item-dialog";
+import { AddInventorySamples } from "@/components/inventory/add-inventory-samples";
 import { InventoryList } from "@/components/inventory/inventory-list";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Input } from "@/components/ui/input";
@@ -42,7 +43,7 @@ export default function InventoryPage() {
     return (
         <div className="flex flex-col h-full">
             <header className="p-4 border-b space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
                     <div className="flex-1">
                         <h1 className="text-2xl font-bold font-headline flex items-center gap-2">
                             <Package />
@@ -50,8 +51,8 @@ export default function InventoryPage() {
                         </h1>
                         <p className="text-muted-foreground">Track and manage your cafe's stock levels.</p>
                     </div>
-                    <div className="hidden md:block">
-                        <AddInventoryItemDialog />
+                    <div>
+                        <AddInventorySamples />
                     </div>
                 </div>
                 <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
@@ -76,9 +77,7 @@ export default function InventoryPage() {
                         </SelectContent>
                     </Select>
                     <DateRangePicker onDateChange={setDateRange} />
-                    <div className="block md:hidden">
-                        <AddInventoryItemDialog />
-                    </div>
+                    {/* Mobile buttons are now displayed above */}
                 </div>
             </header>
             <main className="flex-1 p-4 md:p-6 overflow-auto">
