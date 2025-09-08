@@ -1,0 +1,370 @@
+/* Direct styling for order item price tags */
+.flex.items-center.gap-4 p.bg-\[\#FF9800\] {
+  background-color: #FF9800 !important; /* Orange color */
+  color: white !important;
+  padding: 4px 10px !important;
+  border-radius: 30px !important;
+  font-weight: 500 !important;
+  display: inline-block !important;
+  font-size: 14px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+/* Direct targeting for the Chicken BBQ NPR 60 style */
+.flex-1 p:last-child {
+  background-color: #FF9800 !important;
+  color: white !important;
+  padding: 4px 10px !important;
+  border-radius: 30px !important;
+}
+
+/* Set image size consistent with screenshot */
+.rounded-md.object-cover {
+  width: 60px !important;
+  height: 60px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+}
+
+/* Override any unexpected styling */
+span[class*="NPR"],
+.bg-\[\#FF9800\],
+.bg-\[\#FFA000\],
+.total-display {
+  background-color: #FF9800 !important;
+  color: white !important;
+  padding: 4px 12px !important;
+  border-radius: 30px !important;
+  display: inline-block !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+/* Item name styling */
+.flex-1 p.font-semibold {
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  margin-bottom: 4px !important;
+  color: #333 !important;
+}
+/* Order Summary Style Enhancements */
+
+/* Style for the Total NPR display */
+.total-display {
+  background-color: #FFA000 !important; /* Orange-yellow background */
+  color: white !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.total-display:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2) !important;
+}
+
+/* Style for the Submit Order button */
+.submit-button {
+  background-color: #FF9800 !important; /* Orange background */
+  color: white !important;
+  border-radius: 50px !important; /* Pill-shaped button */
+  padding: 16px 24px !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+  transition: all 0.3s ease !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #F57C00 !important; /* Darker orange on hover */
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.25) !important;
+}
+
+.submit-button:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+/* Make the Order Summary container stand out */
+.bg-card.p-4.border-t.shadow-md {
+  background-color: #FFFFFF !important;
+  border-top: 1px solid rgba(0,0,0,0.1) !important;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.1) !important;
+}
+
+/* Price display in the item list */
+.text-sm.text-primary.font-medium {
+  color: #FF9800 !important;
+  font-weight: 600 !important;
+}
+
+/* Quantity controls */
+.h-7.w-7 {
+  background-color: #f5f5f5 !important;
+  border-radius: 50% !important;
+}
+
+.h-7.w-7:hover {
+  background-color: #e0e0e0 !important;
+}
+
+/* The delete button */
+.h-7.w-7.text-destructive {
+  color: #ef5350 !important;
+}
+
+.h-7.w-7.text-destructive:hover {
+  background-color: #ffebee !important;
+}
+/* Order Summary and Confirmation Button Styles */
+
+/* Style the Total NPR 600.00 label in the corner */
+.total-display,
+[class*="total"],
+.total {
+  background-color: #FFA000 !important; /* Orange-yellow */
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+}
+
+/* Fix for Next.js incompatible selectors */
+div[class*="total"],
+[class*="NPR"] {
+  background-color: #FFA000 !important; /* Orange-yellow */
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+}
+
+/* Style the Submit Order for Confirmation button */
+[class*="submit"] {
+  background-color: #FF9800 !important; /* Orange like BOOK NOW */
+  color: white !important;
+  border-color: #FF9800 !important;
+  border-radius: 50px !important; /* Pill shape */
+  padding: 12px 24px !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+  width: 100% !important;
+  font-size: 1rem !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+[class*="submit"]:hover {
+  background-color: #F57C00 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+}
+
+/* Fix for Next.js incompatible selectors */
+button[class*="submit"],
+a[class*="submit"] {
+  background-color: #FF9800 !important;
+  color: white !important;
+  border-color: #FF9800 !important;
+  border-radius: 50px !important;
+  padding: 12px 24px !important;
+  font-weight: 500 !important;
+  width: 100% !important;
+}
+[class*="submit"] {
+  background-color: #FF9800 !important; /* Orange like BOOK NOW */
+  color: white !important;
+  border-color: #FF9800 !important;
+  border-radius: 50px !important; /* Pill shape */
+  padding: 12px 24px !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+  width: 100% !important;
+  font-size: 1rem !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+[class*="submit"]:hover {
+  background-color: #F57C00 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+}
+
+/* Fix for Next.js incompatible selectors */
+button[class*="submit"],
+a[class*="submit"] {
+  background-color: #FF9800 !important;
+  color: white !important;
+  border-color: #FF9800 !important;
+  border-radius: 50px !important;
+  padding: 12px 24px !important;
+  font-weight: 500 !important;
+  width: 100% !important;
+}
+/* Order Panel - Complete Styling Override 
+   Matches exactly with the provided screenshots */
+
+/* ==== ORDER TOTAL STYLING ==== */
+/* The Total NPR 600.00 display */
+.total-display,
+[class*="total"] span:last-child,
+span[class*="NPR"],
+[data-totalDisplay="true"],
+div.flex.justify-between span:last-child {
+  background-color: #FFC107 !important; /* Light yellow */
+  color: #333 !important; /* Dark text for contrast */
+  padding: 6px 12px !important;
+  border-radius: 6px !important; /* Slightly rounded corners */
+  font-weight: 600 !important;
+  display: inline-block !important;
+  box-shadow: none !important; /* Remove shadow for consistency */
+  border: none !important;
+  font-size: 14px !important; /* Smaller font size */
+}
+
+/* The word "Total" itself */
+.flex.justify-between.text-lg.font-bold.text-primary span:first-child,
+div.flex.justify-between span:first-child {
+  font-weight: bold !important;
+  font-size: 18px !important;
+  color: #333 !important;
+}
+
+/* ==== SUBMIT ORDER BUTTON STYLING ==== */
+/* Submit Order For Confirmation button */
+.submit-button,
+button[data-submitOrder="true"],
+button.w-full.mt-2 {
+  background-color: #F59E0B !important; /* Match with "Go to Menu" buttons */
+  color: white !important;
+  border-radius: 6px !important; /* Match with other buttons */
+  padding: 8px 16px !important; /* Standard button padding */
+  font-weight: 500 !important; /* Medium font weight */
+  text-transform: none !important; /* No uppercase */
+  letter-spacing: normal !important;
+  box-shadow: none !important; /* No shadow */
+  border: none !important;
+  transition: background-color 0.2s ease !important;
+  font-size: 14px !important; /* Standard font size */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: auto !important; /* Auto height */
+}
+
+/* Hover state for button */
+.submit-button:hover:not(:disabled),
+button[data-submitOrder="true"]:hover:not(:disabled) {
+  background-color: #D97706 !important; /* Slightly darker orange */
+  transform: none !important; /* No transform */
+  box-shadow: none !important; /* No shadow */
+}
+
+/* ==== ITEM PRICE TAG ==== */
+/* Price tag in the order item row (NPR 60) */
+.price-tag,
+.rounded-md.object-cover + div p.text-sm,
+[class*="NPR"],
+span.bg-orange-500 {
+  background-color: #FFC107 !important; /* Light yellow */
+  color: #333 !important; /* Dark text for contrast */
+  padding: 4px 8px !important;
+  border-radius: 4px !important; /* Squared corners to match design */
+  font-weight: 500 !important;
+  display: inline-block !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  margin: 4px 0 !important;
+}
+
+/* ==== ORDER ITEM STYLING ==== */
+/* The order item container */
+.flex.items-center.gap-4.border-b.pb-2 {
+  padding: 12px 0 !important;
+  margin-bottom: 8px !important;
+  border-bottom: 1px solid #eee !important;
+}
+
+/* Item name in the order */
+.flex.items-center.gap-4 div p.font-semibold {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  margin-bottom: 4px !important;
+  color: #333 !important;
+}
+
+/* Quantity controls in the order */
+.flex.items-center.gap-2 button.h-7.w-7 {
+  background-color: #f5f5f5 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+.flex.items-center.gap-2 button.h-7.w-7:hover {
+  background-color: #e0e0e0 !important;
+}
+
+/* The item quantity number */
+.flex.items-center.gap-2 span.font-bold.w-4.text-center {
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  color: #333 !important;
+}
+
+/* The delete button */
+.flex.items-center.gap-2 button.text-destructive {
+  color: #f44336 !important;
+}
+
+.flex.items-center.gap-2 button.text-destructive:hover {
+  background-color: #ffebee !important;
+}
+
+/* Item image */
+.flex.items-center.gap-4 img {
+  width: 60px !important;
+  height: 60px !important;
+  border-radius: 8px !important;
+  object-fit: cover !important;
+  border: 1px solid #eee !important;
+}
+
+/* ==== ORDER PANEL CONTAINER ==== */
+/* The sticky container at the bottom */
+.sticky.bottom-0.z-10.bg-card.p-4.border-t.shadow-md {
+  background-color: white !important;
+  border-top: 1px solid rgba(0,0,0,0.1) !important;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.1) !important;
+  padding: 16px !important;
+}
+
+/* Overall order sidebar container */
+.flex.flex-col.h-full {
+  background-color: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1) !important;
+}
+
+/* ==== ADDITIONAL OVERRIDES FOR EXACT MATCH ==== */
+/* Direct styling for the "NPR 600.00" text */
+span[class*="NPR"],
+.flex.justify-between span:last-child {
+  background-color: #FF9800 !important;
+  color: white !important;
+  padding: 8px 16px !important;
+  border-radius: 30px !important;
+  font-size: 16px !important;
+  font-weight: bold !important;
+}

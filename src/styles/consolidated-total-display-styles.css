@@ -1,0 +1,145 @@
+/* Direct targeting for the Total NPR display in the current page */
+
+/* Use more specific selectors to target the display */
+.sticky.bottom-0.z-10.bg-card.p-4.border-t.shadow-md .flex.justify-between.text-lg.font-bold.text-primary span:last-child {
+  background-color: #FFA000 !important;
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Make the Submit Order button more prominent */
+.w-full.mt-2.bg-\[\#FF9800\].hover\:bg-\[\#F57C00\].text-white.rounded-full.py-6.submit-button {
+  background-color: #FF9800 !important;
+  color: white !important;
+  font-weight: bold !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.w-full.mt-2.bg-\[\#FF9800\].hover\:bg-\[\#F57C00\].text-white.rounded-full.py-6.submit-button:hover:not(:disabled) {
+  background-color: #F57C00 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Target by data attribute for more specificity */
+[data-totalDisplay="true"] {
+  background-color: #FFA000 !important;
+  color: white !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+}
+
+/* Target the Submit Order button specifically */
+[data-submitOrder="true"] {
+  background-color: #FF9800 !important;
+  color: white !important;
+  border-radius: 50px !important;
+  padding: 16px !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+/* Final overrides for Total NPR display and Submit button */
+
+/* Apply to all elements with total-display class */
+.total-display {
+  background-color: #FFA000 !important;
+  color: white !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+}
+
+/* Target any elements containing currency by using attribute selectors */
+[class*="total"],
+[class*="NPR"],
+[data-totalDisplay="true"] {
+  background-color: #FFA000 !important;
+  color: white !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+}
+
+/* Target the submit button more specifically */
+button.w-full.mt-2.bg-\[\#FF9800\],
+button.submit-button,
+button[data-submitOrder="true"] {
+  background-color: #FF9800 !important;
+  color: white !important;
+  border-radius: 50px !important;
+  padding: 16px 24px !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* JavaScript style injection as a backup */
+.js-total-display {
+  background-color: #FFA000 !important;
+  color: white !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+}
+
+.js-submit-button {
+  background-color: #FF9800 !important;
+  color: white !important;
+  border-radius: 50px !important;
+  padding: 16px 24px !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+/* Right Corner Total NPR 600.00 Display */
+
+/* Target the specific Total NPR display in the right corner */
+[class*="total"],
+.total-box {
+  background-color: #FFA000 !important; /* Orange-yellow */
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+}
+
+/* Create alternate selectors that work in Next.js for the Total display */
+.flex.justify-between.text-lg.font-bold.text-primary,
+.flex.justify-between.text-lg.font-bold {
+  background-color: transparent !important;
+}
+
+/* The specific Total label in the right corner */
+[class*="NPR"],
+[class*="total"] span:last-child {
+  background-color: #FFA000 !important; /* Orange-yellow */
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+}
+
+/* Add more generic selector for top-right display */
+div[class*="sticky"] span[class*="NPR"] {
+  background-color: #FFA000 !important;
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important; 
+  font-weight: bold !important;
+  display: inline-block !important;
+}

@@ -84,11 +84,40 @@ function OrderSummaryContent() {
     <div className="flex flex-col h-full">
       {/* Sticky footer to ensure it's always visible */}
       <div className="sticky bottom-0 z-10 bg-card p-4 border-t shadow-md">
-        <div className="flex justify-between text-lg font-bold text-primary mb-2">
-          <span>Total</span>
-          <span>{settings?.currency || 'NPR'} {total.toFixed(2)}</span>
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-base font-medium">Total</span>
+          <span 
+            className="total-display"
+            data-totalDisplay="true"
+            style={{
+              backgroundColor: '#FFC107', 
+              color: '#333',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontWeight: '600',
+              fontSize: '14px',
+              display: 'inline-block'
+            }}
+          >
+            {settings?.currency || 'NPR'} {total.toFixed(2)}
+          </span>
         </div>
-        <Button className="w-full mt-2" size="lg" onClick={handlePlaceOrder} disabled={!tableNumber || actualOrder.length === 0}>
+        <Button 
+          className="w-full submit-button" 
+          size="default" 
+          onClick={handlePlaceOrder} 
+          disabled={!tableNumber || actualOrder.length === 0}
+          style={{ 
+            backgroundColor: '#F59E0B',
+            color: 'white',
+            borderRadius: '6px', 
+            fontWeight: '500',
+            padding: '8px 16px',
+            fontSize: '14px',
+            height: 'auto'
+          }}
+          data-submitOrder="true"
+        >
           Submit Order for Confirmation
         </Button>
       </div>
@@ -104,10 +133,37 @@ function OrderSummaryContent() {
           ) : (
             actualOrder.map(item => (
               <div key={item.id} className="flex items-center gap-4 border-b pb-2 last:border-b-0">
-                <Image src={item.image} alt={item.name} width={50} height={50} className="rounded-md object-cover" />
+                <Image 
+                  src={item.image} 
+                  alt={item.name} 
+                  width={60} 
+                  height={60} 
+                  className="rounded-md object-cover" 
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '8px',
+                    objectFit: 'cover'
+                  }}
+                />
                 <div className="flex-1">
-                  <p className="font-semibold">{item.name}</p>
-                  <p className="text-sm text-primary font-medium">{settings?.currency || 'NPR'} {item.price.toFixed(2)}</p>
+                  <p className="font-semibold" style={{ fontWeight: 600, fontSize: '16px', marginBottom: '4px' }}>
+                    {item.name}
+                  </p>
+                  <p 
+                    className="price-tag"
+                    style={{
+                      backgroundColor: '#FFC107',
+                      color: '#333',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      display: 'inline-block',
+                      fontWeight: '500',
+                      fontSize: '13px'
+                    }}
+                  >
+                    {settings?.currency || 'NPR'} {item.price.toFixed(0)}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button 

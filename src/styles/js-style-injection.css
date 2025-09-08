@@ -1,0 +1,27 @@
+/* JavaScript style injection for the Total NPR display */
+
+/* Add a script to directly apply styles to the elements we want to target */
+:root {
+  --js-styles-loaded: "true";
+}
+
+/* The styles will be applied via script in layout.tsx */
+.total-display-js-applied {
+  background-color: #FFA000 !important;
+  color: white !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+.submit-button-js-applied {
+  background-color: #FF9800 !important;
+  color: white !important;
+  border-radius: 50px !important;
+  padding: 16px !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}

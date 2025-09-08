@@ -1,0 +1,178 @@
+/* This file targets pill-shaped status buttons */
+
+/* Target by general shape and appearance */
+[class*="badge"],
+[class*="rounded-full"],
+[class*="px-2"],
+[class*="py-0"],
+div[class*="rounded-full"] {
+  /* Use CSS variables for color management */
+  background-color: var(--badge-bg-color, inherit);
+  color: var(--badge-text-color, inherit);
+  border-color: var(--badge-border-color, inherit);
+}
+
+/* Colors for Available status */
+div.badge.capitalize[data-status="available"] {
+  --badge-bg-color: #597E52 !important;
+  --badge-text-color: white !important;
+  --badge-border-color: #597E52 !important;
+  background-color: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Colors for Occupied status */
+div.badge.capitalize[data-status="occupied"] {
+  --badge-bg-color: #ff9800 !important;
+  --badge-text-color: white !important;
+  --badge-border-color: #ff9800 !important;
+  background-color: #ff9800 !important;
+  color: white !important;
+  border-color: #ff9800 !important;
+}
+/* Override styles specifically for the yellow "Available" buttons */
+
+.badge.capitalize {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Force Available button to be green (#597E52) */
+/* Use attribute selectors and class combinations instead of :has and :contains */
+[data-status="available"],
+.badge.capitalize,
+.Available,
+.available {
+  background-color: #597E52 !important;
+  background: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Override for table cards specifically */
+[class*="card"] .badge.capitalize {
+  background-color: #597E52 !important;
+  background: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Specifically target the Available button in the table management UI */
+div[class*="Available"],
+span[class*="Available"],
+div.Available,
+span.Available {
+  background-color: #597E52 !important;
+  background: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+/* Enhanced Button and Price Display Styles */
+
+/* Price display styling - Light Yellow background for Rs 600 prices */
+.text-primary,
+p.text-lg.font-bold.text-primary,
+div.text-lg.font-bold.text-primary {
+  display: inline-block;
+  background-color: #FFF176; /* Light yellow */
+  color: #333 !important;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Menu item price tags - specifically target price display in menu cards */
+.card .p-4.flex.justify-between.items-center p.text-lg.font-bold.text-primary {
+  background-color: #FFF176; /* Light yellow */
+  color: #333 !important;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Add button styling - Matching "BUY NOW" style */
+button[title="Add to order"] {
+  background-color: #1E88E5 !important; /* Blue color from BUY NOW button */
+  color: white !important;
+  border-color: #1E88E5 !important;
+  border-radius: 50px !important; /* Pill shape */
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  font-weight: 500 !important;
+}
+
+/* Target "In Stock" badges with specific class attributes */
+.absolute.top-2.right-2[class*="bg-green"] {
+  background-color: #4CAF50 !important; /* Green */
+  color: white !important;
+  border-color: #4CAF50 !important;
+  border-radius: 50px !important;
+}
+
+/* Additional styling for price display elements specifically for Rs tags */
+[class*="card"] [class*="footer"] p.text-lg.font-bold {
+  background-color: #FFF176 !important; /* Light yellow */
+  color: #333 !important;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Style all "Add" buttons in the application */
+button:where([class*="card"]) {
+  background-color: #1E88E5 !important; /* Blue color from BUY NOW button */
+  color: white !important;
+  border-color: #1E88E5 !important;
+  border-radius: 50px !important; /* Pill shape */
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  font-weight: 500 !important;
+}
+
+/* Style "In Stock" button display for menu items */
+[class*="stock"] {
+  border-radius: 50px !important;
+}
+/* Custom button styles for the OrderChha application */
+
+/* Available button styling - extremely high specificity */
+.Available, 
+[class*="Available"],
+button.Available,
+div.Available,
+span.Available,
+button.available,
+[data-status="available"],
+button[data-status="available"],
+div[data-status="available"],
+span.available,
+div[class*="available"],
+span[class*="available"],
+*[class*="available"] {
+  background-color: #597E52 !important; 
+  background: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Override for the Available badge in dark mode */
+.dark .Available,
+.dark button.available,
+.dark [data-status="available"],
+.dark button[data-status="available"],
+.dark div[data-status="available"] {
+  background-color: #597E52 !important;
+  background: #597E52 !important;
+  color: white !important;
+  border-color: #597E52 !important;
+}
+
+/* Direct override for the orange/yellow Available buttons seen in the interface */
+[class*="Available"][class*="bg-"],
+[class*="available"][class*="bg-"] {
+  background-color: #597E52 !important;
+  background: #597E52 !important;
+}

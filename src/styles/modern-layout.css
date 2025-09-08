@@ -686,6 +686,27 @@ button[class*="available"] {
   border-color: #597E52 !important;
 }
 
+/* Styles for the Order Panel in sidebar */
+.total-display,
+span[class*="NPR"],
+[data-totalDisplay="true"] {
+  background-color: #FF9800 !important;
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 30px !important;
+  font-weight: bold !important;
+}
+
+/* Order submit button */
+.submit-button,
+button[data-submitOrder="true"] {
+  background-color: #FF9800 !important;
+  color: white !important;
+  text-transform: uppercase !important;
+  border-radius: 50px !important;
+  font-weight: bold !important;
+}
+
 /* Responsive utilities */
 .mobile-only {
   display: block;

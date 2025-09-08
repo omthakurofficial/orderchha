@@ -1,0 +1,89 @@
+/* Food Menu Item Styling */
+
+/* Style the price badges for menu items with light yellow background */
+p.text-lg.font-bold.text-primary {
+  background-color: #FFF176 !important; /* Light yellow */
+  color: #333 !important;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Style the Add buttons in menu items to match the BUY NOW reference button */
+button:where([title="Add to order"]) {
+  background-color: #1E88E5 !important; /* Blue color like BUY NOW */
+  color: white !important;
+  border-color: #1E88E5 !important;
+  border-radius: 50px !important; /* Rounded pill shape */
+  padding: 0.5rem 1rem !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+/* In Stock badge styling */
+.badge[class*="bg-green"] {
+  background-color: #4CAF50 !important; /* Green */
+  color: white !important;
+  border-color: #4CAF50 !important;
+  border-radius: 50px !important;
+}
+
+/* Style the "Rs 600.00" text in the order summary */
+.flex.justify-between.text-lg.font-bold.text-primary {
+  background-color: transparent;
+}
+
+.flex.justify-between.text-lg.font-bold.text-primary span:last-child {
+  background-color: #FFF176 !important; /* Light yellow */
+  color: #333 !important;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Make all buttons rounded like in the reference image */
+button:not([data-state]) {
+  border-radius: 50px !important;
+}
+
+/* BOOK NOW button styling from reference */
+button:where([class*="book"]) {
+  background-color: #FF9800 !important; /* Orange */
+  color: white !important;
+  border-color: #FF9800 !important;
+  border-radius: 50px !important;
+}
+
+/* READ MORE button styling from reference */
+button:where([class*="read"]) {
+  background-color: #FFEB3B !important; /* Yellow */
+  color: #333 !important;
+  border-color: #FFEB3B !important;
+  border-radius: 50px !important;
+}
+
+/* LEARN MORE button styling from reference */
+button:where([class*="learn"]) {
+  background-color: #F44336 !important; /* Red */
+  color: white !important;
+  border-color: #F44336 !important;
+  border-radius: 50px !important;
+}
+
+/* DOWNLOAD button styling from reference */
+button:where([class*="download"]) {
+  background-color: #4CAF50 !important; /* Green */
+  color: white !important;
+  border-color: #4CAF50 !important;
+  border-radius: 50px !important;
+}
+
+/* WATCH NOW button styling from reference */
+button:where([class*="watch"]) {
+  background-color: #9C27B0 !important; /* Purple */
+  color: white !important;
+  border-color: #9C27B0 !important;
+  border-radius: 50px !important;
+}

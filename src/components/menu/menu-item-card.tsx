@@ -75,13 +75,15 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
         <p className="text-sm text-muted-foreground">{item.description}</p>
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
-        <p className="text-lg font-bold text-primary">{formatCurrency(item.price, settings?.currency)}</p>
+        <p className="text-lg font-bold text-primary price-tag">{formatCurrency(item.price, settings?.currency)}</p>
         <Button 
           disabled={!isOrderable} 
           onClick={handleAddItem}
           title={getDisabledTooltip()}
+          className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-4"
+          style={{ backgroundColor: '#1E88E5', borderRadius: '50px' }}
         >
-          <PlusCircle />
+          <PlusCircle className="mr-1 h-4 w-4" />
           Add
         </Button>
       </CardFooter>

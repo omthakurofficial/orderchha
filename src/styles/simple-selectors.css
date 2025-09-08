@@ -1,0 +1,37 @@
+/* Direct selectors for Total NPR display and Submit button */
+
+/* Target the Total NPR display directly with a dedicated class */
+.total-display {
+  background-color: #FFA000 !important;
+  color: white !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+}
+
+/* Target the Submit Order button directly */
+.submit-button {
+  background-color: #FF9800 !important;
+  color: white !important;
+  border-radius: 50px !important;
+  padding: 16px 24px !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Hover effect for the Submit Order button */
+.submit-button:hover:not(:disabled) {
+  background-color: #F57C00 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.25) !important;
+}
+
+/* Disabled state for the Submit Order button */
+.submit-button:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}

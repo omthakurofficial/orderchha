@@ -2,17 +2,19 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import '../styles/modern-layout.css';
-import '../styles/custom-button-fixes.css';
-import '../styles/button-overrides.css';
 import '../styles/direct-overrides.css';
 import '../styles/emergency-fix.css';
-import '../styles/badge-fix.css';
 import '../styles/final-fix.css';
 import '../styles/css-reset.css';
 import '../styles/available-pills-fix.css';
 import '../styles/green-available-hack.css';
-import '../styles/pill-buttons.css';
-import '../styles/final-badge-fix.css';
+import '../styles/food-menu-style.css';
+import '../styles/js-style-injection.css';
+import '../styles/simple-selectors.css';
+import '../styles/consolidated-badge-styles.css';
+import '../styles/consolidated-button-styles.css';
+import '../styles/consolidated-order-styles.css';
+import '../styles/consolidated-total-display-styles.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppProvider } from '@/context/app-context';
 import { NotificationProvider } from '@/context/notification-context';
@@ -151,6 +153,31 @@ export default function RootLayout({
                     contentArea.style.paddingBottom = '40px';
                   }
                 }
+                
+                // Style the Total NPR display
+                const totalDisplays = document.querySelectorAll('.total-display, [data-totalDisplay="true"]');
+                totalDisplays.forEach(display => {
+                  display.style.backgroundColor = '#FFA000';
+                  display.style.color = 'white';
+                  display.style.padding = '8px 14px';
+                  display.style.borderRadius = '8px';
+                  display.style.fontWeight = 'bold';
+                  display.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)';
+                  display.classList.add('total-display-js-applied');
+                });
+                
+                // Style the Submit Order button
+                const submitButtons = document.querySelectorAll('.submit-button, [data-submitOrder="true"]');
+                submitButtons.forEach(button => {
+                  button.style.backgroundColor = '#FF9800';
+                  button.style.color = 'white';
+                  button.style.borderRadius = '50px';
+                  button.style.fontWeight = 'bold';
+                  button.style.textTransform = 'uppercase';
+                  button.style.letterSpacing = '0.5px';
+                  button.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                  button.classList.add('submit-button-js-applied');
+                });
               }
               
               // Run on load and viewport changes
@@ -161,6 +188,67 @@ export default function RootLayout({
               
               // Run periodically to catch any issues with dynamic content
               setInterval(ensureFootersVisible, 1000);
+              
+              // Additional script to style the Total NPR display and Submit button
+              function applySpecificStyles() {
+                // Target Total NPR display 
+                document.querySelectorAll('.total-display, [data-totalDisplay="true"], .flex.justify-between span:last-child').forEach(el => {
+                  // Check if the element contains NPR or currency text
+                  if (el.textContent && (el.textContent.includes('NPR') || el.textContent.includes('Rs'))) {
+                    el.style.backgroundColor = '#FF9800';
+                    el.style.color = 'white';
+                    el.style.padding = '8px 14px';
+                    el.style.borderRadius = '30px';
+                    el.style.fontWeight = 'bold';
+                    el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)';
+                    el.classList.add('js-total-display');
+                  }
+                });
+                
+                // Target Submit Order button
+                document.querySelectorAll('.submit-button, [data-submitOrder="true"], button').forEach(el => {
+                  // Check if the button contains Submit Order text
+                  if (el.textContent && el.textContent.toUpperCase().includes('SUBMIT ORDER')) {
+                    el.style.backgroundColor = '#FF9800';
+                    el.style.color = 'white';
+                    el.style.borderRadius = '50px';
+                    el.style.padding = '16px 24px';
+                    el.style.fontWeight = 'bold';
+                    el.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                    el.style.textTransform = 'uppercase';
+                    el.style.letterSpacing = '0.5px';
+                    el.classList.add('js-submit-button');
+                    
+                    // Make sure text is uppercase
+                    if (el.textContent !== el.textContent.toUpperCase()) {
+                      el.textContent = el.textContent.toUpperCase();
+                    }
+                  }
+                });
+              }
+              
+              // Run the styling function when content changes
+              const stylesObserver = new MutationObserver(() => {
+                applySpecificStyles();
+              });
+              
+              if (document.body) {
+                stylesObserver.observe(document.body, { childList: true, subtree: true });
+              } else {
+                document.addEventListener('DOMContentLoaded', () => {
+                  stylesObserver.observe(document.body, { childList: true, subtree: true });
+                });
+              }
+              
+              // Run immediately and periodically
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', applySpecificStyles);
+              } else {
+                applySpecificStyles();
+              }
+              
+              // Ensure styles are applied periodically
+              setInterval(applySpecificStyles, 1000);
             })();
           `
         }} />
