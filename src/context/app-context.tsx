@@ -1,9 +1,8 @@
-// HYBRID MIGRATION: Real Appwrite Auth + Real Supabase Database
+// Supabase Auth + Supabase Database
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { auth } from '@/lib/appwrite';
-import { db } from '@/lib/supabase';
+import { auth, db } from '@/lib/supabase';
 import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
 import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
@@ -79,7 +78,7 @@ const initialSettings: Settings = {
 };
 
 const initialAdminUser: User = {
-  uid: 'appwrite-admin-001',
+  uid: 'supabase-admin-001',
   email: 'admin@orderchha.cafe',
   name: 'Admin',
   role: 'admin',
@@ -146,7 +145,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
 
-  // Initialize with real Appwrite auth and load database data
+  const mapSupabaseUserToAppUser = useCallback((user: any): User => {
+    const metadata = user?.user_metadata || {};
+    const email = user?.email || '';
+    const name = metadata.name || user?.email?.split('@')[0] || 'User';
+    const role = metadata.role || (email === 'admin@orderchha.cafe' ? 'admin' : 'staff');
+
+    return {
+      uid: user?.id || email || 'unknown-user',
+      email,
+      name,
+      role,
+      designation: metadata.designation || (role === 'admin' ? 'Super Admin' : 'Staff'),
+      joiningDate: user?.created_at || new Date().toISOString(),
+      photoUrl: metadata.photoUrl || metadata.avatar_url || 'https://placehold.co/100x100.png',
+      mobile: metadata.mobile,
+      address: metadata.address,
+    };
+  }, []);
+
+  // Initialize with Supabase Auth and load database data
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -180,17 +198,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         if (currentSession) {
           console.log('✅ Found existing session for:', currentSession.email);
-          setCurrentUser({
-            uid: currentSession.$id,
-            name: currentSession.name || currentSession.email.split('@')[0],
-            email: currentSession.email,
-            role: 'admin', // Default role, should be from database
-            photoUrl: '',
-          });
+          setCurrentUser(mapSupabaseUserToAppUser(currentSession));
           
           toast({
             title: "👋 Welcome Back",
-            description: `Logged in as ${currentSession.name || currentSession.email}`,
+            description: `Logged in as ${currentSession.email}`,
           });
         } else {
           console.log('ℹ️ No existing session found');
@@ -214,6 +226,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsLoaded(true);
       }
     };
+
+    const unsubscribe = auth.onAuthStateChange((user) => {
+      if (user) {
+        setCurrentUser(mapSupabaseUserToAppUser(user));
+      } else {
+        setCurrentUser(null);
+      }
+    });
 
     const loadDatabaseData = async () => {
       try {
@@ -414,36 +434,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('orderchha-order');
       }
     }
-  }, [toast]);
+    
+    return () => unsubscribe();
+  }, [mapSupabaseUserToAppUser, toast]);
 
-  // Real Appwrite sign in
+  // Supabase sign in
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('🔄 Signing in with Appwrite...');
-      const session = await auth.signIn(email, password);
+      console.log('🔄 Signing in with Supabase Auth...');
+      await auth.signIn(email, password);
       const user = await auth.getCurrentUser();
       
       if (user) {
-        const userData: User = {
-          uid: user.$id,
-          email: user.email,
-          name: user.name || 'User',
-          role: user.email === 'admin@orderchha.cafe' ? 'admin' : 'staff',
-          designation: user.email === 'admin@orderchha.cafe' ? 'Super Admin' : 'Staff',
-          joiningDate: user.$createdAt,
-          photoUrl: 'https://placehold.co/100x100.png',
-        };
-        
+        const userData = mapSupabaseUserToAppUser(user);
+
         setCurrentUser(userData);
-        console.log('✅ Appwrite sign in successful:', user.email);
+        console.log('✅ Supabase sign in successful:', user.email);
         
         toast({
           title: "✅ Sign In Successful!",
-          description: `Welcome, ${user.name || user.email}`,
+          description: `Welcome, ${user.email}`,
         });
       }
     } catch (error: any) {
-      console.error('❌ Appwrite sign in failed:', error);
+      console.error('❌ Supabase sign in failed:', error);
       toast({
         title: "❌ Sign In Failed",
         description: error.message || "Please check your credentials",
@@ -453,19 +467,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Smart sign out (handles both real Appwrite users and demo mode)
+  // Smart sign out (handles real Supabase users and demo mode)
   const signOut = async () => {
     try {
       console.log('🔄 Signing out...');
       
-      // Check if user is actually signed in to Appwrite
-      const currentAppwriteUser = await auth.getCurrentUser();
+      // Check if user is actually signed in to Supabase
+      const currentAuthUser = await auth.getCurrentUser();
       
-      if (currentAppwriteUser) {
-        // Real Appwrite user - sign out from Appwrite
-        console.log('🔄 Signing out from Appwrite...');
+      if (currentAuthUser) {
+        // Real Supabase user - sign out from Supabase
+        console.log('🔄 Signing out from Supabase Auth...');
         await auth.signOut();
-        console.log('✅ Appwrite sign out successful');
+        console.log('✅ Supabase sign out successful');
       } else {
         // Demo mode user - just local sign out
         console.log('ℹ️ Signing out from demo mode');
@@ -481,7 +495,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('❌ Sign out failed:', error);
       
-      // Even if Appwrite sign out fails, we can still do local sign out
+      // Even if remote sign out fails, we can still do local sign out
       setCurrentUser(null);
       
       toast({
@@ -1271,13 +1285,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // User management (simplified for now)
   const addUser = async (userData: UserFormData, photoFile: File | null) => {
-    // TODO: Implement with real Appwrite user creation
-    console.log('TODO: Implement real user creation with Appwrite');
+    const newUser: User = {
+      uid: userData.email || Date.now().toString(),
+      email: userData.email,
+      name: userData.name,
+      role: userData.role,
+      designation: userData.designation,
+      joiningDate: userData.joiningDate || new Date().toISOString(),
+      photoUrl: photoFile ? URL.createObjectURL(photoFile) : 'https://placehold.co/100x100.png',
+      mobile: userData.mobile,
+      address: userData.address,
+      country: userData.country,
+      nationality: userData.nationality,
+      employeeId: userData.employeeId,
+      department: userData.department,
+      salary: userData.salary,
+      dateOfBirth: userData.dateOfBirth,
+      bloodGroup: userData.bloodGroup,
+      nationalId: userData.nationalId,
+      taxId: userData.taxId,
+      passportNumber: userData.passportNumber,
+      drivingLicense: userData.drivingLicense,
+      bankName: userData.bankName,
+      accountNumber: userData.accountNumber,
+      routingNumber: userData.routingNumber,
+      accountType: userData.accountType,
+      bankBranch: userData.bankBranch,
+      highestEducation: userData.highestEducation,
+      instituteName: userData.instituteName,
+      graduationYear: userData.graduationYear,
+      specialization: userData.specialization,
+      additionalCertifications: userData.additionalCertifications,
+      previousExperience: userData.previousExperience,
+      skills: userData.skills,
+      languagesSpoken: userData.languagesSpoken,
+      maritalStatus: userData.maritalStatus,
+      religion: userData.religion,
+      notes: userData.notes,
+      isCustomer: Boolean((userData as any).isCustomer),
+    };
+
+    setUsers(prev => [...prev, newUser]);
+
+    toast({
+      title: 'User Added',
+      description: `${userData.name} was added to the local staff list.`,
+    });
   };
 
   const updateUserRole = async (uid: string, role: User['role']) => {
-    // TODO: Implement with real Appwrite user update
-    console.log('TODO: Implement real user role update');
+    setUsers(prev => prev.map(user => user.uid === uid ? { ...user, role } : user));
   };
 
   const updateUserProfile = async (userData: Partial<UserFormData>, photoFile: File | null) => {
@@ -1292,8 +1349,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         };
         setCurrentUser(updatedUser);
         
-        // TODO: Implement with real Appwrite user update and photo upload to cloud storage
-        console.log('TODO: Implement real user profile update with Appwrite', { userData, photoFile });
+        console.log('Updating profile locally with Supabase Auth user state', { userData, photoFile });
         
         // For now, just update locally
         localStorage.setItem('orderchha-current-user', JSON.stringify(updatedUser));
@@ -1305,8 +1361,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteUser = async (uid: string) => {
-    // TODO: Implement with real Appwrite user deletion
-    console.log('TODO: Implement real user deletion');
+    setUsers(prev => prev.filter(user => user.uid !== uid));
   };
 
   // Inventory management (simplified for now)

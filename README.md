@@ -8,7 +8,7 @@ Orderchha is a point-of-sale / restaurant management web application built with 
 - Framework: Next.js (app router)
 - UI: React 18 + Tailwind CSS
 - Database: Supabase (PostgreSQL)
-- Authentication: Appwrite
+- Authentication: Supabase Auth
 - Other notable libraries: GenKit (AI helpers), Radix UI, react-hook-form, date-fns
 
 The project was scaffolded as a Next.js app and contains both frontend pages and Supabase client wiring under `src/lib/supabase.ts`.
@@ -18,7 +18,7 @@ The project was scaffolded as a Next.js app and contains both frontend pages and
 - `src/app` — Next.js app routes and pages (app router)
 - `src/components` — UI components grouped by feature
 - `src/lib/supabase.ts` — Supabase initialization and database helpers
-- `src/lib/appwrite.ts` — Appwrite authentication service
+- `src/lib/supabase.ts` — Supabase database and authentication helpers
 - `package.json` — scripts and dependency list
 - `next.config.ts` — Next configuration (images, typescript/eslint settings)
 
@@ -30,7 +30,7 @@ The project was scaffolded as a Next.js app and contains both frontend pages and
 npm install
 ```
 
-2. Create a local environment file `.env.local` at the project root and add your Supabase and Appwrite credentials:
+2. Create a local environment file `.env.local` at the project root and add your Supabase credentials:
 
 Example `.env.local`:
 
@@ -39,12 +39,12 @@ Example `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# Appwrite credentials
-NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
-NEXT_PUBLIC_APPWRITE_PROJECT_ID=your-project-id
+# Supabase auth uses the same project credentials as data access
 ```
 
-3. Set up the database by running the SQL scripts in the `/sql` directory or use the complete schema in `supabase-schema.sql`.
+3. Set up the database by running these scripts in order:
+   - `sql/01-core-schema.sql`
+   - `sql/02-seed-demo-data.sql`
 
 4. Start dev server:
 
@@ -75,9 +75,7 @@ Note: `next start` will run the built Next.js server.
 
 ## Environment variables
 
-- `NEXT_PUBLIC_FIREBASE_CONFIG` (required) — stringified Firebase config JSON used by `src/lib/firebase.ts`.
-
-You may add other environment variables as needed by your own Firebase project or third-party integrations.
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` for both data access and authentication.
 
 ## Deploying
 
@@ -88,7 +86,10 @@ Vercel (recommended)
 1. Push this repository to GitHub/GitLab/Bitbucket.
 2. In Vercel, import the repository and follow the prompts.
 3. In the Vercel project settings, set environment variables (Production and Preview):
-   - `NEXT_PUBLIC_FIREBASE_CONFIG` — same stringified JSON as your `.env.local`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 4. Build & Output settings (Vercel usually detects Next.js automatically):
    - Build command: `npm run build`
    - Output directory: leave default (Vercel will handle Next)
@@ -117,52 +118,23 @@ Or use the included deployment script:
 
 ```bash
 ./deploy.sh vercel
-```Firebase Hosting (alternative)
-
-You can host a static export of this app with Firebase Hosting. WARNING: a static export with `next export` will not support server-side rendering or API routes from Next's app router. Only use this if your app does not rely on SSR or dynamic server functions.
-
-Static export steps (limited feature set):
-
-```bash
-# 1. Build and export
-npm run build
-npx next export -o out
-
-# 2. Initialize Firebase hosting (if you haven't already)
-npx firebase init hosting
-
-# 3. Set the public directory to `out` in firebase.json and deploy
-npx firebase deploy --only hosting
 ```
 
-Or use the included deployment script:
-
-```bash
-./deploy.sh firebase
-```
-
-If you need full Next.js runtime on Firebase, you'll need a more advanced setup (Cloud Run or Functions with a custom server). For production-grade Next.js with SSR, prefer Vercel.
-
-## How to get your Firebase config
-
-1. Go to the Firebase Console -> Project Settings -> Your apps -> Firebase SDK snippet -> Config.
-2. Copy the config object and paste it into `NEXT_PUBLIC_FIREBASE_CONFIG` as a single-line JSON string (see `.env.local` example above).
+For this repo, Vercel is the recommended deployment target.
 
 ## Notes and caveats
 
-- `src/lib/firebase.ts` expects `NEXT_PUBLIC_FIREBASE_CONFIG` to be present at runtime — the app throws if it is missing.
 - `next.config.ts` currently sets `typescript.ignoreBuildErrors: true` and `eslint.ignoreDuringBuilds: true`. That means the build will succeed even with type or lint errors — consider changing for CI.
 - The project uses Next 15 and React 18.
 
 ## Troubleshooting
 
-- If Firebase complains about invalid config, verify the JSON string in `.env.local` is valid and properly quoted.
 - If you get routing or 404 problems on static export, it likely means your app requires SSR or dynamic routes. Use Vercel for full Next support.
 
 ## Where to start reading the code
 
 - `src/app/page.tsx` — top-level entry for the app
-- `src/lib/firebase.ts` — Firebase initialization and usage
+- `src/lib/supabase.ts` — Supabase database and authentication helpers
 - `src/components` — reusable components grouped by feature
 
 ## Contribution
@@ -182,8 +154,8 @@ This project includes GitHub Actions workflows for continuous integration and de
 2. **Deploy to Vercel** - Automatically deploys to Vercel on push to `master`
    - Requires `VERCEL_TOKEN` secret to be set in GitHub repository settings
 
-3. **Deploy to Firebase** - Can deploy to Firebase Hosting on push to `master`
-   - Requires `FIREBASE_SERVICE_ACCOUNT` and `FIREBASE_PROJECT_ID` secrets in GitHub repository settings
+3. **Deploy to Vercel** - Deploys the Next.js app on push to `master`
+   - Requires `VERCEL_TOKEN` secret in GitHub repository settings
 
 To use these workflows, you need to:
 1. Set up the required secrets in your GitHub repository settings
@@ -195,6 +167,5 @@ If you'd like, I can also:
 
 - add a sample `.env.local.example` with a template
 - add a `vercel.json` with recommended settings
-- prepare a Firebase `firebase.json` for static hosting
 
 Tell me which of those you'd like me to add next.

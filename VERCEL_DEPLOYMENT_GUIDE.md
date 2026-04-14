@@ -21,14 +21,10 @@ Create these environment variables in your Vercel dashboard:
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# 🔐 APPWRITE CONFIGURATION  
-NEXT_PUBLIC_APPWRITE_ENDPOINT=your_appwrite_endpoint
-NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_appwrite_project_id
-
 # 🏗️ BUILD CONFIGURATION
 NODE_ENV=production
 NEXT_PUBLIC_NODE_ENV=production
-```
+  ```bash
 
 ### **2. Deploy to Vercel** 🚀
 
@@ -61,14 +57,14 @@ After successful deployment:
 #### **A. Update Supabase URL Allowlist**
 - Go to Supabase → Settings → API
 - Add your Vercel domain to **Site URL**:
-  ```
+  ```bash
   https://your-app-name.vercel.app
   ```
 
-#### **B. Update Appwrite Domain** 
-- Go to Appwrite Console → Settings
-- Add your Vercel domain to **Platforms**:
-  ```
+#### **B. Update Supabase Auth Settings**
+- Go to Supabase Console → Authentication → URL Configuration
+- Add your Vercel domain to **Site URL** and **Redirect URLs**:
+  ```bash
   https://your-app-name.vercel.app
   ```
 
@@ -129,7 +125,7 @@ After deployment, verify these work:
 
 ### **Issue 2: CORS Errors**
 - **Problem**: API requests fail
-- **Fix**: Add Vercel domain to Supabase/Appwrite allowlists
+- **Fix**: Add Vercel domain to Supabase allowlists
 
 ### **Issue 3: Build Warnings**
 - **Problem**: Genkit/OpenTelemetry warnings (non-critical)

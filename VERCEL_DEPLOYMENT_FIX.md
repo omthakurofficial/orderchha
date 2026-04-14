@@ -13,16 +13,15 @@
 Go to your Vercel dashboard → Project Settings → Environment Variables and add:
 
 ```bash
-NEXT_PUBLIC_APPWRITE_URL=https://cloud.appwrite.io/v1
-NEXT_PUBLIC_APPWRITE_PROJECT_ID=orderchha-app
-MONGODB_URI=mongodb+srv://omthakurcloudengineer:POqBpMotyOmoFtzg@orderchha-cluster.hwb
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 **Important**: Make sure to set these for ALL environments (Production, Preview, Development)
 
-### 2. Update Appwrite Project Settings
+### 2. Update Supabase Project Settings
 
-In your Appwrite dashboard (https://cloud.appwrite.io):
+In your Supabase dashboard:
 
 1. Go to your project "orderchha-app"
 2. Navigate to Settings → Platforms
@@ -52,7 +51,7 @@ If issues persist, check:
 
 1. **Browser Console**: Look for CORS errors or missing env vars
 2. **Vercel Function Logs**: Check for server-side errors
-3. **Network Tab**: Check if API calls to Appwrite are failing
+3. **Network Tab**: Check if API calls to Supabase are failing
 
 ## 🔧 Quick Test Commands:
 
@@ -71,8 +70,8 @@ Add this debugging code to your production app:
 
 ```javascript
 console.log('Production Debug:', {
-  appwriteUrl: process.env.NEXT_PUBLIC_APPWRITE_URL,
-  appwriteProjectId: process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID,
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   nodeEnv: process.env.NODE_ENV
 });
 ```
@@ -84,8 +83,8 @@ console.log('Production Debug:', {
 - **Check**: Vercel dashboard for deployment status
 
 ### Issue: Sign in/out not working on Vercel
-- **Solution**: Ensure Appwrite platform settings include your Vercel domain
-- **Check**: Appwrite console → Settings → Platforms
+- **Solution**: Ensure Supabase auth settings include your Vercel domain
+- **Check**: Supabase console → Authentication → URL Configuration
 
 ### Issue: Environment variables undefined
 - **Solution**: Set env vars in Vercel dashboard and redeploy
@@ -96,7 +95,7 @@ console.log('Production Debug:', {
 ```bash
 # Re-link and deploy
 npx vercel link
-npx vercel env add NEXT_PUBLIC_APPWRITE_URL
-npx vercel env add NEXT_PUBLIC_APPWRITE_PROJECT_ID
+npx vercel env add NEXT_PUBLIC_SUPABASE_URL
+npx vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
 npx vercel --prod
 ```

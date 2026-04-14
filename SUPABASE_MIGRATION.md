@@ -2,7 +2,7 @@
 
 ## Changes Made
 
-We've simplified the OrderChha application to use only Supabase as its database backend, removing the hybrid database model that included Firebase fallback. Here's a summary of the changes:
+This guide documents the move to a Supabase-only stack for persistent data across sessions.
 
 1. **Removed Hybrid Context**:
    - The application now uses only the Supabase context provider (`app-context-supabase.tsx`)
@@ -15,48 +15,37 @@ We've simplified the OrderChha application to use only Supabase as its database 
    - Created a new database debug page at `/debug/database`
    - Focused on displaying Supabase connection status
 
-4. **Created Cleanup Script**:
-   - Created `clean-firebase.sh` to remove all Firebase-related files and code
-   - This script removes:
-     - Firebase bridge files
-     - Hybrid context file
-     - Firebase test API
-     - Hybrid database debug page
-     - Firebase documentation
+4. **Removed legacy auth dependencies**:
+   - The application now uses Supabase Auth and Supabase data access only.
 
-5. **Updated Documentation**:
+5. **Updated root layout and context**:
+   - The app provider and auth flow now resolve through the Supabase client.
+
+6. **Kept the Supabase debug path**:
+   - Use `/debug/database` and `/api/test-supabase` to verify connectivity.
+
+7. **Updated Documentation**:
    - Updated `TROUBLESHOOTING.md` to focus on Supabase connection issues
    - Updated `README.md` to reflect the new architecture
 
 ## Running the Application
 
 1. Ensure your Supabase environment variables are set correctly:
-   ```
+   ```bash
    NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
    ```
 
-2. Make sure your Appwrite environment variables are set for authentication:
-   ```
-   NEXT_PUBLIC_APPWRITE_ENDPOINT=your-appwrite-endpoint
-   NEXT_PUBLIC_APPWRITE_PROJECT_ID=your-appwrite-project-id
-   ```
-
-3. Start the application:
-   ```
+2. Start the application:
+   ```bash
    npm run dev
    ```
 
-4. Test the database connection:
+3. Test the database connection:
    - Visit `/debug/database` to check Supabase connection status
    - Visit `/api/test-supabase` to directly test the API connection
 
-## Complete Cleanup
+## Notes
 
-To complete the cleanup of Firebase-related code and fully migrate to a Supabase-only architecture, run:
-
-```bash
-./clean-firebase.sh
-```
-
-This script will remove all Firebase-related files and code from the project.
+Keep the SQL setup limited to the two canonical files in `sql/`.
+Do not combine older SQL scripts with the canonical pair.

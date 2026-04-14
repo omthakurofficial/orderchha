@@ -15,8 +15,6 @@ export default function DiagnosticPage() {
   const diagnosticInfo = {
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'MISSING',
     supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET (hidden)' : 'MISSING',
-    appwriteUrl: process.env.NEXT_PUBLIC_APPWRITE_URL || 'MISSING',
-    appwriteProjectId: process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ? 'SET (hidden)' : 'MISSING',
     nodeEnv: process.env.NODE_ENV || 'unknown',
     timestamp: new Date().toISOString(),
     domain: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
@@ -36,37 +34,18 @@ export default function DiagnosticPage() {
     }
   }
   
-  async function checkAppwrite() {
-    try {
-      const response = await fetch('/api/debug/check-appwrite', {
-        method: 'GET', 
-      });
-      const result = await response.json();
-      return { appwrite: result };
-    } catch (error: any) {
-      console.error('Appwrite check failed:', error);
-      return { appwrite: { error: error.message || 'Failed to connect to Appwrite' } };
-    }
-  }
-  
   async function runAllChecks() {
     setIsLoading(true);
     setEnvironmentChecks({
-      NEXT_PUBLIC_APPWRITE_URL: process.env.NEXT_PUBLIC_APPWRITE_URL ? 'Set ✅' : 'Missing ❌',
-      NEXT_PUBLIC_APPWRITE_PROJECT_ID: process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ? 'Set ✅' : 'Missing ❌',
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set ✅' : 'Missing ❌',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set ✅' : 'Missing ❌',
     });
     
     try {
-      const [supabaseResult, appwriteResult] = await Promise.all([
-        checkSupabase(),
-        checkAppwrite(),
-      ]);
+      const supabaseResult = await checkSupabase();
       
       setServiceStatus({
         ...supabaseResult,
-        ...appwriteResult,
       });
     } catch (error: any) {
       console.error('Error running checks:', error);
@@ -108,8 +87,6 @@ export default function DiagnosticPage() {
           <ul className="space-y-2">
             <li><strong>Supabase URL:</strong> {diagnosticInfo.supabaseUrl}</li>
             <li><strong>Supabase Key:</strong> {diagnosticInfo.supabaseKey}</li>
-            <li><strong>Appwrite URL:</strong> {diagnosticInfo.appwriteUrl}</li>
-            <li><strong>Appwrite Project:</strong> {diagnosticInfo.appwriteProjectId}</li>
             <li><strong>Node Env:</strong> {diagnosticInfo.nodeEnv}</li>
             <li><strong>Domain:</strong> {diagnosticInfo.domain}</li>
           </ul>
@@ -145,7 +122,7 @@ export default function DiagnosticPage() {
                   <p className="font-semibold mb-1">🔴 Critical Issues Found</p>
                   <p>Please check the error details above and fix the configuration.</p>
                 </div>
-              ) : serviceStatus?.supabase?.error || serviceStatus?.appwrite?.error ? (
+              ) : serviceStatus?.supabase?.error ? (
                 <div className="bg-yellow-50 p-4 rounded text-yellow-700">
                   <p className="font-semibold mb-1">⚠️ Some Services Have Issues</p>
                   <p>Fix the services showing errors above to ensure full functionality.</p>

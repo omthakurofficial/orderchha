@@ -4,8 +4,7 @@
 This guide will help you migrate from static data to real-time Supabase database for persistent data across sessions.
 
 ## Services Used
-✅ **Appwrite** (Authentication) - Keep existing setup  
-🆕 **Supabase** (Database + Real-time) - New addition  
+✅ **Supabase** (Database + Auth + Real-time)  
 ✅ **Vercel** (Hosting) - Keep existing setup  
 
 ## Step 1: Create Supabase Project
@@ -21,8 +20,9 @@ This guide will help you migrate from static data to real-time Supabase database
 ## Step 2: Set Up Database Schema
 
 1. **Go to SQL Editor in Supabase Dashboard**
-2. **Copy and paste the schema from:** `/home/om/Documents/orderchha/sql/supabase-schema.sql`
-3. **Click "RUN" to execute the SQL**
+2. **Run:** `/home/om/Documents/orderchha/sql/01-core-schema.sql`
+3. **Then run:** `/home/om/Documents/orderchha/sql/02-seed-demo-data.sql`
+4. **Click "RUN" for each script**
 
 This will create:
 - ✅ Menu categories and items with your real data
@@ -47,9 +47,7 @@ Add to your `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# Keep existing Appwrite (for authentication)
-NEXT_PUBLIC_APPWRITE_PROJECT_ID=orderchha-app
-NEXT_PUBLIC_APPWRITE_URL=https://cloud.appwrite.io/v1
+# Supabase handles authentication and data access
 ```
 
 ## Step 5: Update Vercel Environment Variables
@@ -98,9 +96,8 @@ npx vercel --prod
 
 ## Why This Stack is Perfect:
 
-1. **Appwrite (Auth)** ➜ User management, login/logout  
-2. **Supabase (Data)** ➜ Menu, orders, tables, real-time updates
-3. **Vercel (Host)** ➜ Fast deployment, edge functions
+1. **Supabase (Auth + Data)** ➜ User management, login/logout, menu, orders, tables, real-time updates
+2. **Vercel (Host)** ➜ Fast deployment, edge functions
 
 ## Verification Steps:
 

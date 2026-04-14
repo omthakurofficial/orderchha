@@ -3,16 +3,21 @@ import { createClient } from '@supabase/supabase-js';
 // Get environment variables with fallbacks
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://duzqqpcxatbdcxoevepy.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1enFxcGN4YXRiZGN4b2V2ZXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNjUwNjEsImV4cCI6MjA3MTk0MTA2MX0.JkywYdsGZ4ZEF-Mloo3gDr85gqwhJ6iKuka3-ZQvrew';
+const shouldLogSupabaseInit =
+  process.env.NODE_ENV === 'development' &&
+  process.env.NEXT_PUBLIC_DEBUG_SUPABASE === 'true';
 
 // Enhanced error handling for connection issues
 let supabaseClient;
 
 try {
   // Debug configuration
-  console.log('🔧 Supabase Configuration:', {
-    url: supabaseUrl ? '✅ URL Set' : '❌ URL Missing',
-    key: supabaseAnonKey ? '✅ Key Set' : '❌ Key Missing',
-  });
+  if (shouldLogSupabaseInit) {
+    console.log('🔧 Supabase Configuration:', {
+      url: supabaseUrl ? '✅ URL Set' : '❌ URL Missing',
+      key: supabaseAnonKey ? '✅ Key Set' : '❌ Key Missing',
+    });
+  }
 
   // Create the Supabase client
   supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -22,11 +27,15 @@ try {
       },
     },
     auth: {
-      persistSession: false, // Since we're using Appwrite for auth
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
     },
   });
   
-  console.log('✅ Supabase client initialized successfully');
+  if (shouldLogSupabaseInit) {
+    console.log('✅ Supabase client initialized successfully');
+  }
 } catch (error) {
   console.error('❌ Failed to initialize Supabase client:', error);
   
@@ -81,6 +90,65 @@ try {
 }
 
 export const supabase = supabaseClient;
+
+export const auth = {
+  signIn: async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return data.session;
+  },
+
+  signUp: async (email: string, password: string, name: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+        },
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return data.user;
+  },
+
+  signOut: async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      throw error;
+    }
+  },
+
+  getCurrentUser: async () => {
+    const { data, error } = await supabase.auth.getUser();
+
+    if (error) {
+      return null;
+    }
+
+    return data.user;
+  },
+
+  onAuthStateChange: (callback: (user: any | null) => void) => {
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      callback(session?.user ?? null);
+    });
+
+    return () => data.subscription.unsubscribe();
+  },
+};
 
 // Database helper functions for restaurant operations
 export const db = {

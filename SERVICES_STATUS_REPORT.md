@@ -5,7 +5,7 @@
 ### ✅ **ACTIVE SERVICES (Currently Used)**
 
 1. **Frontend Hosting: VERCEL**
-   - Status: ✅ **ACTIVE** 
+   - Status: ✅ **ACTIVE**
    - Usage: Hosting your Next.js app
    - Cost: 🆓 **FREE** (Hobby plan)
    - Deployment: Automated via GitHub Actions
@@ -19,11 +19,9 @@
 
 ### 🔧 **CONFIGURED BUT NOT USED (Ready for Migration)**
 
-3. **Authentication: APPWRITE**
-   - Status: ⚠️ **CONFIGURED BUT NOT USED**
-   - Project: `orderchha-app` (15 months free)
-   - Current Usage: 0% (using Firebase stubs instead)
-   - Cost: 🆓 **FREE** for 15 months
+3. **Authentication: SUPABASE AUTH**
+   - Status: ✅ **ACTIVE**
+   - Current Usage: 100% (Supabase Auth)
    - Ready: ✅ SDK installed, environment configured
 
 4. **Database: MONGODB ATLAS**
@@ -44,7 +42,7 @@
 
 ## 🔄 **CURRENT DATA FLOW**
 
-```
+```text
 User Browser
     ↓
 Vercel (Frontend Hosting)
@@ -70,11 +68,11 @@ Initial Static Data (from src/lib/data.ts)
 - **Features**: None (all simulated locally)
 - **Usage**: Placeholder only
 
-### **Appwrite** 🟡
-- **Purpose**: Ready for auth + storage + functions
-- **Status**: Configured but not connected
-- **Features**: Account created, project ready
-- **Usage**: 0% (waiting for migration)
+### **Supabase Auth** 🟢
+- **Purpose**: Auth for login/logout and session handling
+- **Status**: Connected and active
+- **Features**: Email/password auth, session persistence
+- **Usage**: Active
 
 ### **MongoDB** 🟡
 - **Purpose**: Ready for database operations
@@ -90,13 +88,12 @@ Initial Static Data (from src/lib/data.ts)
 - ✅ All features work (using mock data)
 
 **What's Ready for Migration:**  
-- 🔄 Appwrite (15 months free auth/storage)
 - 🔄 MongoDB ($50 database credit)
 - 🔄 Complete backend replacement ready
 
 **What You're NOT Paying For:**
 - ❌ Firebase (using free stubs)
-- ❌ Appwrite (not connected yet)  
+- ✅ Supabase Auth (connected)
 - ❌ MongoDB (not connected yet)
 - ✅ Vercel (free tier)
 

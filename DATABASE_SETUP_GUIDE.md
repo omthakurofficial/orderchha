@@ -15,17 +15,17 @@ This guide will help you set up a fresh Supabase database with the enhanced inte
 2. Click on "SQL Editor" in the left sidebar
 3. Click "New Query" to create a new SQL script
 
-### Step 2: Run the Comprehensive Schema
-1. **Copy the entire content** from `sql/comprehensive-users-schema.sql`
+### Step 2: Run Canonical Core Schema
+1. **Copy the entire content** from `sql/01-core-schema.sql`
 2. **Paste it** in the Supabase SQL Editor
 3. **Click "Run"** to execute the script
-4. ✅ **Verify**: You should see "Success. No rows returned" message
+4. ✅ **Verify**: Core tables and indexes created
 
-### Step 3: Run the Complete Database Schema
-1. **Copy the entire content** from `sql/supabase-schema.sql`
+### Step 3: Run Canonical Seed Data
+1. **Copy the entire content** from `sql/02-seed-demo-data.sql`
 2. **Paste it** in a new SQL query
 3. **Click "Run"** to execute
-4. ✅ **Verify**: All tables created with sample data
+4. ✅ **Verify**: Demo data inserted without conflicts
 
 ### Step 4: Verify Database Structure
 In Supabase Table Editor, you should see these tables:
@@ -67,7 +67,7 @@ In Supabase Table Editor, you should see these tables:
 
 ### Enhanced Users Table Fields:
 ```sql
--- Core Identity: id, uid, appwrite_id, name, email, role
+-- Core Identity: id, uid, auth_user_id, name, email, role
 -- Contact: mobile, emergency_contact, address
 -- Personal: date_of_birth, blood_group, marital_status, religion
 -- Location: country (Nepal default), nationality, languages_spoken

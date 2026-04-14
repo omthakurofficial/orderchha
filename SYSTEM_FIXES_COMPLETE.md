@@ -152,4 +152,4 @@ The system is now user-friendly and suitable for non-technical restaurant staff 
 ---
 
 *Last Updated: September 2, 2025*
-*Next.js 15.3.3 • Supabase • Appwrite Auth*
+*Next.js 15.3.3 • Supabase Auth*

@@ -1,10 +1,12 @@
 'use server';
 
-import { suggestCombos } from '@/ai/flows/suggest-combos';
 import { MENU } from '@/lib/data';
 
 export async function getSuggestions() {
   try {
+    // Lazy import avoids pulling Genkit into unrelated build paths.
+    const { suggestCombos } = await import('@/ai/flows/suggest-combos');
+
     const customerPreferences = 'Loves pepperoni pizza, often orders coke. Sometimes gets a salad. Prefers spicy food.';
 
     const menuString = MENU.map(

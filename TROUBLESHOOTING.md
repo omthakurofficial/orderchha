@@ -4,7 +4,7 @@
 
 Your OrderChha application was experiencing client-side errors across multiple pages, showing "Application error: a client-side exception has occurred" messages. After analyzing the code, we identified several issues:
 
-1. **Environment Variable Handling**: Improper handling of environment variables causing connection failures to both Appwrite and Supabase services.
+1. **Environment Variable Handling**: Improper handling of environment variables causing connection failures to Supabase services.
 2. **Error Handling**: Missing proper error boundaries and fallbacks when services are unavailable.
 3. **Authentication Flow**: Issues in the authentication layer were causing page loads to fail.
 4. **Context Provider Issues**: The application context was not properly handling initialization failures.
@@ -67,11 +67,7 @@ While implementing the hybrid database architecture (Supabase with Firebase fall
    - Individual declarations in merged declaration 'User' must be all exported or all local
    - Solution: Make User interface definitions consistent
 
-3. **Appwrite References**
-   - Cannot find name 'appwriteAuth', 'ID', 'connectToDatabase'
-   - Solution: Remove Appwrite-specific code from the Firebase implementation
-
-4. **Structural Issues**
+3. **Structural Issues**
    - Extra code after module exports causing syntax errors
    - Solution: Restructure the file to follow correct module patterns
 
@@ -90,7 +86,7 @@ While implementing the hybrid database architecture (Supabase with Firebase fall
 1. **Fix Firebase Bridge**
    - Complete firebase-bridge.ts implementation with proper imports
    - Make type definitions consistent across files
-   - Remove Appwrite-specific code
+   - Remove legacy auth-specific code
 
 2. **Update Supabase Client**
    - Implement missing methods to match Firebase interface
@@ -119,10 +115,6 @@ Resolved multiple TypeScript compilation errors in the Supabase client implement
 Ensure your `.env.local` file contains all required variables:
 
 ```bash
-# Appwrite Configuration
-NEXT_PUBLIC_APPWRITE_URL=https://cloud.appwrite.io/v1
-NEXT_PUBLIC_APPWRITE_PROJECT_ID=orderchha-app
-
 # Supabase Configuration  
 NEXT_PUBLIC_SUPABASE_URL=https://duzqqpcxatbdcxoevepy.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
@@ -130,15 +122,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 
 ### Connection Issues
 
-1. **Appwrite**: Ensure your project ID is correct and the project is active in the Appwrite console
-2. **Supabase**: Verify your project is active and the API keys are correct
+1. **Supabase**: Verify your project is active and the API keys are correct
 
 ## Next Steps
 
 1. Regularly run the diagnostics page to catch issues early
 2. Consider implementing comprehensive monitoring
 3. Add additional error handling to critical application flows
-
 
 ## Dashboard Page Error Fixed
 
@@ -190,18 +180,18 @@ Fixed issues in the transaction list components where they were trying to access
 
 ### Issue: Approve and Reject buttons not working
 - **Problem**: The approve and reject buttons in the confirmation page were not functional with database errors occurring
-- **Solution**: 
+- **Solution**:
   - Implemented the `approvePendingOrder` and `rejectPendingOrder` functions in the app context
   - Added enhanced error handling to identify the cause of failures
   - Fixed the Supabase client's updateOrder function with better error reporting
   - Updated the order status flow to match the database schema constraints
-- **Files**: 
+- **Files**:
   - `src/context/app-context-supabase.tsx`
   - `src/lib/supabase.ts` (added updateOrder function with improved error handling)
 
 ### Issue: Orders not flowing from confirmation to kitchen to billing
 - **Problem**: The workflow from order confirmation to kitchen to billing was broken
-- **Solution**: 
+- **Solution**:
   - Added 'in-kitchen' status to KitchenOrder type
   - Updated kitchen page to show orders with 'in-kitchen' status
   - Implemented completeKitchenOrder function to mark orders as completed and create transactions
@@ -233,7 +223,7 @@ Fixed issues in the transaction list components where they were trying to access
 
 ### Issue: Approve and Reject buttons returning errors
 - **Problem**: The buttons were failing with 400 errors because they were trying to set invalid statuses
-- **Solution**: 
+- **Solution**:
   - Changed the order status from 'in-kitchen' to 'preparing' to match database constraints
   - Updated the Table interface to match the actual database schema
   - Fixed table status from 'billing' to 'cleaning' to match database constraints

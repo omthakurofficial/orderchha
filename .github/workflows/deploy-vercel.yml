@@ -23,10 +23,8 @@ jobs:
       - name: Create Environment File
         run: |
           cat > .env.local << EOL
-          # Firebase stubs for deployment
-          NEXT_PUBLIC_FIREBASE_CONFIG='{"apiKey":"stub","authDomain":"stub.firebaseapp.com","projectId":"stub","storageBucket":"stub.firebasestorage.app","messagingSenderId":"123","appId":"1:123:web:stub","measurementId":"G-STUB"}'
-          NEXT_PUBLIC_APPWRITE_URL=https://cloud.appwrite.io/v1
-          NEXT_PUBLIC_APPWRITE_PROJECT_ID=orderchha-app
+          NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=stub-anon-key
           EOL
       
       - name: Install Vercel CLI

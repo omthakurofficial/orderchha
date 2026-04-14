@@ -12,14 +12,14 @@
 
 **🔸 First Query - Run This:**
 ```sql
--- Copy ENTIRE content from: sql/comprehensive-users-schema.sql
--- This creates the enhanced users table with all 25+ fields
+-- Copy ENTIRE content from: sql/01-core-schema.sql
+-- This creates all required tables, indexes, triggers, and compatibility fields
 ```
 
 **🔸 Second Query - Run This:**
 ```sql
--- Copy ENTIRE content from: sql/supabase-schema.sql  
--- This creates all other tables + sample Nepal data
+-- Copy ENTIRE content from: sql/02-seed-demo-data.sql
+-- This inserts demo data safely (idempotent)
 ```
 
 #### 3. **Verify Setup:**

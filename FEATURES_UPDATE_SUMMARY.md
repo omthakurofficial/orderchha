@@ -89,11 +89,11 @@ The staff creation form now includes comprehensive information:
 
 ### Photo Storage:
 - Currently stores photos locally (URL.createObjectURL)
-- Ready to integrate with AWS S3, Cloudinary, or Appwrite Storage
+- Ready to integrate with AWS S3 or Cloudinary
 - Upload infrastructure already in place
 
 ### Database Integration:
-- User management ready for Appwrite/Supabase integration
+- User management ready for Supabase integration
 - Profile updates prepared for cloud sync
 - Photo URLs ready for cloud storage URLs
 

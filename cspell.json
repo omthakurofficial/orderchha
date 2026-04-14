@@ -1,0 +1,26 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "OrderChha",
+    "Supabase",
+    "pgcrypto",
+    "plpgsql",
+    "setval",
+    "Momo",
+    "momo",
+    "Thamel",
+    "Tribhuvan",
+    "Kathmandu",
+    "Nepali",
+    "bikash",
+    "ramesh",
+    "sita",
+    "chha"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".next/**",
+    "cleanup-backup/**"
+  ]
+}

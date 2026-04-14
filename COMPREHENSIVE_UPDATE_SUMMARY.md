@@ -124,7 +124,7 @@
 
 ## 🎯 Next Steps for Production
 1. **Cloud Integration**: AWS S3/Cloudinary for photo storage
-2. **Database**: Real Appwrite user creation (scaffolded)
+2. **Database**: Real Supabase Auth user creation (scaffolded)
 3. **Currency**: Multi-currency support based on country
 4. **Testing**: Comprehensive form validation testing
 
