@@ -14,6 +14,7 @@ import { useApp } from "@/context/app-context";
 import { useToast } from "@/hooks/use-toast";
 import { Search, UserPlus, Plus, Minus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 const customerFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -119,6 +120,21 @@ export default function CustomersPage() {
         <p className="text-muted-foreground">Manage customers and track credit balances.</p>
       </header>
       <main className="flex-1 p-4 md:p-6 overflow-auto space-y-6">
+        <Card className="border-blue-200 bg-blue-50/60">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Loyalty Setup Location</CardTitle>
+            <CardDescription>
+              Loyalty rules (ratio, minimum redeem, expiry) are configured in Settings.
+              This page is for customer profiles and balance tracking.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline">
+              <Link href="/settings#loyalty-rules">Open Loyalty Rules in Settings</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <div className="flex items-center justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

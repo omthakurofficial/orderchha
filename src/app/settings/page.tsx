@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useApp } from "@/context/app-context";
+import { db } from "@/lib/supabase";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -21,6 +22,12 @@ export default function SettingsPage() {
     const { settings, updateSettings, currentUser, isLoaded, clearAllBillingHistory, refreshDataFromDatabase } = useApp();
     const [qrCodeUrl, setQrCodeUrl] = useState("https://placehold.co/256x256.png");
     const [isUploading, setIsUploading] = useState(false);
+    const [isSavingSettings, setIsSavingSettings] = useState(false);
+    const [loyaltyConfig, setLoyaltyConfig] = useState({
+        points_per_npr_ratio: settings?.loyaltyPointsPerNprRatio || 0.05,
+        min_redemption_threshold: settings?.loyaltyMinRedemptionThreshold || 50,
+        points_expiry_days: settings?.loyaltyPointsExpiryDays || 365,
+    });
     const router = useRouter();
 
     useEffect(() => {
@@ -30,10 +37,53 @@ export default function SettingsPage() {
     }, [currentUser, router, isLoaded]);
 
     const handleSaveChanges = () => {
-        toast({
-            title: "Settings Saved",
-            description: "Your changes have been saved successfully and will persist on this device.",
-        });
+        const persistSettings = async () => {
+            setIsSavingSettings(true);
+            try {
+                await db.updateSettings({
+                    id: 'app-settings',
+                    cafe_name: settings?.cafeName,
+                    address: settings?.address,
+                    phone: settings?.phone,
+                    logo: settings?.logo,
+                    currency: settings?.currency,
+                    tax_rate: Number(settings?.taxRate || 0) / 100,
+                    service_charge: Number(settings?.serviceCharge || 0) / 100,
+                    receipt_note: settings?.receiptNote,
+                    ai_suggestions_enabled: settings?.aiSuggestionsEnabled,
+                    online_ordering_enabled: settings?.onlineOrderingEnabled,
+                    payment_qr_url: settings?.paymentQrUrl,
+                });
+
+                await db.updateLoyaltySettings({
+                    points_per_npr_ratio: Number(loyaltyConfig.points_per_npr_ratio || 0),
+                    min_redemption_threshold: Number(loyaltyConfig.min_redemption_threshold || 0),
+                    points_expiry_days: Number(loyaltyConfig.points_expiry_days || 0),
+                });
+
+                updateSettings({
+                    loyaltyPointsPerNprRatio: Number(loyaltyConfig.points_per_npr_ratio || 0),
+                    loyaltyMinRedemptionThreshold: Number(loyaltyConfig.min_redemption_threshold || 0),
+                    loyaltyPointsExpiryDays: Number(loyaltyConfig.points_expiry_days || 0),
+                });
+
+                toast({
+                    title: "Settings Saved",
+                    description: "App settings and loyalty rules are now live for the next payment.",
+                });
+            } catch (error) {
+                console.error('Failed to save settings:', error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Save Failed',
+                    description: 'Could not save settings to database. Please try again.',
+                });
+            } finally {
+                setIsSavingSettings(false);
+            }
+        };
+
+        void persistSettings();
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -122,6 +172,23 @@ export default function SettingsPage() {
             setQrCodeUrl("https://placehold.co/256x256.png");
         }
     }, [settings?.paymentQrUrl]);
+
+    useEffect(() => {
+        const loadLoyaltySettings = async () => {
+            try {
+                const loyalty = await db.getLoyaltySettings();
+                setLoyaltyConfig({
+                    points_per_npr_ratio: Number(loyalty?.points_per_npr_ratio || settings?.loyaltyPointsPerNprRatio || 0.05),
+                    min_redemption_threshold: Number(loyalty?.min_redemption_threshold || settings?.loyaltyMinRedemptionThreshold || 50),
+                    points_expiry_days: Number(loyalty?.points_expiry_days || settings?.loyaltyPointsExpiryDays || 365),
+                });
+            } catch (error) {
+                console.warn('Could not load loyalty settings, using current values.');
+            }
+        };
+
+        void loadLoyaltySettings();
+    }, [settings?.loyaltyMinRedemptionThreshold, settings?.loyaltyPointsExpiryDays, settings?.loyaltyPointsPerNprRatio]);
 
     if (!isLoaded) {
         return (
@@ -234,6 +301,52 @@ export default function SettingsPage() {
                                 </div>
                             </CardContent>
                         </Card>
+                        <Card id="loyalty-rules">
+                            <CardHeader>
+                                <CardTitle>Loyalty Points Rules</CardTitle>
+                                <CardDescription>This is the central place for loyalty policy. Values are fetched on each completed payment.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="points_per_npr_ratio">Points per NPR ratio</Label>
+                                    <Input
+                                        id="points_per_npr_ratio"
+                                        type="number"
+                                        step="0.01"
+                                        value={loyaltyConfig.points_per_npr_ratio}
+                                        onChange={(e) => setLoyaltyConfig(prev => ({
+                                            ...prev,
+                                            points_per_npr_ratio: Number(e.target.value || 0),
+                                        }))}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Example: 0.05 gives 5 points for NPR 100.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="min_redemption_threshold">Minimum points to redeem</Label>
+                                    <Input
+                                        id="min_redemption_threshold"
+                                        type="number"
+                                        value={loyaltyConfig.min_redemption_threshold}
+                                        onChange={(e) => setLoyaltyConfig(prev => ({
+                                            ...prev,
+                                            min_redemption_threshold: Number(e.target.value || 0),
+                                        }))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="points_expiry_days">Points expiry (days)</Label>
+                                    <Input
+                                        id="points_expiry_days"
+                                        type="number"
+                                        value={loyaltyConfig.points_expiry_days}
+                                        onChange={(e) => setLoyaltyConfig(prev => ({
+                                            ...prev,
+                                            points_expiry_days: Number(e.target.value || 0),
+                                        }))}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                     <div className="space-y-8">
                         <Card>
@@ -308,7 +421,9 @@ export default function SettingsPage() {
                     </div>
                 </div>
                  <div className="flex justify-end">
-                    <Button onClick={handleSaveChanges} size="lg">Save All Changes</Button>
+                    <Button onClick={handleSaveChanges} size="lg" disabled={isSavingSettings}>
+                        {isSavingSettings ? 'Saving...' : 'Save All Changes'}
+                    </Button>
                 </div>
             </main>
         </div>

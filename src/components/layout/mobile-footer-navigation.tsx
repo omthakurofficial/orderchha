@@ -19,7 +19,6 @@ import { useApp } from "@/context/app-context";
 import { cn } from "@/lib/utils";
 import { useMobileNavigation } from "@/hooks/use-mobile-navigation";
 import type { UserRole } from "@/types/index";
-import "../../styles/mobile-footer.css";
 
 interface FooterNavItem {
   href: string;
@@ -59,14 +58,18 @@ const roleBasedNavigation: Record<UserRole, FooterNavItem[]> = {
     { href: "/profile", icon: User, label: "Profile", roles: ["cashier"] },
   ],
   admin: [
-    { href: "/settings", icon: Settings, label: "Settings", roles: ["admin"] },
+    { href: "/", icon: LayoutGrid, label: "Tables", roles: ["admin"] },
+    { href: "/menu", icon: LayoutDashboard, label: "Menu", roles: ["admin"] },
+    { href: "/confirm-order", icon: ClipboardCheck, label: "Orders", roles: ["admin"] },
+    { href: "/billing", icon: Receipt, label: "Billing", roles: ["admin"] },
     { href: "/users", icon: Users, label: "Users", roles: ["admin"] },
-    { href: "/inventory", icon: Package, label: "Inventory", roles: ["admin"] },
-    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", roles: ["admin"] },
-    { href: "/profile", icon: User, label: "Profile", roles: ["admin"] },
+    { href: "/settings", icon: Settings, label: "Settings", roles: ["admin"] },
   ],
   staff: [
     { href: "/", icon: LayoutGrid, label: "Tables", roles: ["staff"] },
+    { href: "/confirm-order", icon: ClipboardCheck, label: "Orders", roles: ["staff"] },
+    { href: "/menu", icon: LayoutDashboard, label: "Menu", roles: ["staff"] },
+    { href: "/billing", icon: Receipt, label: "Billing", roles: ["staff"] },
     { href: "/profile", icon: User, label: "Profile", roles: ["staff"] },
   ],
 };
@@ -96,19 +99,16 @@ export function MobileFooterNavigation() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg block md:!hidden"
+      className="fixed inset-x-2 bottom-2 z-50 rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-xl backdrop-blur md:!hidden"
       data-mobile-footer
       role="navigation"
       aria-label="Mobile navigation"
-      style={{ display: 'block' }}
     >
-      <div 
-        className="flex items-center justify-center py-2 px-4 min-h-[60px] max-w-screen-sm mx-auto"
-        style={{
-          paddingBottom: 'max(8px, env(safe-area-inset-bottom))'
-        }}
-      >
-        <div className="nav-items-container">
+      <div className="mx-auto flex max-w-screen-sm items-center justify-center pb-[max(0px,env(safe-area-inset-bottom))]">
+        <div
+          className="grid w-full gap-1"
+          style={{ gridTemplateColumns: `repeat(${Math.max(navItems.length, 1)}, minmax(0, 1fr))` }}
+        >
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || 
@@ -119,25 +119,21 @@ export function MobileFooterNavigation() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center p-2 rounded-lg transition-colors",
-                  "min-h-[48px] min-w-[60px] flex-1 max-w-[80px]",
-                  "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50",
+                  "flex min-h-[52px] flex-col items-center justify-center rounded-xl p-1.5 transition-colors",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/30",
                   isActive
-                    ? "text-primary bg-primary/10"
-                    : "text-gray-600 hover:text-primary hover:bg-gray-50 active:bg-gray-100"
+                    ? "bg-orange-500 text-white"
+                    : "text-slate-600 hover:bg-slate-100 active:bg-slate-200"
                 )}
-                style={{ 
-                  WebkitTapHighlightColor: 'rgba(0, 0, 0, 0.1)'
-                }}
                 aria-label={item.label}
               >
                 <Icon className={cn(
-                  "h-5 w-5 mb-1 flex-shrink-0 transition-colors",
-                  isActive ? "text-primary" : "text-gray-600"
+                  "mb-1 h-[18px] w-[18px] shrink-0 transition-colors",
+                  isActive ? "text-white" : "text-slate-600"
                 )} />
                 <span className={cn(
-                  "text-[10px] font-medium text-center leading-tight transition-colors whitespace-nowrap",
-                  isActive ? "text-primary" : "text-gray-600"
+                  "whitespace-nowrap text-[10px] font-semibold leading-tight transition-colors",
+                  isActive ? "text-white" : "text-slate-600"
                 )}>
                   {item.label}
                 </span>

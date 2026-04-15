@@ -25,83 +25,86 @@ export function AppNavbar({ onSidebarToggle, showSidebarToggle = true }: AppNavb
   const { currentUser, settings, signOut } = useApp();
 
   return (
-    <header className="navbar-container">
-      <div className="navbar-content">
-        {/* Left Section */}
-        <div className="navbar-left">
+    <header className="glass-surface sticky top-3 z-20 rounded-2xl px-3 py-2 sm:px-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
           {showSidebarToggle && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onSidebarToggle}
-              className="navbar-sidebar-toggle"
+              className="h-9 w-9 rounded-xl text-slate-700 hover:bg-slate-200/80"
             >
               <Menu size={20} />
             </Button>
           )}
-          
-          {/* Logo and Title (visible on mobile when sidebar is hidden) */}
-          <div className="navbar-logo mobile-only">
+
+          <div className="hidden items-center gap-2 sm:flex">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-bold text-white">
+              RS
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-900">{settings.cafeName}</p>
+              <p className="text-xs text-slate-500">Restaurant Operations Console</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:hidden">
             {settings.logo ? (
               <img 
                 src={settings.logo} 
                 alt="Logo" 
-                className="navbar-logo-image"
+                className="h-8 w-8 rounded-lg object-cover"
               />
             ) : (
-              <div className="navbar-logo-fallback">
-                <span className="navbar-logo-text">{settings.cafeName?.charAt(0) || 'S'}</span>
+              <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-semibold text-white">
+                <span>{settings.cafeName?.charAt(0) || 'S'}</span>
               </div>
             )}
-            <h1 className="navbar-title">{settings.cafeName}</h1>
+            <h1 className="truncate text-sm font-semibold text-slate-900">{settings.cafeName}</h1>
           </div>
         </div>
 
-        {/* Center Section - Search (Desktop only) */}
-        <div className="navbar-center">
-          <div className="navbar-search">
-            <Search size={18} className="navbar-search-icon" />
+        <div className="hidden max-w-md flex-1 md:flex">
+          <div className="relative w-full">
+            <Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
               type="search"
-              placeholder="Search..."
-              className="navbar-search-input"
+              placeholder="Search tables, menu, customers..."
+              className="h-10 rounded-xl border-slate-200 bg-white/80 pl-9 text-sm"
             />
           </div>
         </div>
 
-        {/* Right Section */}
-        <div className="navbar-right">
-          {/* Notifications */}
-          <div className="navbar-notifications">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div>
             <NotificationBell />
           </div>
 
-          {/* Settings (Desktop only) */}
           <Button
             variant="ghost"
             size="sm"
-            className="navbar-settings desktop-flex"
+            className="hidden h-9 w-9 rounded-xl text-slate-700 hover:bg-slate-200/80 md:inline-flex"
           >
             <Settings size={20} />
           </Button>
 
-          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="navbar-user-menu">
-                <Avatar className="navbar-user-avatar">
+              <Button variant="ghost" className="h-10 rounded-xl px-2 hover:bg-slate-200/80 md:px-3">
+                <Avatar className="h-8 w-8">
                   <AvatarImage src={currentUser?.photoUrl} alt={currentUser?.name} />
-                  <AvatarFallback className="navbar-user-avatar-fallback">
+                  <AvatarFallback className="bg-slate-700 text-white">
                     {currentUser?.name?.charAt(0) ?? 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="navbar-user-info desktop-block">
-                  <p className="navbar-user-name">{currentUser?.name}</p>
-                  <p className="navbar-user-role">{currentUser?.role}</p>
+                <div className="hidden text-left md:block">
+                  <p className="max-w-[8rem] truncate text-sm font-medium text-slate-900">{currentUser?.name}</p>
+                  <p className="text-xs capitalize text-slate-500">{currentUser?.role}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="navbar-user-dropdown">
+            <DropdownMenuContent align="end" className="w-52 rounded-xl border-slate-200">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>

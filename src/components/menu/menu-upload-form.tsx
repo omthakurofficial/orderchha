@@ -130,9 +130,9 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl">
-        <CardHeader>
-        <CardTitle>Add a New Menu Item</CardTitle>
+    <Card className="w-full max-w-3xl rounded-2xl border-slate-200/80 bg-white/95 shadow-md">
+      <CardHeader className="border-b border-slate-100 pb-5">
+      <CardTitle className="text-2xl">Add a New Menu Item</CardTitle>
         <CardDescription>
             Fill out the form below to add a new dish, drink, or snack to your menu.
         </CardDescription>
@@ -149,7 +149,7 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                         <FormItem>
                         <FormLabel>Item Name</FormLabel>
                         <FormControl>
-                            <Input placeholder="e.g., Margherita Pizza" {...field} />
+                          <Input placeholder="e.g., Margherita Pizza" className="h-11 rounded-xl border-slate-200 bg-slate-50/70" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -162,7 +162,7 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                         <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                            <Textarea placeholder="Describe the item..." {...field} />
+                          <Textarea placeholder="Describe the item..." className="min-h-24 rounded-xl border-slate-200 bg-slate-50/70" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -175,7 +175,7 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                         <FormItem>
                         <FormLabel>Price (NPR)</FormLabel>
                         <FormControl>
-                            <Input type="number" step="0.01" placeholder="e.g., 1250.00" {...field} />
+                          <Input type="number" step="0.01" placeholder="e.g., 1250.00" className="h-11 rounded-xl border-slate-200 bg-slate-50/70" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -189,7 +189,7 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                         <FormLabel>Category</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50/70">
                                 <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                             </FormControl>
@@ -207,7 +207,7 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                         control={form.control}
                         name="inStock"
                         render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-4">
+                            <FormItem className="mt-4 flex flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-3 shadow-sm">
                             <div className="space-y-0.5">
                                 <FormLabel>In Stock</FormLabel>
                             </div>
@@ -230,14 +230,14 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                             <FormItem>
                             <FormLabel>Item Image</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={handleFileChange} {...rest} disabled={isUploading} />
+                                <Input type="file" accept="image/*" onChange={handleFileChange} className="h-11 rounded-xl border-slate-200 bg-slate-50/70" {...rest} disabled={isUploading} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
                     />
                     {preview && (
-                    <div className="mt-4 border rounded-md p-2">
+                    <div className="mt-4 rounded-xl border border-slate-200 p-3">
                         <h4 className="font-semibold mb-2 text-center">Image Preview</h4>
                         <Image
                         src={preview}
@@ -251,7 +251,7 @@ export function MenuUploadForm({ categories }: MenuUploadFormProps) {
                 </div>
             </div>
 
-            <Button type="submit" className="w-full mt-6" disabled={isUploading}>
+            <Button type="submit" className="mt-6 h-12 w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 text-white shadow-md hover:from-orange-600 hover:to-amber-500" disabled={isUploading}>
                 {isUploading ? <LoaderCircle className="animate-spin mr-2" /> : <PlusCircle className="mr-2 h-4 w-4" />}
                 {isUploading ? 'Uploading Image...' : 'Add Item to Menu'}
             </Button>

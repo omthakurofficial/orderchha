@@ -123,7 +123,7 @@ create table if not exists inventory (
 
 create table if not exists users (
   id uuid primary key default gen_random_uuid(),
-  appwrite_id varchar(100) unique,
+  auth_user_id uuid unique references auth.users(id) on delete cascade,
   uid varchar(100) unique not null,
   name varchar(200) not null,
   email varchar(200) unique,
@@ -168,6 +168,42 @@ create table if not exists users (
   updated_at timestamptz default now()
 );
 
+create table if not exists loyalty_settings (
+  id varchar(50) primary key default 'default',
+  points_per_npr_ratio numeric(10,4) not null default 0.05,
+  min_redemption_threshold integer not null default 50,
+  points_expiry_days integer not null default 365,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists user_loyalty (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  user_mobile_number varchar(20) not null,
+  current_balance numeric(12,2) not null default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(user_id),
+  unique(user_mobile_number)
+);
+
+create table if not exists loyalty_ledger (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  user_mobile_number varchar(20) not null,
+  transaction_id uuid,
+  points_earned numeric(12,2) not null default 0,
+  points_redeemed numeric(12,2) not null default 0,
+  npr_discount numeric(12,2) not null default 0,
+  source varchar(20) not null default 'In-house',
+  payment_method varchar(20),
+  bill_amount numeric(12,2) not null default 0,
+  notes text,
+  expires_at timestamptz,
+  created_at timestamptz default now()
+);
+
 create index if not exists idx_menu_items_category on menu_items(category_id);
 create index if not exists idx_menu_items_available on menu_items(available);
 create index if not exists idx_orders_table on orders(table_id);
@@ -186,7 +222,11 @@ create index if not exists idx_users_role on users(role);
 create index if not exists idx_users_country on users(country);
 create index if not exists idx_users_employee_id on users(employee_id);
 create index if not exists idx_users_active on users(active);
-create index if not exists idx_users_appwrite_id on users(appwrite_id);
+create index if not exists idx_users_auth_user_id on users(auth_user_id);
+create index if not exists idx_user_loyalty_mobile on user_loyalty(user_mobile_number);
+create index if not exists idx_loyalty_ledger_user on loyalty_ledger(user_id);
+create index if not exists idx_loyalty_ledger_mobile on loyalty_ledger(user_mobile_number);
+create index if not exists idx_loyalty_ledger_transaction on loyalty_ledger(transaction_id);
 
 drop trigger if exists update_menu_items_updated_at on menu_items;
 create trigger update_menu_items_updated_at before update on menu_items
@@ -211,3 +251,15 @@ create trigger update_users_updated_at before update on users
 drop trigger if exists update_settings_updated_at on settings;
 create trigger update_settings_updated_at before update on settings
     for each row execute function update_updated_at_column();
+
+drop trigger if exists update_loyalty_settings_updated_at on loyalty_settings;
+create trigger update_loyalty_settings_updated_at before update on loyalty_settings
+  for each row execute function update_updated_at_column();
+
+drop trigger if exists update_user_loyalty_updated_at on user_loyalty;
+create trigger update_user_loyalty_updated_at before update on user_loyalty
+  for each row execute function update_updated_at_column();
+
+insert into loyalty_settings (id, points_per_npr_ratio, min_redemption_threshold, points_expiry_days)
+values ('default', 0.05, 50, 365)
+on conflict (id) do nothing;

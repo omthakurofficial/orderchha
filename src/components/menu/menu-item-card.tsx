@@ -16,15 +16,40 @@ interface MenuItemCardProps {
 }
 
 export function MenuItemCard({ item }: MenuItemCardProps) {
-  const { settings, addItemToOrder } = useApp();
+  const { settings, addItemToOrder, currentUser } = useApp();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const tableId = searchParams.get('table');
+  const mode = searchParams.get('mode') === 'direct' ? 'direct' : 'table';
+  const isAdmin = currentUser?.role === 'admin';
+  const effectiveMode = mode === 'direct' || (isAdmin && !tableId) ? 'direct' : 'table';
+  const canAddByRole = isAdmin || currentUser?.role === 'waiter' || currentUser?.role === 'staff';
+  const canUseDirectOrder = isAdmin || settings.onlineOrderingEnabled;
 
-  const isOrderable = item.inStock && settings.onlineOrderingEnabled && !!tableId;
+  const isOrderable = item.inStock
+    && canAddByRole
+    && (effectiveMode === 'table' ? !!tableId : canUseDirectOrder);
 
   const handleAddItem = () => {
-    if (!tableId) {
+    if (!canAddByRole) {
+      toast({
+        title: "Restricted by Role",
+        description: "Your role is not allowed to create orders. Ask admin to update access.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (effectiveMode === 'direct' && !canUseDirectOrder) {
+      toast({
+        title: "Direct Ordering Disabled",
+        description: "Admin has disabled direct/home ordering in settings.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (effectiveMode !== 'direct' && !tableId) {
       toast({
         title: "No Table Selected",
         description: "Please select a table to start an order.",
@@ -33,57 +58,57 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
       return;
     }
     
-    const tableNumber = parseInt(tableId);
+    const tableNumber = effectiveMode === 'direct' ? 0 : parseInt(tableId || '0');
     addItemToOrder(item, tableNumber);
     toast({
-      title: `Added to Table ${tableNumber}`,
-      description: `${item.name} added to Table ${tableNumber} order.`,
+      title: effectiveMode === 'direct' ? 'Added to Direct Order' : `Added to Table ${tableNumber}`,
+      description: effectiveMode === 'direct' ? `${item.name} added to the direct order.` : `${item.name} added to Table ${tableNumber} order.`,
     });
   };
   
   const getDisabledTooltip = () => {
-    if (!tableId) return "Please select a table to start an order.";
-    if (!settings.onlineOrderingEnabled) return "Online ordering is currently disabled";
+    if (!canAddByRole) return "Your role cannot create orders.";
+    if (effectiveMode !== 'direct' && !tableId) return "Please select a table to start an order.";
+    if (effectiveMode === 'direct' && !canUseDirectOrder) return "Direct/home ordering is disabled by admin.";
     if (!item.inStock) return "This item is out of stock";
     return "Add to order";
   }
 
   return (
-    <Card className="flex flex-col overflow-hidden h-full">
-      <CardHeader className="p-0 relative">
+    <Card className="group flex h-full flex-col overflow-hidden rounded-xl border-slate-200/80 bg-white/90 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+      <CardHeader className="relative p-0">
         <Image
           src={item.image}
           alt={item.name}
           width={600}
           height={400}
           data-ai-hint={item.imageHint}
-          className="object-cover w-full h-40"
+          className="h-28 w-full object-cover transition duration-500 group-hover:scale-[1.03] sm:h-32"
         />
         <Badge 
           className={cn(
-            "absolute top-2 right-2",
+            "absolute right-2 top-2 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
             item.inStock 
-              ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800" 
-              : "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800"
+              ? "border-emerald-300 bg-emerald-100 text-emerald-800" 
+              : "border-rose-300 bg-rose-100 text-rose-700"
           )}
         >
           {item.inStock ? "In Stock" : "Out of Stock"}
         </Badge>
       </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <CardTitle className="font-headline text-lg mb-1">{item.name}</CardTitle>
-        <p className="text-sm text-muted-foreground">{item.description}</p>
+      <CardContent className="flex-grow p-3">
+        <CardTitle className="mb-1 line-clamp-1 text-base font-headline text-slate-900">{item.name}</CardTitle>
+        <p className="line-clamp-2 text-xs text-slate-600 sm:text-sm">{item.description}</p>
       </CardContent>
-      <CardFooter className="p-4 flex justify-between items-center">
-        <p className="text-lg font-bold text-primary price-tag">{formatCurrency(item.price, settings?.currency)}</p>
+      <CardFooter className="flex items-center justify-between p-3 pt-0">
+        <p className="rounded-full bg-amber-100 px-2.5 py-1 text-sm font-bold text-amber-900">{formatCurrency(item.price, settings?.currency)}</p>
         <Button 
           disabled={!isOrderable} 
           onClick={handleAddItem}
           title={getDisabledTooltip()}
-          className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-4"
-          style={{ backgroundColor: '#1E88E5', borderRadius: '50px' }}
+          className="h-8 rounded-full bg-orange-500 px-3 text-xs text-white shadow-sm hover:bg-orange-600 disabled:bg-slate-300 disabled:text-slate-600 sm:text-sm"
         >
-          <PlusCircle className="mr-1 h-4 w-4" />
+          <PlusCircle className="mr-1 h-3.5 w-3.5" />
           Add
         </Button>
       </CardFooter>

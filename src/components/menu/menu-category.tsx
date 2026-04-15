@@ -28,12 +28,15 @@ export function MenuCategory({ category }: MenuCategoryProps) {
   }, [] as typeof category.items);
 
   return (
-    <section>
-      <div className="flex items-center gap-3 mb-4">
-        <Icon className="w-6 h-6 text-primary" />
-        <h2 className="text-2xl font-bold font-headline">{category.name}</h2>
+    <section className="space-y-3">
+      <div className="flex items-center gap-2.5">
+        <Icon className="h-5 w-5 text-primary" />
+        <h2 className="text-xl font-bold font-headline text-slate-900 sm:text-2xl">{category.name}</h2>
+        <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+          {uniqueItems.length}
+        </span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {uniqueItems.map((item) => (
           <MenuItemCard key={item.id} item={item} />
         ))}

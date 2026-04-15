@@ -4,25 +4,12 @@ import { useApp } from "@/context/app-context";
 import { useNotifications } from "@/context/notification-context";
 import { formatCurrency } from '@/lib/currency';
 import { useToast } from "@/hooks/use-toast";
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search } from 'lucide-react';
-
-const creditFormSchema = z.object({
-  amount: z.coerce.number().positive('Amount must be positive'),
-  customerId: z.string().min(1, 'Customer is required'),
-  notes: z.string().optional(),
-});
-
-type CreditFormValues = z.infer<typeof creditFormSchema>;
+import { db } from '@/lib/supabase';
 
 interface PaymentDialogProps {
   tableId: number;
@@ -32,43 +19,77 @@ interface PaymentDialogProps {
 
 export function PaymentDialog({ tableId, amount, onPaymentComplete }: PaymentDialogProps) {
   const [open, setOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online' | 'credit' | 'card' | 'qr'>('cash');
-  const { users, completeTransaction, settings } = useApp();
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerMobile, setCustomerMobile] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [loyaltyBalance, setLoyaltyBalance] = useState(0);
+  const [redeemPoints, setRedeemPoints] = useState(0);
+  const { processPayment, settings } = useApp();
   const { addNotification } = useNotifications();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const customers = users.filter(user => user.isCustomer || user.role === 'admin');
-  const filteredCustomers = customers.filter(customer => 
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    const lookupLoyalty = async () => {
+      if (!customerMobile || customerMobile.trim().length < 7) {
+        setLoyaltyBalance(0);
+        return;
+      }
 
-  const form = useForm<CreditFormValues>({
-    resolver: zodResolver(creditFormSchema),
-    defaultValues: {
-      amount,
-      customerId: '',
-      notes: '',
-    },
-  });
+      try {
+        const loyalty = await db.getCustomerLoyaltyByMobile(customerMobile);
+        setLoyaltyBalance(Number(loyalty?.loyalty?.current_balance || 0));
+      } catch {
+        setLoyaltyBalance(0);
+      }
+    };
+
+    void lookupLoyalty();
+  }, [customerMobile]);
 
   const handlePayment = async () => {
-    try {
-      await completeTransaction({
-        id: `tr-${Date.now()}`,
-        tableId,
-        amount,
-        method: paymentMethod,
-        timestamp: new Date().toISOString(),
+    if (!customerName.trim() || !customerMobile.trim() || !customerAddress.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Customer Profile Required',
+        description: 'Name, mobile, and address are required before payment.',
       });
+      return;
+    }
+
+    if (redeemPoints < 0 || redeemPoints > loyaltyBalance) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Redeem Points',
+        description: 'Redeem points cannot exceed current points balance.',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await processPayment(
+        tableId,
+        paymentMethod,
+        false,
+        {
+          name: customerName.trim(),
+          mobile: customerMobile.trim(),
+          address: customerAddress.trim(),
+          email: customerEmail.trim() || undefined,
+        },
+        redeemPoints,
+        'In-house'
+      );
       
       toast({
         title: '✅ Payment Processed',
-        description: `Payment for Table ${tableId} completed successfully.`,
+        description: `Payment for Table ${tableId} completed and loyalty updated.`,
       });
       
-      // Add completion notification
       addNotification({
         title: 'Order Completed',
         message: `Table ${tableId} payment completed (${formatCurrency(amount, settings.currency)})`,
@@ -85,30 +106,9 @@ export function PaymentDialog({ tableId, amount, onPaymentComplete }: PaymentDia
         description: 'There was an error processing the payment.',
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handleCreditSubmit = (data: CreditFormValues) => {
-    const customer = customers.find(c => c.uid === data.customerId);
-    
-    completeTransaction({
-      id: `tr-${Date.now()}`,
-      tableId,
-      amount,
-      method: 'credit',
-      timestamp: new Date().toISOString(),
-      customerId: data.customerId,
-      customerName: customer?.name,
-      notes: data.notes || `Credit for ${customer?.name}`
-    });
-    
-    toast({
-      title: '✅ Credit Added',
-      description: `Credit for ${customer?.name} has been recorded.`,
-    });
-    
-    onPaymentComplete();
-    setOpen(false);
   };
 
   const openDialog = () => {
@@ -118,7 +118,6 @@ export function PaymentDialog({ tableId, amount, onPaymentComplete }: PaymentDia
 
   return (
     <>
-      {/* Use a regular button with a clear onClick handler */}
       <Button 
         className="w-full" 
         onClick={openDialog}
@@ -137,6 +136,49 @@ export function PaymentDialog({ tableId, amount, onPaymentComplete }: PaymentDia
           </DialogHeader>
         
         <div className="grid gap-4 py-4">
+          <div className="grid gap-3">
+            <div className="space-y-1">
+              <Label>Customer Name</Label>
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Full name" />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Mobile Number</Label>
+              <Input value={customerMobile} onChange={(e) => setCustomerMobile(e.target.value)} placeholder="98XXXXXXXX" />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Address</Label>
+              <Input value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="City / Area" />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Email (optional)</Label>
+              <Input value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="name@example.com" />
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span>Current Points</span>
+                <span className="font-semibold">{loyaltyBalance.toFixed(2)}</span>
+              </div>
+
+              <div className="mt-2 space-y-1">
+                <Label>Redeem Points (optional)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={loyaltyBalance}
+                  value={redeemPoints}
+                  onChange={(e) => setRedeemPoints(Number(e.target.value || 0))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Discount is calculated from admin loyalty ratio at payment time.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-2">
             <Button 
               variant={paymentMethod === 'cash' ? 'default' : 'outline'} 
@@ -145,97 +187,19 @@ export function PaymentDialog({ tableId, amount, onPaymentComplete }: PaymentDia
               Cash
             </Button>
             <Button 
-              variant={paymentMethod === 'card' ? 'default' : 'outline'} 
-              onClick={() => setPaymentMethod('card')}
-            >
-              Card
-            </Button>
-            <Button 
               variant={paymentMethod === 'online' ? 'default' : 'outline'} 
               onClick={() => setPaymentMethod('online')}
+              className="col-span-1"
             >
               Online Banking
             </Button>
-            <Button 
-              variant={paymentMethod === 'qr' ? 'default' : 'outline'} 
-              onClick={() => setPaymentMethod('qr')}
-            >
-              QR Payment
-            </Button>
-            <Button 
-              variant={paymentMethod === 'credit' ? 'default' : 'outline'} 
-              onClick={() => setPaymentMethod('credit')}
-              className="col-span-2"
-            >
-              Customer Credit
-            </Button>
           </div>
 
-          {paymentMethod === 'credit' ? (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleCreditSubmit)} className="space-y-4">
-                <div className="relative">
-                  <Input
-                    placeholder="Search customers..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
-                  />
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="customerId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label>Select Customer</Label>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a customer" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {filteredCustomers.map(customer => (
-                            <SelectItem key={customer.uid} value={customer.uid}>
-                              {customer.name} {customer.creditBalance ? `(Balance: ${customer.creditBalance})` : ''}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label>Notes (optional)</Label>
-                      <FormControl>
-                        <Input placeholder="Add notes about this credit" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button type="submit" className="w-full">
-                  Add to Customer Credit
-                </Button>
-              </form>
-            </Form>
-          ) : (
-            <Button onClick={handlePayment} className="w-full">
-              Complete {paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)} Payment
-            </Button>
-          )}
+          <Button onClick={handlePayment} className="w-full" disabled={isSubmitting}>
+            {isSubmitting
+              ? 'Processing...'
+              : `Complete ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)} Payment`}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

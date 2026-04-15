@@ -91,6 +91,8 @@ try {
 
 export const supabase = supabaseClient;
 
+const normalizeMobile = (mobile: string) => mobile.replace(/[^0-9+]/g, '').trim();
+
 export const auth = {
   signIn: async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -426,6 +428,29 @@ export const db = {
     return data[0];
   },
 
+  async getUserByAuth(authUserId: string, email?: string) {
+    let query = supabase
+      .from('users')
+      .select('*')
+      .limit(1);
+
+    if (authUserId && email) {
+      query = query.or(`auth_user_id.eq.${authUserId},email.eq.${email}`);
+    } else if (authUserId) {
+      query = query.eq('auth_user_id', authUserId);
+    } else if (email) {
+      query = query.eq('email', email);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    return data?.[0] || null;
+  },
+
   async updateSettings(settings: any) {
     const { data, error } = await supabase
       .from('settings')
@@ -433,6 +458,236 @@ export const db = {
       .select();
     if (error) throw error;
     return data[0];
+  },
+
+  async getLoyaltySettings() {
+    const { data, error } = await supabase
+      .from('loyalty_settings')
+      .select('*')
+      .eq('id', 'default')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
+  async updateLoyaltySettings(settings: {
+    points_per_npr_ratio: number;
+    min_redemption_threshold: number;
+    points_expiry_days: number;
+  }) {
+    const payload = {
+      id: 'default',
+      ...settings,
+    };
+
+    const { data, error } = await supabase
+      .from('loyalty_settings')
+      .upsert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
+  async getCustomerByMobile(mobile: string) {
+    const cleanedMobile = normalizeMobile(mobile);
+    if (!cleanedMobile) {
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, uid, name, email, mobile, address, is_customer')
+      .eq('mobile', cleanedMobile)
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+
+    return data || null;
+  },
+
+  async upsertCustomerProfile(profile: {
+    name: string;
+    mobile: string;
+    address: string;
+    email?: string;
+  }) {
+    const cleanedMobile = normalizeMobile(profile.mobile);
+    if (!cleanedMobile) {
+      throw new Error('Customer mobile number is required.');
+    }
+
+    const existingCustomer = await this.getCustomerByMobile(cleanedMobile);
+
+    if (existingCustomer) {
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          name: profile.name || existingCustomer.name,
+          email: profile.email || existingCustomer.email,
+          mobile: cleanedMobile,
+          address: profile.address || existingCustomer.address,
+          is_customer: true,
+        })
+        .eq('id', existingCustomer.id)
+        .select('id, uid, name, email, mobile, address, is_customer')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    }
+
+    const uid = `customer-${cleanedMobile}-${Date.now()}`;
+
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        uid,
+        name: profile.name,
+        email: profile.email || null,
+        mobile: cleanedMobile,
+        address: profile.address,
+        role: 'staff',
+        is_customer: true,
+        active: true,
+      })
+      .select('id, uid, name, email, mobile, address, is_customer')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
+  async getCustomerLoyaltyByMobile(mobile: string) {
+    const cleanedMobile = normalizeMobile(mobile);
+    if (!cleanedMobile) {
+      return null;
+    }
+
+    const customer = await this.getCustomerByMobile(cleanedMobile);
+    if (!customer) {
+      return null;
+    }
+
+    const { data: loyaltyData, error } = await supabase
+      .from('user_loyalty')
+      .select('id, current_balance, user_mobile_number, updated_at')
+      .eq('user_id', customer.id)
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+
+    return {
+      customer,
+      loyalty: loyaltyData || {
+        current_balance: 0,
+        user_mobile_number: cleanedMobile,
+      },
+    };
+  },
+
+  async applyLoyaltyForCompletedPayment(input: {
+    transactionId?: string;
+    totalBill: number;
+    paymentMethod: 'cash' | 'online' | 'card' | 'qr';
+    source: 'In-house' | 'Online';
+    customer: {
+      name: string;
+      mobile: string;
+      address: string;
+      email?: string;
+    };
+    pointsToRedeem?: number;
+  }) {
+    const loyaltySettings = await this.getLoyaltySettings();
+    const customer = await this.upsertCustomerProfile(input.customer);
+
+    const { data: existingLoyalty, error: loyaltyFetchError } = await supabase
+      .from('user_loyalty')
+      .select('id, current_balance')
+      .eq('user_id', customer.id)
+      .limit(1)
+      .single();
+
+    if (loyaltyFetchError && loyaltyFetchError.code !== 'PGRST116') {
+      throw loyaltyFetchError;
+    }
+
+    const currentBalance = Number(existingLoyalty?.current_balance || 0);
+    const requestedRedeemPoints = Math.max(0, Number(input.pointsToRedeem || 0));
+    const redeemThreshold = Number(loyaltySettings.min_redemption_threshold || 0);
+    const pointsRatio = Number(loyaltySettings.points_per_npr_ratio || 0);
+
+    let pointsRedeemed = 0;
+    if (requestedRedeemPoints >= redeemThreshold && currentBalance >= requestedRedeemPoints) {
+      pointsRedeemed = requestedRedeemPoints;
+    }
+
+    const maxDiscountByPoints = pointsRatio > 0 ? pointsRedeemed / pointsRatio : 0;
+    const nprDiscount = Math.min(Number(input.totalBill || 0), maxDiscountByPoints);
+    const billAfterDiscount = Math.max(0, Number(input.totalBill || 0) - nprDiscount);
+    const pointsEarned = Number((billAfterDiscount * pointsRatio).toFixed(2));
+    const nextBalance = Number((currentBalance - pointsRedeemed + pointsEarned).toFixed(2));
+
+    await supabase
+      .from('user_loyalty')
+      .upsert({
+        user_id: customer.id,
+        user_mobile_number: normalizeMobile(input.customer.mobile),
+        current_balance: nextBalance,
+      });
+
+    const expiryDays = Number(loyaltySettings.points_expiry_days || 0);
+    const expiresAt = expiryDays > 0
+      ? new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString()
+      : null;
+
+    await supabase
+      .from('loyalty_ledger')
+      .insert({
+        user_id: customer.id,
+        user_mobile_number: normalizeMobile(input.customer.mobile),
+        transaction_id: input.transactionId || null,
+        points_earned: pointsEarned,
+        points_redeemed: pointsRedeemed,
+        npr_discount: nprDiscount,
+        source: input.source,
+        payment_method: input.paymentMethod,
+        bill_amount: Number(input.totalBill || 0),
+        notes: `Dynamic ratio ${pointsRatio} applied at payment completion`,
+        expires_at: expiresAt,
+      });
+
+    return {
+      customer,
+      settings: loyaltySettings,
+      currentBalance,
+      pointsRedeemed,
+      pointsEarned,
+      nprDiscount,
+      nextBalance,
+      billAfterDiscount,
+    };
   },
 
   // Inventory operations

@@ -46,55 +46,42 @@ export function MainLayout({ children }: MainLayoutProps) {
   // Don't render if user is not loaded
   if (!currentUser) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="glass-surface rounded-2xl px-8 py-6 text-sm font-medium text-slate-600">
+          Loading workspace...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`main-layout ${sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
-      {/* Sidebar - Desktop Only */}
+    <div className="relative min-h-screen pb-20 md:pb-12">
       {!isMobile && (
-        <aside className="main-sidebar">
+        <aside className="fixed inset-y-4 left-4 z-30">
           <AppSidebar isCollapsed={sidebarCollapsed} />
         </aside>
       )}
 
-      {/* Main Content Area */}
-      <div className="main-content">
-        {/* Navbar */}
+      <div
+        className={`transition-all duration-300 ${
+          isMobile ? 'px-3 pt-3' : sidebarCollapsed ? 'pl-[7.25rem] pr-4 pt-4' : 'pl-[18.5rem] pr-4 pt-4'
+        }`}
+      >
         <AppNavbar 
           onSidebarToggle={handleSidebarToggle}
           showSidebarToggle={!isMobile}
         />
 
-        {/* Page Content */}
-        <main className="page-content">
-          <div className="page-content-inner">
+        <main className="mt-4">
+          <div className="app-section min-h-[calc(100vh-12.5rem)]">
             {children}
           </div>
         </main>
 
-        {/* Footer - Desktop Only */}
         {!isMobile && <AppFooter />}
       </div>
 
-      {/* Mobile Footer Navigation */}
       {isMobile && <MobileFooterNavigation />}
-
-      {/* Sidebar Overlay for Mobile */}
-      {isMobile && !sidebarCollapsed && (
-        <>
-          <div 
-            className="sidebar-overlay"
-            onClick={() => setSidebarCollapsed(true)}
-          />
-          <aside className="main-sidebar mobile-sidebar">
-            <AppSidebar isCollapsed={false} />
-          </aside>
-        </>
-      )}
     </div>
   );
 }

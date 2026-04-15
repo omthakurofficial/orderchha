@@ -53,6 +53,30 @@ export interface Settings {
     aiSuggestionsEnabled: boolean;
     onlineOrderingEnabled: boolean;
     paymentQrUrl: string;
+    loyaltyPointsPerNprRatio?: number;
+    loyaltyMinRedemptionThreshold?: number;
+    loyaltyPointsExpiryDays?: number;
+}
+
+export interface LoyaltySettings {
+  id?: string;
+  points_per_npr_ratio: number;
+  min_redemption_threshold: number;
+  points_expiry_days: number;
+  updated_at?: string;
+}
+
+export interface CustomerProfileInput {
+  name: string;
+  mobile: string;
+  address: string;
+  email?: string;
+}
+
+export interface LoyaltyPreview {
+  currentBalance: number;
+  redeemablePoints: number;
+  estimatedDiscountNpr: number;
 }
 
 export interface Transaction {

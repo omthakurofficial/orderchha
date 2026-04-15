@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { auth, db } from '@/lib/supabase';
 import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
-import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem } from '@/types';
+import type { MenuCategory, MenuItem, Table, Settings, OrderItem, KitchenOrder, Transaction, User, UserFormData, InventoryItem, CustomerProfileInput } from '@/types';
 import { MENU as initialMenu, TABLES as initialTables } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,6 +31,7 @@ interface AppContextType {
   clearOrder: (tableId?: number) => void;
   clearTableOrder: (tableId: number) => void;
   placeOrder: (tableId: number) => void;
+  getDirectOrder: () => OrderItem[];
   kitchenOrders: KitchenOrder[];
   completeKitchenOrder: (orderId: string) => void;
   updateOrderStatus: (orderId: string, status: 'preparing' | 'ready' | 'completed') => void;
@@ -39,8 +40,22 @@ interface AppContextType {
   approvePendingOrder: (orderId: string) => void;
   rejectPendingOrder: (orderId: string) => void;
   transactions: Transaction[];
-  processPayment: (tableId: number, method: 'cash' | 'online', applyVat: boolean) => void;
-  processIndividualOrderPayment: (orderId: string, method: 'cash' | 'online' | 'card' | 'qr', applyVat?: boolean) => Promise<{ success: boolean; transaction: any } | undefined>;
+  processPayment: (
+    tableId: number,
+    method: 'cash' | 'online',
+    applyVat: boolean,
+    customerProfile?: CustomerProfileInput,
+    pointsToRedeem?: number,
+    source?: 'In-house' | 'Online'
+  ) => Promise<void>;
+  processIndividualOrderPayment: (
+    orderId: string,
+    method: 'cash' | 'online' | 'card' | 'qr',
+    applyVat?: boolean,
+    customerProfile?: CustomerProfileInput,
+    pointsToRedeem?: number,
+    source?: 'In-house' | 'Online'
+  ) => Promise<{ success: boolean; transaction: any } | undefined>;
   clearAllBillingHistory: () => void;
   currentUser: User | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -75,6 +90,9 @@ const initialSettings: Settings = {
   aiSuggestionsEnabled: true,
   onlineOrderingEnabled: true,
   paymentQrUrl: 'https://www.example.com/pay',
+  loyaltyPointsPerNprRatio: 0.05,
+  loyaltyMinRedemptionThreshold: 50,
+  loyaltyPointsExpiryDays: 365,
 };
 
 const initialAdminUser: User = {
@@ -135,6 +153,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentTableId, setCurrentTableId] = useState<number | null>(null);
   const [tableOrders, setTableOrders] = useState<Record<number, OrderItem[]>>({});
   const [order, setOrder] = useState<OrderItem[]>([]); // Current table's order
+  const [directOrder, setDirectOrder] = useState<OrderItem[]>([]);
   
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([]);
   const [pendingOrders, setPendingOrders] = useState<KitchenOrder[]>([]);
@@ -145,22 +164,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
 
-  const mapSupabaseUserToAppUser = useCallback((user: any): User => {
+  const mapSupabaseUserToAppUser = useCallback(async (user: any): Promise<User> => {
     const metadata = user?.user_metadata || {};
     const email = user?.email || '';
-    const name = metadata.name || user?.email?.split('@')[0] || 'User';
-    const role = metadata.role || (email === 'admin@orderchha.cafe' ? 'admin' : 'staff');
+
+    let dbUser: any = null;
+    try {
+      dbUser = await db.getUserByAuth(user?.id, email);
+    } catch (error) {
+      console.warn('Could not load app user profile from database:', error);
+    }
+
+    const role = dbUser?.role || metadata.role || (email === 'admin@orderchha.cafe' ? 'admin' : 'staff');
+    const name = dbUser?.name || metadata.name || user?.email?.split('@')[0] || 'User';
 
     return {
-      uid: user?.id || email || 'unknown-user',
+      uid: user?.id || dbUser?.uid || email || 'unknown-user',
       email,
       name,
       role,
-      designation: metadata.designation || (role === 'admin' ? 'Super Admin' : 'Staff'),
-      joiningDate: user?.created_at || new Date().toISOString(),
-      photoUrl: metadata.photoUrl || metadata.avatar_url || 'https://placehold.co/100x100.png',
-      mobile: metadata.mobile,
-      address: metadata.address,
+      designation: dbUser?.designation || metadata.designation || (role === 'admin' ? 'Super Admin' : 'Staff'),
+      joiningDate: user?.created_at || dbUser?.joining_date || new Date().toISOString(),
+      photoUrl: dbUser?.photo_url || metadata.photoUrl || metadata.avatar_url || 'https://placehold.co/100x100.png',
+      mobile: dbUser?.mobile || metadata.mobile,
+      address: dbUser?.address || metadata.address,
     };
   }, []);
 
@@ -198,7 +225,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         if (currentSession) {
           console.log('✅ Found existing session for:', currentSession.email);
-          setCurrentUser(mapSupabaseUserToAppUser(currentSession));
+          setCurrentUser(await mapSupabaseUserToAppUser(currentSession));
           
           toast({
             title: "👋 Welcome Back",
@@ -228,11 +255,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     const unsubscribe = auth.onAuthStateChange((user) => {
-      if (user) {
-        setCurrentUser(mapSupabaseUserToAppUser(user));
-      } else {
-        setCurrentUser(null);
-      }
+      const syncAuthUser = async () => {
+        if (user) {
+          setCurrentUser(await mapSupabaseUserToAppUser(user));
+        } else {
+          setCurrentUser(null);
+        }
+      };
+
+      void syncAuthUser();
     });
 
     const loadDatabaseData = async () => {
@@ -369,7 +400,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         // Load settings from database
         try {
-          const settingsData = await db.getSettings();
+          const [settingsData, loyaltySettings] = await Promise.all([
+            db.getSettings(),
+            db.getLoyaltySettings().catch(() => null),
+          ]);
           if (settingsData) {
             const formattedSettings: Settings = {
               cafeName: settingsData.cafe_name || 'Sips & Slices Corner',
@@ -382,7 +416,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
               receiptNote: settingsData.receipt_note || 'Thank you for dining with us!',
               aiSuggestionsEnabled: settingsData.ai_suggestions_enabled ?? true,
               onlineOrderingEnabled: settingsData.online_ordering_enabled ?? true,
-              paymentQrUrl: settingsData.payment_qr_url || ''
+              paymentQrUrl: settingsData.payment_qr_url || '',
+              loyaltyPointsPerNprRatio: Number(loyaltySettings?.points_per_npr_ratio ?? 0.05),
+              loyaltyMinRedemptionThreshold: Number(loyaltySettings?.min_redemption_threshold ?? 50),
+              loyaltyPointsExpiryDays: Number(loyaltySettings?.points_expiry_days ?? 365),
             };
             setSettings(formattedSettings);
             console.log('✅ Settings loaded from database');
@@ -434,6 +471,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('orderchha-order');
       }
     }
+
+    const savedDirectOrder = localStorage.getItem('orderchha-direct-order');
+    if (savedDirectOrder) {
+      try {
+        const parsedDirectOrder = JSON.parse(savedDirectOrder);
+        setDirectOrder(parsedDirectOrder);
+        if (parsedDirectOrder.length > 0) {
+          setTableOrders(prev => ({ ...prev, 0: parsedDirectOrder }));
+        }
+      } catch (error) {
+        console.log('⚠️ Error loading direct order from localStorage:', error);
+        localStorage.removeItem('orderchha-direct-order');
+      }
+    }
     
     return () => unsubscribe();
   }, [mapSupabaseUserToAppUser, toast]);
@@ -446,7 +497,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const user = await auth.getCurrentUser();
       
       if (user) {
-        const userData = mapSupabaseUserToAppUser(user);
+        const userData = await mapSupabaseUserToAppUser(user);
 
         setCurrentUser(userData);
         console.log('✅ Supabase sign in successful:', user.email);
@@ -635,7 +686,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       // Load settings from database
       try {
-        const settingsData = await db.getSettings();
+        const [settingsData, loyaltySettings] = await Promise.all([
+          db.getSettings(),
+          db.getLoyaltySettings().catch(() => null),
+        ]);
         if (settingsData) {
           const formattedSettings: Settings = {
             cafeName: settingsData.cafe_name || 'Sips & Slices Corner',
@@ -648,7 +702,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             receiptNote: settingsData.receipt_note || 'Thank you for dining with us!',
             aiSuggestionsEnabled: settingsData.ai_suggestions_enabled ?? true,
             onlineOrderingEnabled: settingsData.online_ordering_enabled ?? true,
-            paymentQrUrl: settingsData.payment_qr_url || ''
+            paymentQrUrl: settingsData.payment_qr_url || '',
+            loyaltyPointsPerNprRatio: Number(loyaltySettings?.points_per_npr_ratio ?? 0.05),
+            loyaltyMinRedemptionThreshold: Number(loyaltySettings?.min_redemption_threshold ?? 50),
+            loyaltyPointsExpiryDays: Number(loyaltySettings?.points_expiry_days ?? 365),
           };
           setSettings(formattedSettings);
           console.log('✅ Settings refreshed from database');
@@ -721,13 +778,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // 🔥 TABLE-SPECIFIC ORDER MANAGEMENT - Prevents Multiple Customer Cart Mixing
   const getTableOrder = (tableId: number): OrderItem[] => {
+    if (tableId === 0) {
+      return directOrder;
+    }
     return tableOrders[tableId] || [];
   };
+
+  const getDirectOrder = () => directOrder;
 
   const updateTableOrderInStorage = (tableId: number, orderItems: OrderItem[]) => {
     const newTableOrders = { ...tableOrders, [tableId]: orderItems };
     setTableOrders(newTableOrders);
-    localStorage.setItem('orderchha-table-orders', JSON.stringify(newTableOrders));
+    if (tableId === 0) {
+      setDirectOrder(orderItems);
+      localStorage.setItem('orderchha-direct-order', JSON.stringify(orderItems));
+    } else {
+      localStorage.setItem('orderchha-table-orders', JSON.stringify(newTableOrders));
+    }
     
     // Update current order if this is the current table
     if (currentTableId === tableId) {
@@ -758,7 +825,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     toast({
       title: "Item Added",
-      description: `${item.name} added to Table ${tableId}`,
+      description: tableId === 0 ? `${item.name} added to Direct Order` : `${item.name} added to Table ${tableId}`,
     });
   };
 
@@ -784,12 +851,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const clearOrder = (tableId?: number) => {
-    if (tableId) {
+    if (tableId !== undefined) {
       // Clear specific table's order
       clearTableOrder(tableId);
     } else {
       // Clear current table's order
-      if (currentTableId) {
+      if (currentTableId !== null) {
         clearTableOrder(currentTableId);
       }
     }
@@ -797,9 +864,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const clearTableOrder = (tableId: number) => {
     const newTableOrders = { ...tableOrders };
-    delete newTableOrders[tableId];
-    setTableOrders(newTableOrders);
-    localStorage.setItem('orderchha-table-orders', JSON.stringify(newTableOrders));
+    if (tableId === 0) {
+      setDirectOrder([]);
+      localStorage.removeItem('orderchha-direct-order');
+      delete newTableOrders[0];
+      setTableOrders(newTableOrders);
+    } else {
+      delete newTableOrders[tableId];
+      setTableOrders(newTableOrders);
+      localStorage.setItem('orderchha-table-orders', JSON.stringify(newTableOrders));
+    }
     
     // Update current order if this is the current table
     if (currentTableId === tableId) {
@@ -808,13 +882,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     toast({
       title: "Cart Cleared",
-      description: `Table ${tableId} cart has been cleared`,
+      description: tableId === 0 ? 'Direct Order cart has been cleared' : `Table ${tableId} cart has been cleared`,
     });
   };
 
   // Update current order when table changes
   useEffect(() => {
-    if (currentTableId) {
+    if (currentTableId !== null) {
       const tableOrder = getTableOrder(currentTableId);
       setOrder(tableOrder);
     } else {
@@ -827,7 +901,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (tableOrder.length === 0) {
       toast({
         title: "Empty Cart",
-        description: `No items in cart for Table ${tableId}`,
+        description: tableId === 0 ? 'No items in Direct Order cart' : `No items in cart for Table ${tableId}`,
         variant: "destructive"
       });
       return;
@@ -839,11 +913,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       // Create order data for database
       const orderData = {
-        table_id: tableId,
+        table_id: tableId === 0 ? null : tableId,
         total_amount: orderTotal,
         status: 'pending',
-        customer_name: `Table ${tableId}`,
-        notes: `${itemCount} items ordered`
+        customer_name: tableId === 0 ? 'Direct Order' : `Table ${tableId}`,
+        notes: tableId === 0 ? `${itemCount} items direct order` : `${itemCount} items ordered`
       };
 
       // Create order items data for database
@@ -880,12 +954,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
       
       setPendingOrders(prev => [...prev, newOrder]);
-      updateTableStatus(tableId, 'occupied');
+      if (tableId !== 0) {
+        updateTableStatus(tableId, 'occupied');
+      }
       clearTableOrder(tableId);
       
       toast({
         title: "Order Placed! 🍽️",
-        description: `Table ${tableId}: ${itemCount} items (${formatCurrency(orderTotal, settings.currency)}) saved to database.`,
+        description: tableId === 0
+          ? `Direct Order: ${itemCount} items (${formatCurrency(orderTotal, settings.currency)}) saved to database.`
+          : `Table ${tableId}: ${itemCount} items (${formatCurrency(orderTotal, settings.currency)}) saved to database.`,
       });
 
       // Dispatch custom event for notifications
@@ -898,7 +976,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       // Fallback to local state if database fails
       const newOrder: KitchenOrder = {
-        id: `${Date.now()}-T${tableId}`,
+        id: `${Date.now()}-${tableId === 0 ? 'D' : `T${tableId}`}`,
         tableId,
         items: tableOrder,
         status: 'pending',
@@ -908,12 +986,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
       
       setPendingOrders(prev => [...prev, newOrder]);
-      updateTableStatus(tableId, 'occupied');
+      if (tableId !== 0) {
+        updateTableStatus(tableId, 'occupied');
+      }
       clearTableOrder(tableId);
       
       toast({
         title: "Order Placed! 🍽️",
-        description: `Table ${tableId}: ${itemCount} items (${formatCurrency(orderTotal, settings.currency)}) - using local storage.`,
+        description: tableId === 0
+          ? `Direct Order: ${itemCount} items (${formatCurrency(orderTotal, settings.currency)}) - using local storage.`
+          : `Table ${tableId}: ${itemCount} items (${formatCurrency(orderTotal, settings.currency)}) - using local storage.`,
       });
 
       window.dispatchEvent(new CustomEvent('orderPlaced', {
@@ -1056,7 +1138,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const processPayment = async (tableId: number, method: 'cash' | 'online', applyVat: boolean) => {
+  const processPayment = async (
+    tableId: number,
+    method: 'cash' | 'online',
+    applyVat: boolean,
+    customerProfile?: CustomerProfileInput,
+    pointsToRedeem: number = 0,
+    source: 'In-house' | 'Online' = 'In-house'
+  ) => {
     // Look for billing-ready orders for this table
     const tableOrders = billingOrders.filter(order => order.tableId === tableId);
     
@@ -1083,7 +1172,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       vat_amount: vatAmount,
       total_amount: finalAmount,
       method,
-      customer_name: `Table ${tableId}`,
+      customer_name: customerProfile?.name || `Table ${tableId}`,
+      phone: customerProfile?.mobile || null,
+      notes: customerProfile?.address || null,
       status: 'completed',
       invoice_number: `INV-${Date.now()}`
     };
@@ -1091,6 +1182,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       // Save transaction to database
       const savedTransaction = await db.saveTransaction(newTransaction);
+
+      let loyaltyResult: any = null;
+      if (customerProfile?.name && customerProfile?.mobile && customerProfile?.address) {
+        try {
+          loyaltyResult = await db.applyLoyaltyForCompletedPayment({
+            transactionId: savedTransaction.id,
+            totalBill: finalAmount,
+            paymentMethod: method,
+            source,
+            customer: customerProfile,
+            pointsToRedeem,
+          });
+        } catch (loyaltyError) {
+          console.warn('Loyalty processing failed, payment still completed:', loyaltyError);
+        }
+      }
       
       // Update local state
       setTransactions(prev => [...prev, {
@@ -1116,7 +1223,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       toast({
         title: "Payment Processed!",
-        description: `${formatCurrency(finalAmount, settings.currency)} payment completed for table ${tableId} and saved to database.`,
+        description: loyaltyResult
+          ? `${formatCurrency(finalAmount, settings.currency)} paid. Earned ${loyaltyResult.pointsEarned} pts, redeemed ${loyaltyResult.pointsRedeemed} pts.`
+          : `${formatCurrency(finalAmount, settings.currency)} payment completed for table ${tableId} and saved to database.`,
       });
 
       // Dispatch custom event for notifications
@@ -1152,7 +1261,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const processIndividualOrderPayment = async (orderId: string, method: 'cash' | 'online' | 'card' | 'qr', applyVat: boolean = false) => {
+  const processIndividualOrderPayment = async (
+    orderId: string,
+    method: 'cash' | 'online' | 'card' | 'qr',
+    applyVat: boolean = false,
+    customerProfile?: CustomerProfileInput,
+    pointsToRedeem: number = 0,
+    source: 'In-house' | 'Online' = 'In-house'
+  ) => {
     // Find the specific order to pay
     const order = billingOrders.find(order => order.id === orderId);
     
@@ -1176,7 +1292,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       vat_amount: vatAmount,
       total_amount: finalAmount,
       method,
-      customer_name: `Table ${order.tableId}`,
+      customer_name: customerProfile?.name || `Table ${order.tableId}`,
+      phone: customerProfile?.mobile || null,
+      notes: customerProfile?.address || null,
       status: 'completed',
       invoice_number: `INV-${order.id.substring(0, 8)}-${Date.now()}`
     };
@@ -1184,6 +1302,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       // Save transaction to database
       const savedTransaction = await db.saveTransaction(newTransaction);
+
+      let loyaltyResult: any = null;
+      if (customerProfile?.name && customerProfile?.mobile && customerProfile?.address) {
+        try {
+          loyaltyResult = await db.applyLoyaltyForCompletedPayment({
+            transactionId: savedTransaction.id,
+            totalBill: finalAmount,
+            paymentMethod: method,
+            source,
+            customer: customerProfile,
+            pointsToRedeem,
+          });
+        } catch (loyaltyError) {
+          console.warn('Loyalty processing failed, payment still completed:', loyaltyError);
+        }
+      }
       
       // Update local state
       setTransactions(prev => [...prev, {
@@ -1213,7 +1347,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       toast({
         title: "Payment Processed!",
-        description: `Individual order payment of ${formatCurrency(finalAmount, settings.currency)} completed successfully.`,
+        description: loyaltyResult
+          ? `Individual payment done. Earned ${loyaltyResult.pointsEarned} pts, redeemed ${loyaltyResult.pointsRedeemed} pts.`
+          : `Individual order payment of ${formatCurrency(finalAmount, settings.currency)} completed successfully.`,
       });
 
       // Dispatch custom event for notifications
@@ -1450,6 +1586,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     processPayment,
     processIndividualOrderPayment,
     clearAllBillingHistory,
+    getDirectOrder,
     currentUser,
     signIn,
     signOut,

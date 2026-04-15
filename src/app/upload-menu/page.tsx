@@ -29,11 +29,11 @@ export default function UploadMenuPage() {
   
     return (
     <div className="flex flex-col h-full">
-      <header className="p-4 border-b">
-        <h1 className="text-2xl font-bold font-headline">Menu Management</h1>
-        <p className="text-muted-foreground">Add new items to your digital menu.</p>
+        <header className="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-orange-50 to-amber-50 p-5 shadow-sm">
+          <h1 className="text-2xl font-bold font-headline text-slate-900">Menu Management</h1>
+          <p className="mt-1 text-sm text-slate-600">Add new dishes to your digital menu with rich details and clean visuals.</p>
       </header>
-      <main className="flex-1 p-4 md:p-6 flex justify-center items-start">
+        <main className="flex flex-1 justify-center p-4 md:p-6">
         <MenuUploadForm categories={categories} />
       </main>
     </div>
