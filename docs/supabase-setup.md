@@ -21,8 +21,12 @@ This guide will help you migrate from static data to real-time Supabase database
 
 1. **Go to SQL Editor in Supabase Dashboard**
 2. **Run:** `/home/om/Documents/orderchha/sql/01-core-schema.sql`
-3. **Then run:** `/home/om/Documents/orderchha/sql/02-seed-demo-data.sql`
-4. **Click "RUN" for each script**
+3. **Then run:** `/home/om/Documents/orderchha/sql/03-customer-profile-updates.sql`
+4. **Then run:** `/home/om/Documents/orderchha/sql/04-loyalty-system.sql`
+5. **Then run:** `/home/om/Documents/orderchha/sql/05-seed-nepali-thai.sql`
+6. **Click "RUN" for each script**
+
+For the newer restaurant and loyalty seed flow, see [docs/sql-seed-run-guide.md](docs/sql-seed-run-guide.md).
 
 This will create:
 - ✅ Menu categories and items with your real data

@@ -23,6 +23,13 @@ interface AppNavbarProps {
 
 export function AppNavbar({ onSidebarToggle, showSidebarToggle = true }: AppNavbarProps) {
   const { currentUser, settings, signOut } = useApp();
+  const [logoLoadFailed, setLogoLoadFailed] = React.useState(false);
+  const logoSrc = typeof settings.logo === 'string' ? settings.logo.trim() : '';
+
+  React.useEffect(() => {
+    // Reset failure state when logo source changes.
+    setLogoLoadFailed(false);
+  }, [logoSrc]);
 
   return (
     <header className="glass-surface sticky top-3 z-20 rounded-2xl px-3 py-2 sm:px-4">
@@ -50,11 +57,12 @@ export function AppNavbar({ onSidebarToggle, showSidebarToggle = true }: AppNavb
           </div>
 
           <div className="flex items-center gap-2 sm:hidden">
-            {settings.logo ? (
+            {logoSrc && !logoLoadFailed ? (
               <img 
-                src={settings.logo} 
+                src={logoSrc}
                 alt="Logo" 
                 className="h-8 w-8 rounded-lg object-cover"
+                onError={() => setLogoLoadFailed(true)}
               />
             ) : (
               <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-semibold text-white">

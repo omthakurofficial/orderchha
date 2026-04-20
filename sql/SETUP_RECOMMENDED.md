@@ -1,11 +1,13 @@
-# Recommended Supabase Setup (Use Only These 2 Files)
+# Recommended Supabase Setup
 
 Run these scripts in order:
 
 1. sql/01-core-schema.sql
-2. sql/02-seed-demo-data.sql
+2. sql/03-customer-profile-updates.sql
+3. sql/04-loyalty-system.sql
+4. sql/05-seed-nepali-thai.sql
 
-These two files are the canonical setup for this repository.
+These files are the canonical setup for this repository.
 They are idempotent and safe to run more than once.
 
 ## Quick Verify Query
@@ -16,15 +18,16 @@ from information_schema.tables
 where table_schema='public'
 and table_name in (
   'menu_categories','menu_items','tables','orders','order_items',
-  'transactions','settings','inventory','users'
+  'transactions','settings','inventory','users',
+  'loyalty_settings','user_loyalty','loyalty_ledger'
 )
 order by table_name;
 ```
 
-Expected: 9 rows.
+Expected: 12 rows.
 
 ## Notes
 
 - Older SQL files are kept for history and debugging only.
-- For new setup, do not run multiple old scripts together.
+- For new setup, follow the order above.
 - This project uses Supabase Auth and Supabase data only.

@@ -8,7 +8,7 @@ const shouldLogSupabaseInit =
   process.env.NEXT_PUBLIC_DEBUG_SUPABASE === 'true';
 
 // Enhanced error handling for connection issues
-let supabaseClient;
+let supabaseClient: any;
 
 try {
   // Debug configuration
@@ -89,9 +89,15 @@ try {
   };
 }
 
-export const supabase = supabaseClient;
+export const supabase: any = supabaseClient;
 
 const normalizeMobile = (mobile: string) => mobile.replace(/[^0-9+]/g, '').trim();
+const isNoRowsError = (error: unknown) => (
+  !!error &&
+  typeof error === 'object' &&
+  'code' in error &&
+  (error as { code?: string }).code === 'PGRST116'
+);
 
 export const auth = {
   signIn: async (email: string, password: string) => {
@@ -144,7 +150,7 @@ export const auth = {
   },
 
   onAuthStateChange: (callback: (user: any | null) => void) => {
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       callback(session?.user ?? null);
     });
 
@@ -510,7 +516,7 @@ export const db = {
       .limit(1)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && !isNoRowsError(error)) {
       throw error;
     }
 
@@ -593,7 +599,7 @@ export const db = {
       .limit(1)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && !isNoRowsError(error)) {
       throw error;
     }
 
@@ -629,7 +635,7 @@ export const db = {
       .limit(1)
       .single();
 
-    if (loyaltyFetchError && loyaltyFetchError.code !== 'PGRST116') {
+    if (loyaltyFetchError && !isNoRowsError(loyaltyFetchError)) {
       throw loyaltyFetchError;
     }
 
@@ -804,7 +810,7 @@ export const db = {
         data, 
         error, 
         dataLength: data?.length,
-        statuses: data?.map(o => o.status) 
+        statuses: data?.map((o: any) => o.status) 
       });
       
       if (error) throw error;

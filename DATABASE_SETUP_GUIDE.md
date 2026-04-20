@@ -21,11 +21,11 @@ This guide will help you set up a fresh Supabase database with the enhanced inte
 3. **Click "Run"** to execute the script
 4. ✅ **Verify**: Core tables and indexes created
 
-### Step 3: Run Canonical Seed Data
-1. **Copy the entire content** from `sql/02-seed-demo-data.sql`
-2. **Paste it** in a new SQL query
-3. **Click "Run"** to execute
-4. ✅ **Verify**: Demo data inserted without conflicts
+### Step 3: Run Customer/Loyalty + Seed Data
+1. **Run** `sql/03-customer-profile-updates.sql`
+2. **Run** `sql/04-loyalty-system.sql`
+3. **Run** `sql/05-seed-nepali-thai.sql`
+4. ✅ **Verify**: Customer, loyalty, and menu seed data inserted without conflicts
 
 ### Step 4: Verify Database Structure
 In Supabase Table Editor, you should see these tables:

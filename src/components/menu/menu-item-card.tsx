@@ -74,17 +74,26 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
     return "Add to order";
   }
 
+  const imageSrc = typeof item.image === 'string' ? item.image.trim() : '';
+  const hasImage = imageSrc.length > 0;
+
   return (
     <Card className="group flex h-full flex-col overflow-hidden rounded-xl border-slate-200/80 bg-white/90 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
       <CardHeader className="relative p-0">
-        <Image
-          src={item.image}
-          alt={item.name}
-          width={600}
-          height={400}
-          data-ai-hint={item.imageHint}
-          className="h-28 w-full object-cover transition duration-500 group-hover:scale-[1.03] sm:h-32"
-        />
+        {hasImage ? (
+          <Image
+            src={imageSrc}
+            alt={item.name}
+            width={600}
+            height={400}
+            data-ai-hint={item.imageHint}
+            className="h-28 w-full object-cover transition duration-500 group-hover:scale-[1.03] sm:h-32"
+          />
+        ) : (
+          <div className="flex h-28 w-full items-center justify-center bg-gradient-to-br from-amber-100 to-orange-100 text-xs font-semibold text-amber-900 sm:h-32">
+            No Image Available
+          </div>
+        )}
         <Badge 
           className={cn(
             "absolute right-2 top-2 rounded-full border px-2 py-0.5 text-[10px] font-semibold",

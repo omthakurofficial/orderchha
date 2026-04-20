@@ -140,13 +140,19 @@ function OrderSummaryContent() {
           ) : (
             actualOrder.map(item => (
               <div key={item.id} className="flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm sm:gap-3 sm:p-3">
-                <Image 
-                  src={item.image} 
-                  alt={item.name} 
-                  width={60} 
-                  height={60} 
-                  className="h-12 w-12 rounded-xl object-cover sm:h-14 sm:w-14"
-                />
+                {typeof item.image === 'string' && item.image.trim().length > 0 ? (
+                  <Image 
+                    src={item.image.trim()} 
+                    alt={item.name} 
+                    width={60} 
+                    height={60} 
+                    className="h-12 w-12 rounded-xl object-cover sm:h-14 sm:w-14"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-[9px] font-semibold text-slate-500 sm:h-14 sm:w-14">
+                    No Image
+                  </div>
+                )}
                 <div className="flex-1">
                   <p className="line-clamp-1 text-xs font-semibold text-slate-900 sm:text-sm">
                     {item.name}
