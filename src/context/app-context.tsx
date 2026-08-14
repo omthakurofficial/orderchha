@@ -97,7 +97,7 @@ const initialSettings: Settings = {
 
 const initialAdminUser: User = {
   uid: 'supabase-admin-001',
-  email: 'admin@orderchha.cafe',
+  email: 'admin@orderchha.com',
   name: 'Admin',
   role: 'admin',
   designation: 'Super Admin',
@@ -175,7 +175,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.warn('Could not load app user profile from database:', error);
     }
 
-    const role = dbUser?.role || metadata.role || (email === 'admin@orderchha.cafe' ? 'admin' : 'staff');
+    const normalizedEmail = (email || '').toLowerCase();
+    const isAdminEmail = normalizedEmail === 'admin@orderchha.com' || normalizedEmail === 'admin@orderchha.cafe';
+    const role = dbUser?.role || metadata.role || (isAdminEmail ? 'admin' : 'staff');
     const name = dbUser?.name || metadata.name || user?.email?.split('@')[0] || 'User';
 
     return {
@@ -273,7 +275,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const menuCategories = await db.getMenuCategories();
         const menuItems = await db.getMenuItems();
         
-        if (menuCategories && menuItems) {
+        if (menuCategories && menuCategories.length > 0 && menuItems && menuItems.length > 0) {
           const formattedMenu = menuCategories.map((category: any) => ({
             id: category.id,
             name: category.name,
@@ -294,7 +296,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setMenu(formattedMenu);
           console.log('✅ Menu loaded from database:', formattedMenu.length, 'categories');
         } else {
-          console.warn('⚠️ Could not load menu from database, using hardcoded menu');
+          console.log('📋 Database menu empty or not found. Using built-in Nepal restaurant menu with', initialMenu.length, 'categories');
+          // Keep the hardcoded menu - it's already loaded in initial state
         }
 
         // Load pending orders from database
@@ -566,7 +569,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const menuCategories = await db.getMenuCategories();
       const menuItems = await db.getMenuItems();
       
-      if (menuCategories && menuItems) {
+      if (menuCategories && menuCategories.length > 0 && menuItems && menuItems.length > 0) {
         const formattedMenu = menuCategories.map((category: any) => ({
           id: category.id,
           name: category.name,
@@ -586,6 +589,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         setMenu(formattedMenu);
         console.log('✅ Menu refreshed from database:', formattedMenu.length, 'categories');
+      } else {
+        console.log('📋 Database menu empty. Keeping built-in menu');
       }
       
       // Load pending orders from database
@@ -718,9 +723,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const tablesData = await db.getTables();
       if (tablesData && tablesData.length > 0) {
         setTables(tablesData);
+        console.log('✅ Tables loaded from database:', tablesData.length, 'tables');
+      } else {
+        console.log('📋 Database tables empty or not found. Using built-in tables with', initialTables.length, 'default tables');
+        // Keep the hardcoded tables - they're already loaded in initial state
       }
 
-      console.log('✅ Database data refreshed successfully');
+      console.log('✅ Database data loaded successfully');
       
       toast({
         title: "Data Refreshed",

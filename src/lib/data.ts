@@ -1,134 +1,186 @@
 import type { MenuCategory, Table, User } from '@/types';
 
-// 🍕 REAL MENU DATA - Updated with proper pricing and real items
+// �️ Nepal Restaurant Mock Data - ready for ordering flow testing
 export const MENU: MenuCategory[] = [
   {
-    id: 'pizza',
-    name: '🍕 Pizzas',
-    icon: 'Flame',
+    id: 'nepali-mains',
+    name: '🍛 Nepali Mains',
+    icon: 'UtensilsCrossed',
     items: [
-      { 
-        id: 'p1', 
-        name: 'Margherita Classic', 
-        description: 'Fresh mozzarella, tomato sauce, basil', 
-        price: 450.00, // NPR pricing
-        image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop', 
-        imageHint: 'margherita pizza', 
-        inStock: true 
+      {
+        id: 'nm1',
+        name: 'Chicken Choila',
+        description: 'Smoky grilled chicken with mustard oil, chili, and herbs.',
+        price: 420.00,
+        image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=600&fit=crop',
+        imageHint: 'Nepali grilled chicken',
+        inStock: true
       },
-      { 
-        id: 'p2', 
-        name: 'Pepperoni Supreme', 
-        description: 'Spicy pepperoni with extra cheese', 
-        price: 550.00, 
-        image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop', 
-        imageHint: 'pepperoni pizza', 
-        inStock: true 
+      {
+        id: 'nm2',
+        name: 'Thakali Set',
+        description: 'Dal, bhat, tarkari, achar, and seasonal greens.',
+        price: 560.00,
+        image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop',
+        imageHint: 'Nepali thali platter',
+        inStock: true
       },
-      { 
-        id: 'p3', 
-        name: 'Veggie Garden', 
-        description: 'Bell peppers, mushrooms, onions, olives', 
-        price: 500.00, 
-        image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop', 
-        imageHint: 'vegetable pizza', 
-        inStock: true 
+      {
+        id: 'nm3',
+        name: 'Buff Sekuwa',
+        description: 'Chargrilled buffalo meat with spicy Nepali masala.',
+        price: 480.00,
+        image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=600&fit=crop',
+        imageHint: 'Nepali sekuwa grilled meat',
+        inStock: true
       },
-      { 
-        id: 'p4', 
-        name: 'Chicken BBQ', 
-        description: 'Grilled chicken with BBQ sauce', 
-        price: 600.00, 
-        image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop', 
-        imageHint: 'bbq chicken pizza', 
-        inStock: true 
+      {
+        id: 'nm4',
+        name: 'Dal Bhat Tarkari',
+        description: 'Classic lentil rice with seasonal vegetables and ghee.',
+        price: 390.00,
+        image: 'https://images.unsplash.com/photo-1604908553252-8d8d5d3f6f2d?w=800&h=600&fit=crop',
+        imageHint: 'Nepali dal bhat',
+        inStock: true
       },
-    ],
+      {
+        id: 'nm5',
+        name: 'Gundruk Ko Jhol',
+        description: 'Traditional fermented greens soup with Himalayan aroma.',
+        price: 320.00,
+        image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&h=600&fit=crop',
+        imageHint: 'Nepali soup',
+        inStock: true
+      }
+    ]
+  },
+  {
+    id: 'momos',
+    name: '🥟 Momos & Snacks',
+    icon: 'Soup',
+    items: [
+      {
+        id: 'ms1',
+        name: 'Steam Momo',
+        description: 'Juicy dumplings served with traditional tomato achar.',
+        price: 220.00,
+        image: 'https://images.unsplash.com/photo-1626804475297-41608ea09aeb?w=800&h=600&fit=crop',
+        imageHint: 'steam momo',
+        inStock: true
+      },
+      {
+        id: 'ms2',
+        name: 'Crispy Fried Momo',
+        description: 'Golden fried dumplings with chili garlic dip.',
+        price: 250.00,
+        image: 'https://images.unsplash.com/photo-1559847844-5315695dadae?w=800&h=600&fit=crop',
+        imageHint: 'fried dumplings',
+        inStock: true
+      },
+      {
+        id: 'ms3',
+        name: 'Chatamari',
+        description: 'Nepali rice pancake topped with minced chicken and herbs.',
+        price: 260.00,
+        image: 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=800&h=600&fit=crop',
+        imageHint: 'Nepali chatamari',
+        inStock: true
+      },
+      {
+        id: 'ms4',
+        name: 'French Fries',
+        description: 'Crispy potato fries with peri-peri seasoning.',
+        price: 180.00,
+        image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&h=600&fit=crop',
+        imageHint: 'fries',
+        inStock: true
+      }
+    ]
+  },
+  {
+    id: 'thai-fusion',
+    name: '🌶️ Thai Fusion',
+    icon: 'Beef',
+    items: [
+      {
+        id: 'tf1',
+        name: 'Tom Yum Soup',
+        description: 'Hot and sour soup with shrimp, herbs, and lemongrass.',
+        price: 340.00,
+        image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&h=600&fit=crop',
+        imageHint: 'Thai tom yum soup',
+        inStock: true
+      },
+      {
+        id: 'tf2',
+        name: 'Green Curry Chicken',
+        description: 'Coconut curry with basil, vegetables, and chicken.',
+        price: 520.00,
+        image: 'https://images.unsplash.com/photo-1559847844-5315695dadae?w=800&h=600&fit=crop',
+        imageHint: 'green curry chicken',
+        inStock: true
+      },
+      {
+        id: 'tf3',
+        name: 'Pad Thai',
+        description: 'Rice noodles tossed with tamarind, peanuts, and egg.',
+        price: 490.00,
+        image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&h=600&fit=crop',
+        imageHint: 'pad thai noodles',
+        inStock: true
+      },
+      {
+        id: 'tf4',
+        name: 'Thai Basil Fried Rice',
+        description: 'Fragrant jasmine rice with basil, vegetables, and egg.',
+        price: 460.00,
+        image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800&h=600&fit=crop',
+        imageHint: 'fried rice thai style',
+        inStock: true
+      }
+    ]
   },
   {
     id: 'beverages',
     name: '🥤 Beverages',
     icon: 'GlassWater',
     items: [
-      { 
-        id: 'b1', 
-        name: 'Coca-Cola', 
-        description: 'Classic cola drink', 
-        price: 80.00, 
-        image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400&h=300&fit=crop', 
-        imageHint: 'cola bottle', 
-        inStock: true 
+      {
+        id: 'bv1',
+        name: 'Masala Chai',
+        description: 'Strong Nepali masala tea with ginger and cardamom.',
+        price: 90.00,
+        image: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=800&h=600&fit=crop',
+        imageHint: 'masala chai',
+        inStock: true
       },
-      { 
-        id: 'b2', 
-        name: 'Fresh Orange Juice', 
-        description: 'Freshly squeezed orange juice', 
-        price: 120.00, 
-        image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&h=300&fit=crop', 
-        imageHint: 'orange juice glass', 
-        inStock: true 
+      {
+        id: 'bv2',
+        name: 'Sweet Lassi',
+        description: 'Traditional yogurt-based drink served chilled.',
+        price: 120.00,
+        image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800&h=600&fit=crop',
+        imageHint: 'sweet lassi',
+        inStock: true
       },
-      { 
-        id: 'b3', 
-        name: 'Mineral Water', 
-        description: 'Pure mineral water', 
-        price: 50.00, 
-        image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=300&fit=crop', 
-        imageHint: 'water bottle', 
-        inStock: true 
+      {
+        id: 'bv3',
+        name: 'Fresh Lime Soda',
+        description: 'Sparkling lime soda with a citrus kick.',
+        price: 110.00,
+        image: 'https://images.unsplash.com/photo-1622483767028-3f66f2b0d1d2?w=800&h=600&fit=crop',
+        imageHint: 'lime soda',
+        inStock: true
       },
-      { 
-        id: 'b4', 
-        name: 'Sweet Lassi', 
-        description: 'Traditional Nepali yogurt drink', 
-        price: 100.00, 
-        image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop', 
-        imageHint: 'lassi glass', 
-        inStock: true 
-      },
-    ],
-  },
-  {
-    id: 'snacks',
-    name: '🍟 Snacks & Appetizers',
-    icon: 'Pizza',
-    items: [
-      { 
-        id: 'sn1', 
-        name: 'French Fries', 
-        description: 'Crispy golden potato fries', 
-        price: 150.00, 
-        image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop', 
-        imageHint: 'french fries', 
-        inStock: true 
-      },
-      { 
-        id: 'sn2', 
-        name: 'Chicken Wings', 
-        description: 'Spicy buffalo wings (6 pieces)', 
-        price: 350.00, 
-        image: 'https://images.unsplash.com/photo-1608039755401-742074f0548d?w=400&h=300&fit=crop', 
-        imageHint: 'chicken wings', 
-        inStock: true 
-      },
-      { 
-        id: 'sn3', 
-        name: 'Steam Momo', 
-        description: 'Traditional Nepali dumplings (10 pieces)', 
-        price: 200.00, 
-        image: 'https://images.unsplash.com/photo-1626804475297-41608ea09aeb?w=400&h=300&fit=crop', 
-        imageHint: 'steamed momo', 
-        inStock: true 
-      },
-      { 
-        id: 'sn4', 
-        name: 'Fried Momo', 
-        description: 'Crispy fried dumplings (10 pieces)', 
-        price: 220.00, 
-        image: 'https://images.unsplash.com/photo-1496412705862-e0088f16f791?w=400&h=300&fit=crop', 
-        imageHint: 'fried momo', 
-        inStock: true 
-      },
+      {
+        id: 'bv4',
+        name: 'Mango Smoothie',
+        description: 'Fresh mango blended with yogurt and ice.',
+        price: 180.00,
+        image: 'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800&h=600&fit=crop',
+        imageHint: 'mango smoothie',
+        inStock: true
+      }
     ]
   },
   {
@@ -136,35 +188,35 @@ export const MENU: MenuCategory[] = [
     name: '🍰 Desserts',
     icon: 'IceCream2',
     items: [
-      { 
-        id: 'd1', 
-        name: 'Chocolate Brownie', 
-        description: 'Rich chocolate brownie with vanilla ice cream', 
-        price: 180.00, 
-        image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=300&fit=crop', 
-        imageHint: 'chocolate brownie', 
-        inStock: true 
+      {
+        id: 'ds1',
+        name: 'Kheer',
+        description: 'Traditional rice pudding infused with cardamom.',
+        price: 170.00,
+        image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800&h=600&fit=crop',
+        imageHint: 'Nepali kheer dessert',
+        inStock: true
       },
-      { 
-        id: 'd2', 
-        name: 'Kulfi Ice Cream', 
-        description: 'Traditional Indian ice cream', 
-        price: 120.00, 
-        image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=300&fit=crop', 
-        imageHint: 'kulfi ice cream', 
-        inStock: true 
+      {
+        id: 'ds2',
+        name: 'Gulab Jamun',
+        description: 'Soft milk dumplings soaked in rose-infused syrup.',
+        price: 160.00,
+        image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&h=600&fit=crop',
+        imageHint: 'gulab jamun dessert',
+        inStock: true
       },
-      { 
-        id: 'd3', 
-        name: 'Gulab Jamun', 
-        description: 'Sweet milk-based balls in syrup (4 pieces)', 
-        price: 150.00, 
-        image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop', 
-        imageHint: 'gulab jamun', 
-        inStock: true 
-      },
-    ],
-  },
+      {
+        id: 'ds3',
+        name: 'Chocolate Brownie',
+        description: 'Warm fudgy brownie with vanilla cream.',
+        price: 190.00,
+        image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop',
+        imageHint: 'brownie dessert',
+        inStock: true
+      }
+    ]
+  }
 ];
 
 // 🪑 REAL TABLE LAYOUT - Updated for typical restaurant
@@ -186,7 +238,7 @@ export const USERS: User[] = [
   { 
     uid: 'admin-001', 
     name: 'Restaurant Manager', 
-    email: 'admin@orderchha.cafe', 
+    email: 'admin@orderchha.com',
     role: 'admin' 
   },
   { 
